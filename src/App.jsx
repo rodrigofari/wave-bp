@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+const { useState, useMemo, useCallback, useRef, useEffect } = React;
 
 /* ═══════════════════════════════════════════════════════════
    CITYWAVE FUNCHAL — FINANCIAL SIMULATOR v5
@@ -195,7 +195,7 @@ function Bar({label,value,maxVal,dark=false}) {
 }
 
 /* ═══════════════════════════════════ */
-export default function App() {
+function App() {
   const [s, setS] = useState(INIT);
   const [tab, setTab] = useState("overview");
   const u = useCallback((k,v) => setS(p=>({...p,[k]:v})), []);
@@ -969,3 +969,5 @@ export default function App() {
     </div>
   );
 }
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
