@@ -13,6 +13,39 @@ const fmtK = n => n>=1e6?(n/1e6).toFixed(2)+"M":n>=1000?(n/1000).toFixed(0)+"K":
 const fd = (n,d=1) => n.toFixed(d);
 const pct = n => (n*100).toFixed(1)+"%";
 
+/* ── Financial helpers ── */
+const npv = (rate, cashflows) => cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + rate, t), 0);
+const irr = (cashflows, guess = 0.1) => {
+  let r = guess;
+  for (let i = 0; i < 200; i++) {
+    let f = 0, df = 0;
+    for (let t = 0; t < cashflows.length; t++) {
+      const d = Math.pow(1 + r, t);
+      f += cashflows[t] / d;
+      if (t > 0) df += -t * cashflows[t] / (d * (1 + r));
+    }
+    if (Math.abs(f) < 1e-6) return r;
+    if (df === 0) break;
+    const nr = r - f / df;
+    if (nr <= -0.99) { r = -0.99; continue; }
+    if (Math.abs(nr - r) < 1e-8) return nr;
+    r = nr;
+  }
+  return r;
+};
+
+/* Industry beta comparables — leisure / entertainment / experiential
+   Source: average levered betas from Yahoo Finance / Damodaran (2025) */
+const INDUSTRY_BETAS = [
+  { name: "Vail Resorts (MTN)", beta: 1.42, sector: "Ski / Resort" },
+  { name: "Six Flags (SIX)", beta: 1.65, sector: "Theme Park" },
+  { name: "Cedar Fair (FUN)", beta: 1.38, sector: "Theme Park" },
+  { name: "SeaWorld (PRKS)", beta: 1.48, sector: "Aquatic Park" },
+  { name: "Planet Fitness (PLNT)", beta: 1.20, sector: "Fitness" },
+  { name: "Topgolf Callaway (MODG)", beta: 1.55, sector: "Sports Leisure" },
+  { name: "Damodaran — Recreation", beta: 1.18, sector: "Industry avg" },
+];
+
 /* Wave sizes — Citywave confirmed range: 7.5m to 10m standard, modular up to 30m
    Pricing from Citywave call: 7.5m ~ €1.2M, 10m ~ €1.7-1.8M */
 const WAVES = [
@@ -75,6 +108,15 @@ const INIT = {
   loanRate:5.5, loanYears:10,
   investors:[{id:1,name:"Investidor A",pct:20},{id:2,name:"Investidor B",pct:15}],
   distPct:70, mgmtPct:0,
+  // CAPM / WACC / FCF assumptions
+  taxRate:22.5,            // PT IRC 21% + 1.5% derrama
+  depreciationYears:15,    // equipamento + infra (vida util fiscal)
+  maintCapexPct:2,         // % do CAPEX/ano (manutencao capitalizada)
+  terminalGrowth:2,        // g% perpetuidade
+  rfRate:3.0,              // PT 10y Bund ~3%
+  marketPremium:6.0,       // equity risk premium EU
+  unleveredBeta:0.85,      // bottom-up leisure (Damodaran)
+  forecastYears:10,        // periodo explicito (=concessao)
 };
 
 /* ── Inline Editable Number ── */
@@ -362,32 +404,168 @@ function App() {
     // Site fit check
     const siteFitsWave = site.id === "custom" || s.waveSize <= site.maxWave;
 
+    /* ═══════ CAPM / WACC ═══════ */
+    const tax = s.taxRate/100;
+    const eqCashPct = s.joaoPct + s.rodrigoPct + invPct;  // ignora sweat (nao e cash)
+    const dRatio = (s.bankPct) / (eqCashPct + s.bankPct || 1);
+    const eRatio = 1 - dRatio;
+    const DE = eRatio > 0 ? dRatio / eRatio : 0;
+    const leveredBeta = s.unleveredBeta * (1 + (1 - tax) * DE);
+    const costOfEquity = (s.rfRate + leveredBeta * s.marketPremium) / 100;
+    const costOfDebtAT = (s.loanRate/100) * (1 - tax);
+    const wacc = eRatio * costOfEquity + dRatio * costOfDebtAT;
+
+    /* ═══════ Free Cash Flow ═══════ */
+    const depreciation = capex / s.depreciationYears;
+    const maintCapex = capex * (s.maintCapexPct/100);
+    const tg = s.terminalGrowth/100;
+    const N = Math.max(5, Math.min(15, s.forecastYears));
+    const fcfYears = Array.from({length:N},(_,yr)=>{
+      const g = Math.pow(1.03, yr);                  // revenue +3%/y
+      const cg = Math.pow(1.02, yr);                 // costs +2%/y
+      const rev = annRev * g;
+      const ox = opex * cg;
+      const ebitdaY = rev - ox;
+      const dep = yr < s.depreciationYears ? depreciation : 0;
+      const ebitY = ebitdaY - dep;
+      const taxY = Math.max(0, ebitY * tax);
+      const nopat = ebitY - taxY;
+      const capexY = yr === 0 ? 0 : maintCapex;       // year 0 = operations start (initial capex separate)
+      const fcff = nopat + dep - capexY;
+      return { y: yr+1, rev, opex:ox, ebitda:ebitdaY, dep, ebit:ebitY, tax:taxY, nopat, maintCapex:capexY, fcff };
+    });
+    const lastFcff = fcfYears[fcfYears.length-1].fcff;
+    const terminalValue = wacc > tg ? lastFcff * (1 + tg) / (wacc - tg) : 0;
+    const pvFcff = fcfYears.reduce((a,y,i) => a + y.fcff / Math.pow(1+wacc, i+1), 0);
+    const pvTerminal = terminalValue / Math.pow(1+wacc, N);
+    const enterpriseValue = pvFcff + pvTerminal;
+    const npvProject = enterpriseValue - capex;
+    const projectCashflows = [-capex, ...fcfYears.slice(0,-1).map(y=>y.fcff), fcfYears[fcfYears.length-1].fcff + terminalValue];
+    const projectIRR = irr(projectCashflows);
+
+    /* Equity IRR (alavancada) — fluxo de caixa apos divida */
+    const equityInvested = capex * (eqCashPct/100);
+    const equityCashflows = [-equityInvested, ...fcfYears.map(y => y.fcff - annDebt)];
+    equityCashflows[equityCashflows.length-1] += terminalValue - bankAmt * Math.pow(1 - 1/Math.max(1,s.loanYears), N) * 0;  // bond approx 0 residual
+    const equityIRR = irr(equityCashflows);
+
+    /* ═══════ Revenue Sensitivity (% do base case) ═══════ */
+    const revScenarios = [0.50, 0.75, 0.90, 1.00, 1.10, 1.25, 1.50].map(p => {
+      const rev = annRev * p;
+      // custos variaveis escalam com receita (energia 50%, concessao 100%, marketing 50%)
+      const varCost = annEnergy * (0.5 + 0.5*p) + annConc*p + annMktg*(0.5 + 0.5*p);
+      const fixedCost = opex - annEnergy - annConc - annMktg;
+      const opx = fixedCost + varCost;
+      const ebitdaS = rev - opx;
+      const netS = ebitdaS - annDebt;
+      const marginS = rev>0 ? ebitdaS/rev : 0;
+      const dep0 = depreciation;
+      const ebitS = ebitdaS - dep0;
+      const taxS = Math.max(0, ebitS*tax);
+      const fcfS = ebitS - taxS + dep0 - maintCapex;
+      const pb = ebitdaS>0 ? capex/ebitdaS : Infinity;
+      return { p, rev, opx, ebitda:ebitdaS, margin:marginS, net:netS, fcf:fcfS, payback:pb };
+    });
+
+    /* Two-way sensitivity: receita × preco eletricidade → EBITDA */
+    const sensRevPcts = [0.70, 0.85, 1.00, 1.15, 1.30];
+    const sensElec = [0.10, 0.13, 0.156, 0.18, 0.22];
+    const sensMatrix = sensElec.map(er => sensRevPcts.map(rp => {
+      const rev = annRev * rp;
+      const en = (dailyKwh * er) * s.opDays;
+      const varCost = en + annConc*rp + annMktg*(0.5 + 0.5*rp);
+      const fixedCost = opex - annEnergy - annConc - annMktg;
+      return rev - (fixedCost + varCost);
+    }));
+
+    /* ═══════ Bond / Stable Investment Comparison ═══════ */
+    const benchmarks = [
+      { name: "PT 10y Govt Bond", yield: s.rfRate/100, risk: "Muito baixo" },
+      { name: "EU IG Corp Bond (AA)", yield: (s.rfRate+1.5)/100, risk: "Baixo" },
+      { name: "EU HY Corp Bond (BB)", yield: (s.rfRate+5.0)/100, risk: "Medio" },
+      { name: "S&P 500 (historico)", yield: (s.rfRate+s.marketPremium)/100, risk: "Alto" },
+      { name: "MSCI Europe (historico)", yield: 0.08, risk: "Alto" },
+    ];
+    const projectAnnReturn = isFinite(projectIRR) ? projectIRR : 0;
+    const equityAnnReturn = isFinite(equityIRR) ? equityIRR : 0;
+    const benchmarkRows = benchmarks.map(b => ({
+      ...b,
+      excessProject: projectAnnReturn - b.yield,
+      excessEquity: equityAnnReturn - b.yield,
+      yearsToDouble: b.yield > 0 ? 0.72 / b.yield : Infinity,
+      // 10k investido apos 10 anos
+      val10k10y: 10000 * Math.pow(1 + b.yield, 10),
+    }));
+
+    /* Sharpe-like ratio (proxy) — usa premio sobre rf dividido por desvio assumido */
+    const projectVol = 0.18;  // assumido ~18% (private equity / experiential leisure)
+    const sharpe = projectVol > 0 ? (projectAnnReturn - s.rfRate/100) / projectVol : 0;
+
+    /* Industry beta avg */
+    const industryAvgBeta = INDUSTRY_BETAS.reduce((a,b)=>a+b.beta,0) / INDUSTRY_BETAS.length;
+
     return{wc,site,siteFitsWave,citywaveTotal,capexBk,
       effKwh,dailyKwh,annKwh,annEnergy,costPerSess,capex,baseCAPEX,contAmt,eqAmt,eqPct,invPct,fundPct,
       bankAmt,joaoAmt,rodrigoAmt,invAmts,ownJ,ownR,ownInv,mp,annDebt,annStaff,opex,annConc,annMgmt,
       annRev,mRev,mCost,mProfit,ebitda,margin,net,payback,dist0,divs,reinv,jProfit,rProfit,invRet,
       proj,cumRet,revBk,costBk,energyComp,capTableData,
       slotsPerHour,ridersPerHour,maxSlotsDay,maxRidersDay,avgOccupancy,avgPeopleDay,
-      effectiveAvgPrice,energyCostPerPerson,wtdPrice,peoplePerDay};
+      effectiveAvgPrice,energyCostPerPerson,wtdPrice,peoplePerDay,
+      // Financial model
+      tax,dRatio,eRatio,DE,leveredBeta,costOfEquity,costOfDebtAT,wacc,
+      depreciation,maintCapex,fcfYears,terminalValue,pvFcff,pvTerminal,enterpriseValue,
+      npvProject,projectIRR,equityIRR,equityInvested,projectCashflows,equityCashflows,
+      revScenarios,sensRevPcts,sensElec,sensMatrix,
+      benchmarks,benchmarkRows,projectAnnReturn,equityAnnReturn,projectVol,sharpe,
+      industryAvgBeta,
+      };
   }, [s]);
 
   const fundAlert = Math.abs(calc.fundPct-100)>0.5;
-  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"7 Anos"}];
+  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}];
 
   return (
-    <div style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
+    <div className="root-container" style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
       <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
       <style>{`
         input[type=range]{-webkit-appearance:none;height:3px;background:#ddd;border-radius:2px;outline:none;width:100%}
         input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
         input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
         ::selection{background:#000;color:#fff}
-        @media(max-width:800px){.grid-main{grid-template-columns:1fr !important}}
+        *{box-sizing:border-box}
+        table{max-width:100%}
+
+        @media(max-width:900px){
+          .grid-main{grid-template-columns:1fr !important;gap:16px !important}
+          .grid-main aside{border-right:none !important;padding-right:0 !important;border-bottom:1px solid #eee;padding-bottom:16px}
+        }
+
+        @media(max-width:700px){
+          .root-container{padding:14px 12px !important;max-width:100% !important}
+          h1{font-size:22px !important}
+          .kpi-grid{grid-template-columns:repeat(2,1fr) !important}
+          .tabs-bar{overflow-x:auto;scrollbar-width:none}
+          .tabs-bar::-webkit-scrollbar{display:none}
+          .tabs-bar button{flex-shrink:0;padding:7px 12px !important;font-size:10px !important}
+          .analise-grid-2{grid-template-columns:1fr !important}
+          .analise-grid-3{grid-template-columns:1fr 1fr !important}
+          .analise-risk-grid{grid-template-columns:1fr 1fr !important}
+          .twocol-charts{grid-template-columns:1fr !important}
+          table{font-size:10px !important}
+          .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+          .header-row{flex-direction:column;align-items:flex-start !important}
+        }
+
+        @media(max-width:480px){
+          .kpi-grid{grid-template-columns:1fr 1fr !important}
+          .wave-grid{grid-template-columns:repeat(3,1fr) !important}
+          .analise-risk-grid{grid-template-columns:1fr !important}
+        }
       `}</style>
 
       {/* ── HEADER ── */}
       <header style={{ borderBottom:"3px solid #000", paddingBottom:16, marginBottom:16 }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:8 }}>
+        <div className="header-row" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:8 }}>
           <div>
             <div style={{ fontSize:10, letterSpacing:4, textTransform:"uppercase", color:"#999", fontWeight:600 }}>Surf Clube da Madeira</div>
             <h1 style={{ margin:"4px 0 0", fontSize:28, fontWeight:800, letterSpacing:-0.5, lineHeight:1 }}>Citywave Funchal · v5</h1>
@@ -409,7 +587,7 @@ function App() {
       </div>
 
       {/* ── KPIs ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:1, background:"#000", marginBottom:24, borderRadius:2, overflow:"hidden" }}>
+      <div className="kpi-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:1, background:"#000", marginBottom:24, borderRadius:2, overflow:"hidden" }}>
         {[
           {l:"EBITDA",v:`${fmtK(calc.ebitda)}€`,sub:pct(calc.margin),neg:calc.ebitda<0},
           {l:"APOS DIVIDA",v:`${fmtK(calc.net)}€`,neg:calc.net<0},
@@ -427,7 +605,7 @@ function App() {
       </div>
 
       {/* ── TABS ── */}
-      <div style={{ display:"flex", gap:0, borderBottom:"2px solid #000", marginBottom:20 }}>
+      <div className="tabs-bar" style={{ display:"flex", gap:0, borderBottom:"2px solid #000", marginBottom:20 }}>
         {tabs.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             padding:"8px 18px", background:tab===t.id?"#000":"transparent",
@@ -479,7 +657,7 @@ function App() {
 
           {/* WAVE SIZE */}
           <Section title="Tamanho da Onda" number="1">
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:3, marginBottom:12 }}>
+            <div className="wave-grid" style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:3, marginBottom:12 }}>
               {WAVES.map(w=>{
                 const disabled = calc.site.id !== "custom" && w.size > calc.site.maxWave;
                 return (
@@ -643,7 +821,7 @@ function App() {
               <Row label="CAPEX Total" value={calc.capex} suffix="€" total />
             </div>
 
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24 }}>
+            <div className="twocol-charts" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24 }}>
               <div>
                 <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Custos Anuais</h2>
                 {calc.costBk.map((c,i)=><Bar key={i} label={c.l} value={c.v} maxVal={Math.max(...calc.costBk.map(x=>x.v))*1.1} dark={i===0} />)}
@@ -683,7 +861,7 @@ function App() {
             </div>
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>1. Configuracao das Sessoes</h2>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
+            <div className="twocol-charts" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
               <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
                 <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={15} max={90} step={15} />
                 <Row label="Pessoas por grupo" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={10} />
@@ -914,6 +1092,252 @@ function App() {
           </>}
 
           {/* PROJECTION */}
+          {tab==="analise" && <>
+            {/* ── INTRO ── */}
+            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>Analise Financeira Avancada</h2>
+            <div style={{ background:"#f8f8f8", borderLeft:"3px solid #000", borderRadius:4, padding:12, marginBottom:20, fontSize:11, lineHeight:1.6, color:"#444" }}>
+              Modelo DCF/WACC com Free Cash Flow to Firm, Beta bottom-up por industria (Damodaran), sensibilidade bidirecional e benchmark vs investimentos passivos. Todos os inputs sao editaveis.
+            </div>
+
+            {/* ── CAPM INPUTS ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:8 }}>1. CAPM · Custo do Capital</h3>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:16 }} className="analise-grid-2">
+              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
+                <div style={{ fontSize:10, fontWeight:700, marginBottom:6, color:"#666" }}>INPUTS DE MERCADO</div>
+                <Row label="Taxa sem risco (rf)" value={s.rfRate} onChange={v=>u("rfRate",v)} suffix="%" info="OT Portugal 10 anos" min={0} max={10} step={0.1} />
+                <Row label="Premio de risco mercado" value={s.marketPremium} onChange={v=>u("marketPremium",v)} suffix="%" info="Equity Risk Premium EU (Damodaran)" min={3} max={12} step={0.1} />
+                <Row label="Beta nao-alavancado" value={s.unleveredBeta} onChange={v=>u("unleveredBeta",v)} suffix="" info="Bottom-up leisure/recreation" min={0.3} max={2} step={0.05} />
+                <Row label="Taxa imposto" value={s.taxRate} onChange={v=>u("taxRate",v)} suffix="%" info="IRC + derrama PT" min={15} max={30} step={0.5} />
+              </div>
+              <div style={{ background:"#000", color:"#fff", borderRadius:4, padding:14 }}>
+                <div style={{ fontSize:10, fontWeight:700, marginBottom:8, color:"#999" }}>OUTPUTS CALCULADOS</div>
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:11 }}>
+                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>D/V</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.dRatio)}</div></div>
+                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>E/V</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.eRatio)}</div></div>
+                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>β LEVERED</div><div style={{ fontSize:16, fontWeight:800 }}>{fd(calc.leveredBeta,2)}</div></div>
+                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>Ke</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.costOfEquity)}</div></div>
+                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>Kd (apos imp.)</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.costOfDebtAT)}</div></div>
+                  <div style={{ background:"#fff", color:"#000", padding:"4px 6px", borderRadius:3 }}>
+                    <div style={{ fontSize:8, color:"#666", letterSpacing:1 }}>WACC</div>
+                    <div style={{ fontSize:18, fontWeight:800 }}>{pct(calc.wacc)}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize:9, color:"#888", marginTop:10, lineHeight:1.5 }}>
+                  β<sub>L</sub> = β<sub>U</sub> × (1 + (1-t)·D/E) · Ke = rf + β<sub>L</sub>·MRP · WACC = E/V·Ke + D/V·Kd(1-t)
+                </div>
+              </div>
+            </div>
+
+            {/* ── BETA COMPARABLES ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>2. Beta · Industria Comparavel</h3>
+            <div style={{ fontSize:10, color:"#888", marginBottom:6 }}>Beta alavancado de empresas listadas em leisure/recreation. Media simples — usar como referencia para o β<sub>U</sub>.</div>
+            <div style={{ overflowX:"auto", marginBottom:18 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11, minWidth:480 }}>
+                <thead><tr style={{ borderBottom:"2px solid #000" }}>
+                  {["Comparavel","Setor","β (levered)"].map(h=><th key={h} style={{ padding:"7px 6px", textAlign:"left", fontSize:10, fontWeight:700, letterSpacing:0.5, textTransform:"uppercase" }}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {INDUSTRY_BETAS.map((b,i)=>(
+                    <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
+                      <td style={{ padding:"6px", fontWeight:600 }}>{b.name}</td>
+                      <td style={{ padding:"6px", color:"#666", fontSize:10 }}>{b.sector}</td>
+                      <td style={{ padding:"6px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{fd(b.beta,2)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop:"2px solid #000", background:"#f8f8f8" }}>
+                    <td style={{ padding:"7px 6px", fontWeight:800 }}>Media (referencia)</td>
+                    <td style={{ padding:"7px 6px", color:"#666" }}>Industria</td>
+                    <td style={{ padding:"7px 6px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{fd(calc.industryAvgBeta,2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── FREE CASH FLOW ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:8 }}>3. Free Cash Flow to Firm (FCFF)</h3>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:14, marginBottom:14 }} className="analise-grid-3">
+              <Row label="Anos forecast" value={s.forecastYears} onChange={v=>u("forecastYears",v)} suffix="" info="Periodo explicito antes da perpetuidade" min={5} max={15} />
+              <Row label="Depreciacao" value={s.depreciationYears} onChange={v=>u("depreciationYears",v)} suffix=" anos" info="Vida util fiscal media" min={5} max={25} />
+              <Row label="Maint. CapEx" value={s.maintCapexPct} onChange={v=>u("maintCapexPct",v)} suffix="% capex/ano" min={0} max={10} step={0.5} />
+            </div>
+            <Row label="Crescimento perpetuidade (g)" value={s.terminalGrowth} onChange={v=>u("terminalGrowth",v)} suffix="%" info="Inflacao alvo BCE 2% · Maximo recomendado: rf - 1pp" min={0} max={5} step={0.25} />
+
+            <div style={{ overflowX:"auto", marginTop:12 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:680 }}>
+                <thead><tr style={{ borderBottom:"2px solid #000" }}>
+                  {["Ano","Receita","OPEX","EBITDA","Depr.","EBIT","Imposto","NOPAT","Maint Capex","FCFF","PV @ WACC"].map(h=>
+                    <th key={h} style={{ padding:"6px 4px", textAlign:"right", fontSize:9.5, fontWeight:700 }}>{h}</th>
+                  )}
+                </tr></thead>
+                <tbody>
+                  {calc.fcfYears.map((y,i)=>{
+                    const pv = y.fcff / Math.pow(1+calc.wacc, i+1);
+                    return (
+                      <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontWeight:700 }}>A{y.y}</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(y.rev)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(y.opex)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:y.ebitda<0?"#c00":"#000" }}>{fmtK(y.ebitda)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(y.dep)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:y.ebit<0?"#c00":"#000" }}>{fmtK(y.ebit)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#c00" }}>-{fmtK(y.tax)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(y.nopat)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#c00" }}>-{fmtK(y.maintCapex)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800, color:y.fcff<0?"#c00":"#000" }}>{fmtK(y.fcff)}€</td>
+                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{fmtK(pv)}€</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── DCF VALUATION SUMMARY ── */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:1, background:"#000", marginTop:14, marginBottom:20, borderRadius:2, overflow:"hidden" }}>
+              {[
+                {l:"PV FCFF EXPLICITO", v:`${fmtK(calc.pvFcff)}€`},
+                {l:"VALOR TERMINAL", v:`${fmtK(calc.terminalValue)}€`, sub:`g=${s.terminalGrowth}%`},
+                {l:"PV VALOR TERMINAL", v:`${fmtK(calc.pvTerminal)}€`},
+                {l:"ENTERPRISE VALUE", v:`${fmtK(calc.enterpriseValue)}€`},
+                {l:"NPV PROJETO", v:`${fmtK(calc.npvProject)}€`, neg:calc.npvProject<0, sub:"EV - CAPEX inicial"},
+                {l:"IRR PROJETO", v:isFinite(calc.projectIRR)?pct(calc.projectIRR):"N/A", sub:`vs WACC ${pct(calc.wacc)}`},
+                {l:"IRR EQUITY", v:isFinite(calc.equityIRR)?pct(calc.equityIRR):"N/A", sub:"Apos divida"},
+              ].map((m,i)=>(
+                <div key={i} style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
+                  <div style={{ fontSize:8, letterSpacing:1.5, textTransform:"uppercase", color:"#999", fontWeight:600 }}>{m.l}</div>
+                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:14, fontWeight:800, color:m.neg?"#c00":"#000", marginTop:3 }}>{m.v}</div>
+                  {m.sub && <div style={{ fontSize:8, color:"#999", marginTop:2 }}>{m.sub}</div>}
+                </div>
+              ))}
+            </div>
+
+            {/* ── REVENUE SENSITIVITY ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>4. Sensibilidade à Receita</h3>
+            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Custos variaveis (energia, marketing, concessao) escalam parcialmente com a receita. Custos fixos (pessoal, agua, manutencao, seguro) mantem-se.</div>
+            <div style={{ overflowX:"auto", marginBottom:20 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:640 }}>
+                <thead><tr style={{ borderBottom:"2px solid #000" }}>
+                  {["% Receita","Receita","OPEX","EBITDA","Margem","Apos divida","FCFF","Payback"].map(h=>
+                    <th key={h} style={{ padding:"7px 5px", textAlign:"right", fontSize:9.5, fontWeight:700 }}>{h}</th>
+                  )}
+                </tr></thead>
+                <tbody>
+                  {calc.revScenarios.map((sc,i)=>{
+                    const base = Math.abs(sc.p - 1) < 0.01;
+                    return (
+                      <tr key={i} style={{ borderBottom:"1px solid #eee", background:base?"#f5f5f5":"transparent" }}>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontWeight:base?800:700, fontFamily:"'IBM Plex Mono',monospace" }}>{fd(sc.p*100,0)}%</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(sc.rev)}€</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(sc.opx)}€</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:sc.ebitda<0?"#c00":"#000" }}>{fmtK(sc.ebitda)}€</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{pct(sc.margin)}</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:sc.net<0?"#c00":"#000" }}>{fmtK(sc.net)}€</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:sc.fcf<0?"#c00":"#000" }}>{fmtK(sc.fcf)}€</td>
+                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{sc.payback<50?fd(sc.payback)+"a":"—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── TWO-WAY SENSITIVITY ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>5. Sensibilidade Bidirecional · EBITDA</h3>
+            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Receita (% base) × Preco eletricidade. Verde = lucro · Vermelho = perda.</div>
+            <div style={{ overflowX:"auto", marginBottom:20 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10, minWidth:560 }}>
+                <thead><tr style={{ borderBottom:"2px solid #000" }}>
+                  <th style={{ padding:"7px 4px", textAlign:"right", fontSize:9, fontWeight:700, background:"#000", color:"#fff" }}>€/kWh \ Rev%</th>
+                  {calc.sensRevPcts.map(r=><th key={r} style={{ padding:"7px 4px", textAlign:"right", fontSize:9, fontWeight:700, background:"#f5f5f5" }}>{fd(r*100,0)}%</th>)}
+                </tr></thead>
+                <tbody>
+                  {calc.sensElec.map((er,i)=>(
+                    <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
+                      <td style={{ padding:"5px 4px", textAlign:"right", fontWeight:700, background:"#f5f5f5", fontFamily:"'IBM Plex Mono',monospace" }}>{er.toFixed(3)}€</td>
+                      {calc.sensMatrix[i].map((v,j)=>{
+                        const intensity = Math.min(Math.abs(v)/Math.max(calc.ebitda,1), 1);
+                        const bg = v>=0 ? `rgba(40,160,80,${0.10+intensity*0.30})` : `rgba(220,40,40,${0.10+intensity*0.30})`;
+                        return (
+                          <td key={j} style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:v<0?"#900":"#040", background:bg }}>{fmtK(v)}€</td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── BOND BENCHMARK ── */}
+            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>6. Comparacao vs Investimentos Passivos</h3>
+            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Retorno do projeto vs alternativas "estaveis". Considere risco/iliquidez do projeto vs liquidez total de obrigacoes/indices.</div>
+            <div style={{ overflowX:"auto", marginBottom:14 }}>
+              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:640 }}>
+                <thead><tr style={{ borderBottom:"2px solid #000" }}>
+                  {["Instrumento","Risco","Yield/Retorno","€10k @ 10a","Premio Projeto","Premio Equity"].map(h=>
+                    <th key={h} style={{ padding:"7px 5px", textAlign:"left", fontSize:9.5, fontWeight:700, letterSpacing:0.3, textTransform:"uppercase" }}>{h}</th>
+                  )}
+                </tr></thead>
+                <tbody>
+                  {calc.benchmarkRows.map((b,i)=>(
+                    <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
+                      <td style={{ padding:"6px 5px", fontWeight:600 }}>{b.name}</td>
+                      <td style={{ padding:"6px 5px", fontSize:10, color:"#666" }}>{b.risk}</td>
+                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{pct(b.yield)}</td>
+                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(b.val10k10y))}€</td>
+                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", color:b.excessProject>=0?"#040":"#c00", fontWeight:700 }}>{b.excessProject>=0?"+":""}{pct(b.excessProject)}</td>
+                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", color:b.excessEquity>=0?"#040":"#c00", fontWeight:700 }}>{b.excessEquity>=0?"+":""}{pct(b.excessEquity)}</td>
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop:"2px solid #000", background:"#000", color:"#fff" }}>
+                    <td style={{ padding:"7px 5px", fontWeight:800 }}>CITYWAVE FUNCHAL · Projeto</td>
+                    <td style={{ padding:"7px 5px", fontSize:10 }}>Alto (iliquido)</td>
+                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{isFinite(calc.projectIRR)?pct(calc.projectIRR):"N/A"}</td>
+                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(10000 * Math.pow(1+calc.projectAnnReturn,10)))}€</td>
+                    <td style={{ padding:"7px 5px" }} colSpan={2}>—</td>
+                  </tr>
+                  <tr style={{ background:"#222", color:"#fff" }}>
+                    <td style={{ padding:"7px 5px", fontWeight:800 }}>CITYWAVE FUNCHAL · Equity (alavancado)</td>
+                    <td style={{ padding:"7px 5px", fontSize:10 }}>Muito alto</td>
+                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{isFinite(calc.equityIRR)?pct(calc.equityIRR):"N/A"}</td>
+                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(10000 * Math.pow(1+calc.equityAnnReturn,10)))}€</td>
+                    <td style={{ padding:"7px 5px" }} colSpan={2}>—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── RISK METRICS ── */}
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:10, marginBottom:20 }} className="analise-risk-grid">
+              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
+                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>SHARPE RATIO (PROXY)</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800 }}>{fd(calc.sharpe,2)}</div>
+                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>(IRR - rf) / σ — σ assumido {pct(calc.projectVol)}</div>
+              </div>
+              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
+                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>NPV / CAPEX</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800, color:calc.npvProject<0?"#c00":"#000" }}>{fd(calc.npvProject/calc.capex,2)}x</div>
+                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>Indice de rentabilidade · &gt;0 cria valor</div>
+              </div>
+              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
+                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>SPREAD vs WACC</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800, color:(calc.projectIRR-calc.wacc)<0?"#c00":"#040" }}>{calc.projectIRR-calc.wacc>=0?"+":""}{pct(calc.projectIRR-calc.wacc)}</div>
+                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>IRR - WACC · &gt;0 cria valor</div>
+              </div>
+              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
+                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>EQUITY MULTIPLE</div>
+                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800 }}>{isFinite(calc.equityIRR)?fd(Math.pow(1+calc.equityAnnReturn,10),1)+"x":"N/A"}</div>
+                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>Retorno equity em 10 anos</div>
+              </div>
+            </div>
+
+            {/* ── NOTES ── */}
+            <div style={{ background:"#f8f8f8", border:"1px solid #eee", borderRadius:4, padding:12, fontSize:10, lineHeight:1.6, color:"#555" }}>
+              <strong style={{color:"#000"}}>Notas metodologicas:</strong> FCFF = NOPAT + Depreciacao – Maint CapEx (working capital desprezado para servico). Terminal value via Gordon growth. WACC re-calculado por bottom-up beta (Hamada) ajustado a estrutura de capital atual. Sharpe assume volatilidade tipica de leisure private equity (~18%). IRR equity inclui residuo do valor terminal.
+              <br/><br/>
+              <strong style={{color:"#000"}}>Limites:</strong> Modelo nao inclui IRS sobre dividendos (impacto adicional de ~28% no retorno liquido do investidor PT). Nao modela ciclo cash-to-cash do working capital (assumido neutro). Nao incorpora opcionalidades (expansao, segunda onda, exit M&A).
+            </div>
+          </>}
+
           {tab==="projection" && <>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>P&L — 7 Anos</h2>
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, marginBottom:24 }}>
