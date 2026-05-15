@@ -46,15 +46,15 @@ const INDUSTRY_BETAS = [
   { name: "Damodaran — Recreation", beta: 1.18, sector: "Industry avg" },
 ];
 
-/* Wave sizes — Citywave confirmed range: 7.5m to 10m standard, modular up to 30m
-   Pricing from Citywave call: 7.5m ~ €1.2M, 10m ~ €1.7-1.8M */
+/* Wave sizes — Citywave confirmed (May 2026): 10m system peaks at 600 kW
+   (15 pumps × 40 kW). Smaller/larger sizes scaled proportionally. */
 const WAVES = [
-  {size:7.5,pumps:11,kwh:286,label:"7.5m",basePrice:1300000},
-  {size:8,pumps:12,kwh:312,label:"8m",basePrice:1450000},
-  {size:10,pumps:15,kwh:390,label:"10m",basePrice:1750000},
-  {size:12,pumps:18,kwh:468,label:"12m",basePrice:2100000},
-  {size:14,pumps:21,kwh:546,label:"14m",basePrice:2400000},
-  {size:16,pumps:24,kwh:624,label:"16m",basePrice:2700000},
+  {size:7.5,pumps:11,kwh:440,label:"7.5m",basePrice:1300000},
+  {size:8,pumps:12,kwh:480,label:"8m",basePrice:1450000},
+  {size:10,pumps:15,kwh:600,label:"10m",basePrice:1750000},
+  {size:12,pumps:18,kwh:720,label:"12m",basePrice:2100000},
+  {size:14,pumps:21,kwh:840,label:"14m",basePrice:2400000},
+  {size:16,pumps:24,kwh:960,label:"16m",basePrice:2700000},
 ];
 
 /* Site scenarios — from discovery call
@@ -95,8 +95,8 @@ const INIT = {
   electrical:60000,       // 400V, 1200A three-phase
   permits:30000,
   contingency:10,
-  // Energy — Citywave confirmed: 10m = 15 pumps × 26kWh = 390kWh max
-  waveSize:10, electricityRate:0.16, operatingHoursDay:10, avgPumpLoad:100,
+  // Energy — Citywave confirmed (May 2026): 10m peaks at 600 kW
+  waveSize:10, kwhMax:600, electricityRate:0.16, operatingHoursDay:10, avgPumpLoad:100,
   // Ops — updated per Citywave: maintenance optional ~1.5% of system price
   waterMonth:2500,        // 1500m³ initial + ~17.5 m³/week ongoing
   maintMonth:2250,        // ~1.5% of €1.75M / 12 = €2,187/mo
@@ -251,12 +251,13 @@ function App() {
     if(!site) return;
     setS(p => {
       const newWaveSize = (site.id !== "custom" && p.waveSize > site.maxWave) ? site.maxWave : p.waveSize;
-      const newCitywaveCost = WAVES.find(w=>w.size===newWaveSize)?.basePrice || p.citywaveCost;
+      const newWave = WAVES.find(w=>w.size===newWaveSize);
       return {
         ...p,
         siteId,
         waveSize: newWaveSize,
-        citywaveCost: newCitywaveCost,
+        citywaveCost: newWave?.basePrice || p.citywaveCost,
+        kwhMax: newWaveSize !== p.waveSize ? (newWave?.kwh || p.kwhMax) : p.kwhMax,
         sitePrep: site.id === "custom" ? p.sitePrep : site.sitePrep,
       };
     });
@@ -265,7 +266,8 @@ function App() {
   const calc = useMemo(() => {
     const wc = WAVES.find(w=>w.size===s.waveSize)||WAVES[2];
     const site = SITES.find(x=>x.id===s.siteId)||SITES[1];
-    const effKwh = wc.kwh * (s.avgPumpLoad/100);
+    const kwhPeak = s.kwhMax || wc.kwh;
+    const effKwh = kwhPeak * (s.avgPumpLoad/100);
     const dailyKwh = effKwh * s.operatingHoursDay;
     const annKwh = dailyKwh * s.opDays;
     const annEnergy = annKwh * s.electricityRate;
@@ -372,7 +374,7 @@ function App() {
       {l:"Concessao",v:annConc},{l:"Outros",v:annAcct+annMisc},
     ];
 
-    const energyComp = WAVES.map(w=>{const k=w.kwh*(s.avgPumpLoad/100)*s.operatingHoursDay;return{...w,dKwh:k,aCost:k*s.opDays*s.electricityRate};});
+    const energyComp = WAVES.map(w=>{const peak = w.size===s.waveSize ? kwhPeak : w.kwh; const k=peak*(s.avgPumpLoad/100)*s.operatingHoursDay;return{...w,kwh:peak,dKwh:k,aCost:k*s.opDays*s.electricityRate};});
     const costPerSess = s.sessionsDay>0?(dailyKwh*s.electricityRate)/s.sessionsDay:0;
 
     const slotsPerHour = s.sessionsPerHour;
@@ -662,7 +664,7 @@ function App() {
                 const disabled = calc.site.id !== "custom" && w.size > calc.site.maxWave;
                 return (
                   <button key={w.size} disabled={disabled}
-                    onClick={()=>{u("waveSize",w.size); u("citywaveCost",w.basePrice);}}
+                    onClick={()=>{u("waveSize",w.size); u("citywaveCost",w.basePrice); u("kwhMax",w.kwh);}}
                     style={{
                       padding:"8px 2px", borderRadius:4,
                       border:s.waveSize===w.size?"2px solid #000":"1px solid #ddd",
@@ -678,6 +680,7 @@ function App() {
                 );
               })}
             </div>
+            <Row label="Potencia max" value={s.kwhMax} onChange={v=>u("kwhMax",v)} suffix=" kW" info="Citywave confirmou max 600 kW (10m). Editavel para ajustar a confirmacao final." min={100} max={1200} step={10} />
             <Row label="Carga media bombas" value={s.avgPumpLoad} onChange={v=>u("avgPumpLoad",v)} suffix="%" info="100% = potencia max · Iniciantes ~50-60%" min={30} max={100} step={5} />
             <Row label="Preco eletricidade" value={s.electricityRate} onChange={v=>u("electricityRate",v)} suffix=" €/kWh" info="PT comercial: ~0.156€/kWh" min={0.05} max={0.40} step={0.01} />
             <Row label="Horas operacao/dia" value={s.operatingHoursDay} onChange={v=>u("operatingHoursDay",v)} suffix="h" min={4} max={16} />
@@ -964,12 +967,12 @@ function App() {
           {tab==="energy" && <>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Onda {s.waveSize}m — {calc.wc.pumps} Bombas</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginBottom:14, fontSize:11, color:"#444" }}>
-              Especificacao Citywave confirmada: 10m = 15 bombas × 26 kWh max = 390 kWh/h max. 400V trifasico, 1200A.
+              Especificacao Citywave (Mai 2026): 10m peak {s.kwhMax} kW (15 bombas × 40 kW). 400V trifasico, 1200A. Valor editavel acima.
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#000", borderRadius:2, overflow:"hidden", marginBottom:20 }}>
               {[
-                {l:"BOMBAS",v:calc.wc.pumps},{l:"KWH MAX/H",v:calc.wc.kwh},
-                {l:"KWH EFETIVO/H",v:Math.round(calc.effKwh)},{l:"KWH/DIA",v:Math.round(calc.dailyKwh)},
+                {l:"BOMBAS",v:calc.wc.pumps},{l:"KW MAX",v:s.kwhMax},
+                {l:"KW EFETIVO/H",v:Math.round(calc.effKwh)},{l:"KWH/DIA",v:Math.round(calc.dailyKwh)},
               ].map((m,i)=>(
                 <div key={i} style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
                   <div style={{ fontSize:8, letterSpacing:1, color:"#999", fontWeight:600 }}>{m.l}</div>
