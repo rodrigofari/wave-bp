@@ -96,7 +96,7 @@ const INIT = {
   permits:30000,
   contingency:10,
   // Energy — Citywave confirmed (May 2026): 10m peaks at 600 kW
-  waveSize:10, kwhMax:600, electricityRate:0.16, operatingHoursDay:10, avgPumpLoad:100,
+  waveSize:10, kwhMax:600, pumpsCount:15, electricityRate:0.16, operatingHoursDay:10, avgPumpLoad:100,
   // Ops — updated per Citywave: maintenance optional ~1.5% of system price
   waterMonth:2500,        // 1500m³ initial + ~17.5 m³/week ongoing
   maintMonth:2250,        // ~1.5% of €1.75M / 12 = €2,187/mo
@@ -252,12 +252,14 @@ function App() {
     setS(p => {
       const newWaveSize = (site.id !== "custom" && p.waveSize > site.maxWave) ? site.maxWave : p.waveSize;
       const newWave = WAVES.find(w=>w.size===newWaveSize);
+      const sizeChanged = newWaveSize !== p.waveSize;
       return {
         ...p,
         siteId,
         waveSize: newWaveSize,
         citywaveCost: newWave?.basePrice || p.citywaveCost,
-        kwhMax: newWaveSize !== p.waveSize ? (newWave?.kwh || p.kwhMax) : p.kwhMax,
+        kwhMax: sizeChanged ? (newWave?.kwh || p.kwhMax) : p.kwhMax,
+        pumpsCount: sizeChanged ? (newWave?.pumps || p.pumpsCount) : p.pumpsCount,
         sitePrep: site.id === "custom" ? p.sitePrep : site.sitePrep,
       };
     });
@@ -571,7 +573,7 @@ function App() {
           <div>
             <div style={{ fontSize:10, letterSpacing:4, textTransform:"uppercase", color:"#999", fontWeight:600 }}>Surf Clube da Madeira</div>
             <h1 style={{ margin:"4px 0 0", fontSize:28, fontWeight:800, letterSpacing:-0.5, lineHeight:1 }}>Citywave Funchal · v5</h1>
-            <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Atualizado com dados confirmados pela Citywave · Reuniao 12 Mai 2026 · Onda {s.waveSize}m · {calc.wc.pumps} bombas</div>
+            <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Atualizado com dados confirmados pela Citywave · Reuniao 12 Mai 2026 · Onda {s.waveSize}m · {s.pumpsCount} bombas</div>
           </div>
           <div style={{ textAlign:"right" }}>
             <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(calc.annRev)}€</div>
@@ -664,7 +666,7 @@ function App() {
                 const disabled = calc.site.id !== "custom" && w.size > calc.site.maxWave;
                 return (
                   <button key={w.size} disabled={disabled}
-                    onClick={()=>{u("waveSize",w.size); u("citywaveCost",w.basePrice); u("kwhMax",w.kwh);}}
+                    onClick={()=>{u("waveSize",w.size); u("citywaveCost",w.basePrice); u("kwhMax",w.kwh); u("pumpsCount",w.pumps);}}
                     style={{
                       padding:"8px 2px", borderRadius:4,
                       border:s.waveSize===w.size?"2px solid #000":"1px solid #ddd",
@@ -675,12 +677,13 @@ function App() {
                     }}
                     title={disabled?`Nao cabe no local ${calc.site.label}`:""}>
                     <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, fontWeight:800 }}>{w.label}</div>
-                    <div style={{ fontSize:7.5, opacity:0.7 }}>{w.pumps}b · {fmtK(w.basePrice)}€</div>
+                    <div style={{ fontSize:7.5, opacity:0.7 }}>{fmtK(w.basePrice)}€</div>
                   </button>
                 );
               })}
             </div>
-            <Row label="Potencia max" value={s.kwhMax} onChange={v=>u("kwhMax",v)} suffix=" kW" info="Citywave confirmou max 600 kW (10m). Editavel para ajustar a confirmacao final." min={100} max={1200} step={10} />
+            <Row label="Potencia max" value={s.kwhMax} onChange={v=>u("kwhMax",v)} suffix=" kW" info="Citywave confirmou max 600 kW para 10m. Editavel quando especificacao final chegar." min={100} max={1500} step={10} />
+            <Row label="Numero de bombas" value={s.pumpsCount} onChange={v=>u("pumpsCount",v)} suffix="" info="Estimativa — Citywave nao confirmou. So afeta display, nao calculos." min={1} max={40} />
             <Row label="Carga media bombas" value={s.avgPumpLoad} onChange={v=>u("avgPumpLoad",v)} suffix="%" info="100% = potencia max · Iniciantes ~50-60%" min={30} max={100} step={5} />
             <Row label="Preco eletricidade" value={s.electricityRate} onChange={v=>u("electricityRate",v)} suffix=" €/kWh" info="PT comercial: ~0.156€/kWh" min={0.05} max={0.40} step={0.01} />
             <Row label="Horas operacao/dia" value={s.operatingHoursDay} onChange={v=>u("operatingHoursDay",v)} suffix="h" min={4} max={16} />
@@ -965,13 +968,13 @@ function App() {
 
           {/* ENERGY */}
           {tab==="energy" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Onda {s.waveSize}m — {calc.wc.pumps} Bombas</h2>
+            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Onda {s.waveSize}m — {s.pumpsCount} Bombas (estimado)</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginBottom:14, fontSize:11, color:"#444" }}>
-              Especificacao Citywave (Mai 2026): 10m peak {s.kwhMax} kW (15 bombas × 40 kW). 400V trifasico, 1200A. Valor editavel acima.
+              Especificacao Citywave (Mai 2026): peak {s.kwhMax} kW para sistema 10m. Numero de bombas a confirmar — Citywave nao publica especificacoes detalhadas. Ambos valores editaveis.
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#000", borderRadius:2, overflow:"hidden", marginBottom:20 }}>
               {[
-                {l:"BOMBAS",v:calc.wc.pumps},{l:"KW MAX",v:s.kwhMax},
+                {l:"BOMBAS",v:s.pumpsCount},{l:"KW MAX",v:s.kwhMax},
                 {l:"KW EFETIVO/H",v:Math.round(calc.effKwh)},{l:"KWH/DIA",v:Math.round(calc.dailyKwh)},
               ].map((m,i)=>(
                 <div key={i} style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
@@ -1375,7 +1378,7 @@ function App() {
             <div style={{ background:"#f8f8f8", border:"1px solid #eee", borderRadius:4, padding:16 }}>
               <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>Proposta Investidores</h2>
               <div style={{ fontSize:11, lineHeight:1.7 }}>
-                <p style={{ margin:"0 0 6px" }}><strong>Citywave Funchal</strong> — Onda {s.waveSize}m · {calc.wc.pumps} bombas · {calc.site.label} · Concessao {s.concessionYears} anos</p>
+                <p style={{ margin:"0 0 6px" }}><strong>Citywave Funchal</strong> — Onda {s.waveSize}m · {s.pumpsCount} bombas · {calc.site.label} · Concessao {s.concessionYears} anos</p>
                 <p style={{ margin:"0 0 4px" }}>Investimento total: <strong>{fmt(Math.round(calc.capex))}€</strong> {s.saltwaterUplift>0?`(inclui +${s.saltwaterUplift}% saltwater)`:"(freshwater)"}</p>
                 <p style={{ margin:"0 0 4px" }}>Fundadores SCM: {fmt(Math.round(calc.joaoAmt+calc.rodrigoAmt))}€ ({s.joaoPct+s.rodrigoPct}%) + {s.sweatPct}% sweat equity</p>
                 <p style={{ margin:"0 0 4px" }}>Capital externo: <strong>{fmt(Math.round(calc.invAmts.reduce((a,i)=>a+i.amt,0)))}€</strong></p>
