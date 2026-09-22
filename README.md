@@ -7,8 +7,8 @@ Simulador de cenários; valores ilustrativos não são previsões nem orçamento
 Na pasta do repositório, executar `python3 -m http.server 8766` e abrir
 http://localhost:8766. A página usa React/Babel via CDN, pelo que necessita de internet.
 
-1. Escolher **Bilhetes / entrada flexível** ou **Sessões de grupo**.
-2. Alterar os números sublinhados. Em bilhetes, definir procura diária, receita
+1. A página abre no painel **Onda sem bar**, com indicadores, gráficos e parâmetros à esquerda. Escolher **Bilhetes / entrada flexível** ou **Sessões de grupo** nessa coluna.
+2. Alterar os números sublinhados. O separador **Receitas** inclui a configuração detalhada e o break-even do conjunto em modo bilhetes. Em bilhetes, definir procura diária, receita
    líquida média, minutos de onda e intervalo por bilhete. O tempo limita as vendas.
 3. Introduzir comissões, material e encargos elétricos adicionais quando conhecidos.
    Zero significa que ainda não foi incluído um custo, não que não exista.

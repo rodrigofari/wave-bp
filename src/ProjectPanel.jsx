@@ -47,6 +47,8 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
     <h2 style={{fontSize:23,marginBottom:5}}>{isBar?'Bar e espaco para trabalhar':'Onda + bar — visao conjunta'}</h2>
     <p style={{fontSize:12,color:'#666',lineHeight:1.6}}>{isBar?'Resultado do bar dentro do projeto, incluindo clientes trazidos pela onda e a sua quota dos custos comuns.':'Componentes separadas e contas consolidadas. Os impostos e o financiamento do conjunto sao recalculados; nao se somam TIR nem dividendos.'}</p>
     <ComponentKpis data={data} />
+    <h3 style={{fontSize:13,textTransform:'uppercase'}}>EBITDA mensal — {isBar?'bar':'conjunto'}</h3>
+    <ComponentMonthly data={data.monthly} />
     {project.warnings.length>0&&<div role="status" style={{...card,border:'1px solid #e6d5ae',background:'#fffaf0'}}>{project.warnings.map((w,i)=><div key={i}>{w}</div>)}</div>}
     {!isBar&&<>
       <h3>Contribuicao de cada componente</h3>
@@ -158,7 +160,7 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
       </main>
     </div>}
     <Section title="Custos partilhados e financiamento" open={!isBar}>
-      <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+      <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:24}}>
         <div>
           <p style={{fontSize:12,lineHeight:1.6}}>Defina que parte das rubricas ja existentes na onda serve ambas as atividades. Sao reclassificadas, nao somadas novamente.</p>
           {[
@@ -182,8 +184,6 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
         </div>
       </div>
     </Section>
-    <h3>EBITDA mensal — {isBar?'bar':'conjunto'}</h3>
-    <ComponentMonthly data={data.monthly} />
     <h3>Caixa e retorno — {isBar?'bar (imputacao analitica)':'conjunto'}</h3>
     <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
       <div style={card}>
@@ -214,7 +214,7 @@ function SimulationControls({s,b,shared,updateWave,project}) {
       <option value="tickets">Bilhetes / entrada flexivel</option><option value="sessions">Sessoes de grupo</option>
     </select></label>
     <p style={{fontSize:12,lineHeight:1.6}}>Precos liquidos de IVA. Material incluido exceto avancados. O bar continua separado, com consumo de surfistas e procura externa editavel. Os valores sao hipoteses; os resultados nao validam procura nem orcamentos.</p>
-    <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:24}}>
+    <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:24}}>
       <div>
         {ticket?fields([
           ['ticketsDay','Procura de bilhetes por dia aberto','',0,500,.1],

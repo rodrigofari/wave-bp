@@ -129,7 +129,7 @@ function Bar({label,value,maxVal,dark=false}) {
 function App() {
   const [s, setS] = useState(CitywaveFinance.APP_INIT);
   const [tab, setTab] = useState("overview");
-  const [component, setComponent] = useState("project");
+  const [component, setComponent] = useState("wave");
   const [barInputs, setBarInputs] = useState(CitywaveHospitality.BAR_INIT);
   const [sharedInputs, setSharedInputs] = useState(CitywaveHospitality.SHARED_INIT);
   const updateBar = useCallback((k,v)=>setBarInputs(p=>({...p,[k]:v})),[]);
@@ -163,10 +163,9 @@ function App() {
   const calc = project.wave;
   const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
 
-  useEffect(()=>{if(s.salesMode==="tickets" && tab==="revenue")setTab("overview");},[s.salesMode,tab]);
 
   const fundAlert = Math.abs(calc.fundPct-100)>0.000001;
-  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}].filter(t=>s.salesMode!=="tickets" || t.id!=="revenue");
+  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}];
 
   return (
     <div className="root-container" style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
@@ -223,13 +222,13 @@ function App() {
         <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 23/09/2026 · <a href="./reports.html">Relatorios e pressupostos atuais</a></div>
       </header>
 
-      <nav aria-label="Componentes do projeto" style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
-        {[['project','Conjunto'],['wave','Onda sem bar'],['bar','Bar / trabalhar']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'11px 18px',border:'1px solid #111',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
+      <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
+        {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
       </nav>
-      <SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} />
       {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
+      {component !== 'wave' && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
-      <p style={{fontSize:12,color:'#666'}}>Todos os separadores abaixo (incluindo Investidores, P&L e Analise) referem-se apenas a onda sem bar. Contas e retorno consolidados aparecem na vista Conjunto.</p>
+      <p style={{fontSize:12,color:'#666'}}>Onda sem bar · Indicadores, graficos e separadores desta vista referem-se a piscina. Consulte Conjunto para o projeto completo.</p>
       {/* ── DISCOVERY CALL BANNER ── */}
       <div style={{ background:"#f5f5f3", border:"1px solid #e0e0e0", borderLeft:"3px solid #000", padding:"10px 14px", marginBottom:24, fontSize:11, lineHeight:1.5, color:"#444" }}>
         <strong style={{color:"#000",letterSpacing:0.5,textTransform:"uppercase",fontSize:10}}>DADOS CITYWAVE CONFIRMADOS · 12 Mai 2026</strong> ·
@@ -278,6 +277,22 @@ function App() {
         {/* ═══ LEFT ═══ */}
         <aside style={{ borderRight:"1px solid #eee", paddingRight:20 }}>
 
+          <div style={{marginBottom:16,paddingBottom:12,borderBottom:"1px solid #ddd"}}>
+            <label style={{fontSize:11,fontWeight:700}}>MODELO DE VENDA
+              <select aria-label="Modelo de venda" value={s.salesMode} onChange={e=>u('salesMode',e.target.value)} style={{display:'block',width:'100%',padding:8,marginTop:6,border:'1px solid #ddd',background:'#fff'}}>
+                <option value="tickets">Bilhetes / entrada flexivel</option><option value="sessions">Sessoes de grupo</option>
+              </select>
+            </label>
+          </div>
+          {s.salesMode==="tickets" && <Section title="Bilhetes e capacidade" number="1">
+            <Row label="Bilhetes procurados/dia" value={s.ticketsDay} onChange={v=>u('ticketsDay',v)} suffix="" min={0} max={500} step={.1}/>
+            <Row label="Preco medio liquido" value={s.ticketPrice} onChange={v=>u('ticketPrice',v)} min={0} max={200} step={.01}/>
+            <Row label="Minutos de onda/bilhete" value={s.ticketMinutes} onChange={v=>u('ticketMinutes',v)} suffix="min" min={1} max={60} step={.5}/>
+            <Row label="Tempo de troca" value={s.turnaroundMinutes} onChange={v=>u('turnaroundMinutes',v)} suffix="min" min={0} max={20} step={.5}/>
+            <Row label="Capacidade diaria" value={calc.ticketCapacity} suffix=" bilhetes"/>
+            <Row label="Vendas efetivas/dia" value={calc.avgPeopleDay} suffix="" step={.1}/>
+            <p style={{fontSize:10,color:'#777',lineHeight:1.5}}>Uma utilizacao de cada vez. Sem receitas extra neste modo. Em Receitas, edite comissoes, material e veja o break-even do conjunto.</p>
+          </Section>}
           {/* SITE & CONFIG */}
           <Section title="Local e Configuracao" number="0">
             <div style={{ fontSize:10, color:"#999", marginBottom:8 }}>Selecione o cenario do local (Jardins do Teleferico)</div>
@@ -367,6 +382,13 @@ function App() {
             <Row label="Eventos sem onda/mes" value={s.eventMonthly} onChange={v=>u("eventMonthly",v)} suffix="€" min={0} max={20000} step={500} />
           </Section>}
 
+          <Section title="Custos de venda e material" open={false}>
+            <Row label="Receita intermediada" value={s.distributionPct} onChange={v=>u('distributionPct',v)} suffix="%" max={100}/>
+            <Row label="Comissao do intermediario" value={s.commissionPct} onChange={v=>u('commissionPct',v)} suffix="%" max={100}/>
+            <Row label="Material por participacao" value={s.equipmentPerVisit} onChange={v=>u('equipmentPerVisit',v)} suffix="€" max={30} step={.1}/>
+            <Row label="Encargos eletricos adicionais" value={s.energyOtherMonth} onChange={v=>u('energyOtherMonth',v)} suffix="€/mes" max={50000} step={100}/>
+            <p style={{fontSize:10,color:'#777'}}>Valores zero nao sao orcamentos validados. Nao duplicar custos ja incluidos noutras rubricas.</p>
+          </Section>
           {/* CAPEX */}
           <Section title="Investimento (CAPEX)" number="3" open={true}>
             <div style={{ fontSize:10, color:"#888", marginBottom:8, lineHeight:1.5 }}>
@@ -512,7 +534,11 @@ function App() {
           </>}
 
           {/* REVENUE */}
-          {tab==="revenue" && <>
+          {tab==="revenue" && s.salesMode==="tickets" && <>
+            <h2 style={{fontSize:13,fontWeight:800,textTransform:'uppercase'}}>Receitas e break-even por bilhete</h2>
+            <SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project}/>
+          </>}
+          {tab==="revenue" && s.salesMode!=="tickets" && <>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de Receitas — Capacidade e Precos Liquidos</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:14, marginBottom:16, fontSize:11, lineHeight:1.6, color:"#444" }}>
               <p style={{margin:"0 0 6px"}}><strong style={{color:"#000"}}>Cada pessoa paga por sessao</strong>, com preco diferenciado por nivel. Principiantes incluem prancha, fato e instrutor.</p>
