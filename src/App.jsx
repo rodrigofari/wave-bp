@@ -127,8 +127,13 @@ function Bar({label,value,maxVal,dark=false}) {
 
 /* ═══════════════════════════════════ */
 function App() {
-  const [s, setS] = useState(INIT);
+  const [s, setS] = useState({...INIT,salesMode:"tickets"});
   const [tab, setTab] = useState("overview");
+  const [component, setComponent] = useState("project");
+  const [barInputs, setBarInputs] = useState(CitywaveHospitality.BAR_INIT);
+  const [sharedInputs, setSharedInputs] = useState(CitywaveHospitality.SHARED_INIT);
+  const updateBar = useCallback((k,v)=>setBarInputs(p=>({...p,[k]:v})),[]);
+  const updateShared = useCallback((k,v)=>setSharedInputs(p=>({...p,[k]:v})),[]);
   const u = useCallback((k,v) => setS(p=>({...p,[k]:v})), []);
   const uInv = useCallback((id,f,v)=>setS(p=>({...p,investors:p.investors.map(i=>i.id===id?{...i,[f]:v}:i)})),[]);
   const addInv = useCallback(()=>setS(p=>({...p,investors:[...p.investors,{id:Date.now(),name:`Investidor ${String.fromCharCode(65+p.investors.length)}`,pct:5}]})),[]);
@@ -154,10 +159,14 @@ function App() {
     });
   }, []);
 
-  const calc = useMemo(() => calculate(s), [s]);
+  const project = useMemo(() => CitywaveHospitality.calculateProject(s,barInputs,sharedInputs), [s,barInputs,sharedInputs]);
+  const calc = project.wave;
+  const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
+
+  useEffect(()=>{if(s.salesMode==="tickets" && ["revenue","energy"].includes(tab))setTab("overview");},[s.salesMode,tab]);
 
   const fundAlert = Math.abs(calc.fundPct-100)>0.000001;
-  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}];
+  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}].filter(t=>s.salesMode!=="tickets" || !["revenue","energy"].includes(t.id));
 
   return (
     <div className="root-container" style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
@@ -203,16 +212,23 @@ function App() {
         <div className="header-row" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:8 }}>
           <div>
             <div style={{ fontSize:10, letterSpacing:4, textTransform:"uppercase", color:"#999", fontWeight:600 }}>Surf Clube da Madeira</div>
-            <h1 style={{ margin:"4px 0 0", fontSize:28, fontWeight:800, letterSpacing:-0.5, lineHeight:1 }}>Citywave Funchal · v5</h1>
-            <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Atualizado com dados confirmados pela Citywave · Reuniao 12 Mai 2026 · Onda {s.waveSize}m · {s.pumpsCount} bombas</div>
+            <h1 style={{ margin:"4px 0 0", fontSize:28, fontWeight:800, letterSpacing:-0.5, lineHeight:1 }}>Citywave Funchal · Onda + Bar</h1>
+            <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Onda {s.waveSize}m · Dados da reuniao Citywave de 12 Mai 2026 · Bar: cenario ilustrativo, nao validado</div>
           </div>
           <div style={{ textAlign:"right" }}>
-            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(calc.annRev)}€</div>
-            <div style={{ fontSize:10, color:"#666" }}>Receita anual estimada</div>
+            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(displayed.annRev)}€</div>
+            <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
           </div>
         </div>
       </header>
 
+      <nav aria-label="Componentes do projeto" style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
+        {[['project','Conjunto'],['wave','Onda sem bar'],['bar','Bar / trabalhar']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'11px 18px',border:'1px solid #111',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
+      </nav>
+      <SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} />
+      {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
+      {component === 'wave' && <>
+      <p style={{fontSize:12,color:'#666'}}>Cenario de referencia: onda sem bar, com todos os seus custos originais. A imputacao de custos partilhados aparece na vista Conjunto.</p>
       {/* ── DISCOVERY CALL BANNER ── */}
       <div style={{ background:"#f5f5f3", border:"1px solid #e0e0e0", borderLeft:"3px solid #000", padding:"10px 14px", marginBottom:24, fontSize:11, lineHeight:1.5, color:"#444" }}>
         <strong style={{color:"#000",letterSpacing:0.5,textTransform:"uppercase",fontSize:10}}>DADOS CITYWAVE CONFIRMADOS · 12 Mai 2026</strong> ·
@@ -319,19 +335,19 @@ function App() {
             </div>
             <Row label="Potencia max" value={s.kwhMax} onChange={v=>u("kwhMax",v)} suffix=" kW" info="Citywave confirmou max 600 kW para 10m. Editavel quando especificacao final chegar." min={100} max={1500} step={10} />
             <Row label="Numero de bombas" value={s.pumpsCount} onChange={v=>u("pumpsCount",v)} suffix="" info="Estimativa — Citywave nao confirmou. So afeta display, nao calculos." min={1} max={40} />
-            <Row label="Carga media bombas" value={s.avgPumpLoad} onChange={v=>u("avgPumpLoad",v)} suffix="%" info="100% = potencia max · Iniciantes ~50-60%" min={30} max={100} step={5} />
-            <Row label="Preco eletricidade" value={s.electricityRate} onChange={v=>u("electricityRate",v)} suffix=" €/kWh" info="PT comercial: ~0.156€/kWh" min={0.05} max={0.40} step={0.01} />
+            <Row label="Carga media bombas" value={s.avgPumpLoad} onChange={v=>u("avgPumpLoad",v)} suffix="%" info="100% = potencia maxima durante todo o horario; perfil real a validar com Citywave" min={30} max={100} step={5} />
+            <Row label="Preco eletricidade" value={s.electricityRate} onChange={v=>u("electricityRate",v)} suffix=" €/kWh" info="Hipotese nao validada pela EEM. Fatura depende de horarios, potencia e outros encargos." min={0.05} max={0.40} step={0.01} />
             <Row label="Horas operacao/dia" value={s.operatingHoursDay} onChange={v=>u("operatingHoursDay",v)} suffix="h" min={4} max={16} />
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:11, lineHeight:1.8 }}>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Consumo/dia</span><strong>{fmt(Math.round(calc.dailyKwh))} kWh</strong></div>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/dia</span><strong>{fmt(Math.round(calc.dailyKwh*s.electricityRate))}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/sessao</span><strong>{fd(calc.costPerSess,2)}€</strong></div>
+              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>{calc.ticketMode?"Energia/bilhete":"Custo/sessao"}</span><strong>{fd(calc.ticketMode?calc.energyCostPerPerson:calc.costPerSess,2)}€</strong></div>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/ano</span><strong>{fmt(Math.round(calc.annEnergy))}€</strong></div>
             </div>
           </Section>
 
           {/* REVENUE */}
-          <Section title="Receitas" number="2">
+          {s.salesMode!=="tickets" && <Section title="Receitas" number="2">
             <div style={{ fontSize:10, color:"#999", marginBottom:6 }}>Precos liquidos de IVA · Venda limitada pela capacidade</div>
             <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={15} max={90} step={15} />
             <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
@@ -348,7 +364,7 @@ function App() {
             <Row label="Avancado" value={s.advancedPrice} onChange={v=>u("advancedPrice",v)} suffix="€" min={15} max={100} info={`${s.advancedPct}%`} />
             <Row label="Criancas" value={s.kidsPrice} onChange={v=>u("kidsPrice",v)} suffix="€" min={10} max={80} info={`${s.kidsPct}%`} />
             <Row label="Eventos sem onda/mes" value={s.eventMonthly} onChange={v=>u("eventMonthly",v)} suffix="€" min={0} max={20000} step={500} />
-          </Section>
+          </Section>}
 
           {/* CAPEX */}
           <Section title="Investimento (CAPEX)" number="3" open={true}>
@@ -499,7 +515,7 @@ function App() {
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de Receitas — Capacidade e Precos Liquidos</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:14, marginBottom:16, fontSize:11, lineHeight:1.6, color:"#444" }}>
               <p style={{margin:"0 0 6px"}}><strong style={{color:"#000"}}>Cada pessoa paga por sessao</strong>, com preco diferenciado por nivel. Principiantes incluem prancha, fato e instrutor.</p>
-              <p style={{margin:0}}>Precos liquidos de IVA. Privadas substituem sessoes publicas; clinics sao suplementos. Eventos e cards nao incluem tempo de onda. Duracao e participantes sao pressupostos editaveis.</p>
+              <p style={{margin:0}}>Precos liquidos de IVA. Privadas substituem sessoes publicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. Duracao e participantes sao pressupostos editaveis.</p>
             </div>
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>1. Configuracao das Sessoes</h2>
@@ -539,13 +555,13 @@ function App() {
                     <td style={{ padding:"8px 6px", fontWeight:600 }}>Intermedio</td>
                     <td style={{ padding:"8px 6px" }}><Editable value={s.intermediatePrice} onChange={v=>u("intermediatePrice",v)} suffix="€" min={15} max={100} /></td>
                     <td style={{ padding:"8px 6px" }}><Editable value={s.intermediatePct} onChange={v=>u("intermediatePct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Instrutor seguranca + tips</td>
+                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Prancha + fato + acompanhamento</td>
                   </tr>
                   <tr style={{ borderBottom:"1px solid #eee" }}>
                     <td style={{ padding:"8px 6px", fontWeight:600 }}>Avancado / Pro</td>
                     <td style={{ padding:"8px 6px" }}><Editable value={s.advancedPrice} onChange={v=>u("advancedPrice",v)} suffix="€" min={15} max={100} /></td>
                     <td style={{ padding:"8px 6px" }}><Editable value={s.advancedPct} onChange={v=>u("advancedPct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Free surf, seguranca</td>
+                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Material proprio + seguranca</td>
                   </tr>
                   <tr style={{ borderBottom:"1px solid #eee" }}>
                     <td style={{ padding:"8px 6px", fontWeight:600 }}>Criancas (8-16)</td>
@@ -573,11 +589,11 @@ function App() {
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>3. Receitas Extra</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:12, marginBottom:20 }}>
-              <Row label="Surf Clinic (% pessoas)" value={s.clinicPct} onChange={v=>u("clinicPct",v)} suffix="%" info="Suplemento ao bilhete publico, sem ocupar outra sessao" min={0} max={30} />
-              <Row label="Suplemento Surf Clinic" value={s.clinicPrice} onChange={v=>u("clinicPrice",v)} suffix="€/pessoa" min={20} max={200} />
+              <Row label="Coaching extra opcional (% pessoas)" value={s.clinicPct} onChange={v=>u("clinicPct",v)} suffix="%" info="Desligado por defeito. Apenas servico distinto do acompanhamento incluido; validar custo e tempo." min={0} max={30} />
+              <Row label="Preco coaching extra opcional" value={s.clinicPrice} onChange={v=>u("clinicPrice",v)} suffix="€/pessoa" min={20} max={200} />
               <Row label="Onda Privada (% sessoes)" value={s.privatePct} onChange={v=>u("privatePct",v)} suffix="%" info="Substitui sessoes publicas; nao acresce capacidade" min={0} max={30} />
               <Row label="Preco Onda Privada" value={s.privatePrice} onChange={v=>u("privatePrice",v)} suffix="€/sessao" min={50} max={500} step={10} />
-              <Row label="Aluguer equip. inter/adv (%)" value={s.rentalAdvancedPct} onChange={v=>u("rentalAdvancedPct",v)} suffix="%" info="Intermedios/avancados que alugam prancha" min={0} max={80} />
+              <Row label="Avancados que alugam material (%)" value={s.rentalAdvancedPct} onChange={v=>u("rentalAdvancedPct",v)} suffix="%" info="Apenas avancados; nos restantes niveis o material esta incluido" min={0} max={80} />
               <Row label="Preco aluguer" value={s.rentalAdvancedPrice} onChange={v=>u("rentalAdvancedPrice",v)} suffix="€" min={5} max={30} />
               <Row label="Bonos (% com desconto)" value={s.bonoPct} onChange={v=>u("bonoPct",v)} suffix="%" info="Clientes com pacotes 10/20 sessoes" min={0} max={50} />
               <Row label="Desconto medio bonos" value={s.bonoDiscount} onChange={v=>u("bonoDiscount",v)} suffix="%" min={5} max={30} />
@@ -1013,9 +1029,11 @@ function App() {
         </main>
       </div>
 
+      </>}
+
       {/* FOOTER */}
       <footer style={{ borderTop:"3px solid #000", marginTop:32, paddingTop:12, display:"flex", justifyContent:"space-between", fontSize:9, color:"#999" }}>
-        <span>Surf Clube da Madeira · Simulador Citywave Funchal v5</span>
+        <span>Surf Clube da Madeira · Citywave + Bar</span>
         <span>Dados Citywave Munich, 12 Mai 2026 · Estimativas, nao constitui aconselhamento financeiro</span>
       </footer>
     </div>

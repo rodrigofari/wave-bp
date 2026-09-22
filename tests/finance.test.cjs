@@ -121,3 +121,14 @@ test('the sum of individual equity flows reconciles to company equity flows',()=
  assert.ok(retained.last.cash>profitable.last.cash);
  assert.notEqual(profitable.equityIRR,retained.equityIRR);
 });
+
+test('base experience has no clinic surcharge and equipment rental applies only to advanced riders',()=>{
+ const c=run({});
+ near(c.revBk[1].v,0);
+ const publicPeople=c.monthly.reduce((a,m)=>a+m.people,0);
+ near(c.revBk[3].v,publicPeople*.15*.30*10);
+ const intermediate=run({beginnerPct:0,intermediatePct:100,advancedPct:0,kidsPct:0});
+ near(intermediate.revBk[3].v,0);
+ const advanced=run({beginnerPct:0,intermediatePct:0,advancedPct:100,kidsPct:0});
+ near(advanced.revBk[3].v,advanced.monthly.reduce((a,m)=>a+m.people,0)*.30*10);
+});
