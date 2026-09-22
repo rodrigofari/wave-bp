@@ -41,7 +41,7 @@ const INIT = {
   intermediatePct:30, intermediatePrice:39,
   advancedPct:15, advancedPrice:39,
   kidsPct:10, kidsPrice:35,
-  privatePct:5, privatePrice:250,
+  privatePct:5, privatePrice:250, privateGroupSize:6,
   clinicPct:0, clinicPrice:75, // Optional separate coaching, disabled in the base experience
   bonoPct:20, bonoDiscount:15,
   rentalAdvancedPrice:10,
@@ -182,7 +182,7 @@ function calculate(input) {
       s.eventMonthly*SF[i], s.communityCards*s.communityPrice/12];
     const rev = sum(revenue), energy = dailyKwh * days[i] * s.electricityRate;
     const commission=rev*s.distributionPct/100*s.commissionPct/100;
-    const equipment=(people+privateSessions*s.ridersPerSession)*s.equipmentPerVisit;
+    const equipment=(people+privateSessions*s.privateGroupSize)*s.equipmentPerVisit;
     const cost = energy + fixedExEnergy/12 + rev*(s.concessionRate+s.mgmtPct)/100+commission+equipment;
     return {days:days[i], sessions, privateSessions, publicSessions, people, revenue, rev, energy, commission, equipment, cost, ebitda:rev-cost};
   });
@@ -286,7 +286,7 @@ function calculate(input) {
   const revBk=[ticketMode?'Bilhetes':'Sessoes publicas','Surf Clinic (suplemento)','Onda Privada','Aluguer Equip.','Eventos sem uso da onda','Community Cards sem sessoes'].map((l,i)=>({l,v:sum(monthly.map(m=>m.revenue[i]))}));
   const costBk=[{l:'Energia',v:annEnergy},{l:'Pessoal',v:annStaff},{l:'Manutencao',v:annMaint},{l:'Agua',v:annWater},{l:'Seguro',v:s.insuranceYear},{l:'Marketing',v:annMktg},{l:'Concessao',v:annConc},{l:'Gestao',v:annMgmt},{l:'Outros',v:annAcct+annMisc},{l:'Potencia e consumos auxiliares',v:s.energyOtherMonth*12},{l:'Comissoes de venda',v:sum(monthly.map(m=>m.commission))},{l:'Material por utilizacao',v:sum(monthly.map(m=>m.equipment))}];
   const capexBk=[{l:`Citywave ${s.waveSize}m`,v:citywaveTotal},{l:'Instalacao',v:s.installation},{l:'Shipping',v:s.shipping},{l:'Preparacao local',v:s.sitePrep},{l:'Canalizacao',v:s.plumbing},{l:'Eletrica',v:s.electrical},{l:'Licencas e projeto',v:s.permits},{l:`Contingencia (${s.contingency}%)`,v:contAmt}];
-  const energyComp=WAVES.map(w=>{const peak=w.size===s.waveSize?s.kwhMax:w.kwh;const k=peak*s.avgPumpLoad/100*s.operatingHoursDay;return {...w,kwh:peak,dKwh:k,aCost:k*opDays*s.electricityRate};});
+  const energyComp=WAVES.map(w=>{const peak=w.size===s.waveSize?s.kwhMax:w.kwh;const k=peak*s.avgPumpLoad/100*s.operatingHoursDay;return {...w,pumps:w.size===s.waveSize?s.pumpsCount:w.pumps,kwh:peak,dKwh:k,aCost:k*opDays*s.electricityRate};});
   const capTableData=[{name:'Joao Febrer',cash:joaoAmt,cashPct:s.joaoPct,ownership:ownJ,type:'Fundador+Sweat'},{name:'Rodrigo Farinha',cash:rodrigoAmt,cashPct:s.rodrigoPct,ownership:ownR,type:'Fundador+Sweat'},...ownInv.map(i=>({name:i.name,cash:i.amt,cashPct:i.pct,ownership:i.own,type:'Investidor'}))];
   const revScenarios=[.5,.75,.9,1,1.1,1.25,1.5].map(p=>{const y=operatingYear(0,p);return {p,rev:y.rev,opx:y.opex,ebitda:y.ebitda,margin:y.rev?y.ebitda/y.rev:0,net:y.fcfe,fcf:y.fcff,payback:valid?paybackOf(capex,Array.from({length:N},(_,i)=>operatingYear(i,p).fcff)):NaN};});
   const sensRevPcts=[.7,.85,1,1.15,1.3];
@@ -305,7 +305,8 @@ function calculate(input) {
     projectCashflows,equityCashflows,equityMultiple,equityExit,revScenarios,sensRevPcts,sensElec,sensMatrix,benchmarks,benchmarkRows,
     projectAnnReturn:projectIRR,equityAnnReturn:equityIRR,first,last};
 }
-const api = {MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,npv,irr,debtSchedule,allocateDays,paybackOf};
+const APP_INIT={...INIT,salesMode:"tickets"};
+const api = {APP_INIT,MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,npv,irr,debtSchedule,allocateDays,paybackOf};
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.CitywaveFinance = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

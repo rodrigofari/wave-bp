@@ -7,7 +7,7 @@ const sum = values => values.reduce((a,b)=>a+b,0);
 const BAR_INIT = {
   seats:36, hoursDay:12, opDays:340,
   externalDaily:45, externalTicket:10.5, externalStay:0.8, seasonalPct:50,
-  surfConversion:45, surfTicket:8, surfStay:0.75, privateGroupSize:6,
+  surfConversion:45, surfTicket:8, surfStay:0.75,
   companionsPerSurfer:0.5, companionConversion:60, companionTicket:8, companionStay:1,
   workSeats:10, workHours:6, workDaily:6, workTicket:12, workStay:3,
   cogsPct:32, paymentPct:1.5, concessionPct:5, mgmtPct:0,
@@ -78,7 +78,7 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
     // shorter bar opening hours reduce exposure proportionally.
     const overlapDays=Math.min(d,waveMonth.days);
     const hourOverlap=s.operatingHoursDay>0?Math.min(1,b.hoursDay/s.operatingHoursDay):0;
-    const surfVisits=waveMonth.days>0 ? (waveMonth.people+waveMonth.privateSessions*b.privateGroupSize)*overlapDays/waveMonth.days*hourOverlap*trafficFactor : 0;
+    const surfVisits=waveMonth.days>0 ? (waveMonth.people+waveMonth.privateSessions*s.privateGroupSize)*overlapDays/waveMonth.days*hourOverlap*trafficFactor : 0;
     const season=1-b.seasonalPct/100*(1-SF[i]);
     const requested=[
       {id:'surfers',label:'Surfistas',visits:surfVisits*b.surfConversion/100,ticket:b.surfTicket,stay:b.surfStay},
@@ -91,10 +91,10 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
     const worker=requested[3];
     const workVisits=worker.stay>0&&worker.stay<=Math.min(b.workHours,b.hoursDay) ? Math.min(worker.visits,workerLimit/worker.stay) : 0;
     const workerHours=workVisits*worker.stay;
-    const requestedOtherHours=sum(requested.slice(0,3).map(g=>g.visits*g.stay));
+    const requestedOtherHours=sum(requested.slice(0,3).map(g=>g.stay<=b.hoursDay?g.visits*g.stay:0));
     const otherFactor=requestedOtherHours>0?Math.min(1,Math.max(0,totalSeatHours-workerHours)/requestedOtherHours):1;
     const groups=requested.map((g,j)=>{
-      const visits=j===3?workVisits:g.visits*otherFactor;
+      const visits=j===3?workVisits:(g.stay<=b.hoursDay ? g.visits*otherFactor : 0);
       return {...g,requested:g.visits,visits,seatHours:visits*g.stay,rev:visits*g.ticket};
     });
     const rev=sum(groups.map(g=>g.rev));
@@ -191,7 +191,9 @@ function calculateProject(waveInput=INIT,barInput=BAR_INIT,sharedInput=SHARED_IN
 function ticketBreakEven(waveInput,barInput,sharedInput) {
   const s={...INIT,...waveInput,salesMode:'tickets'};
   const base=calculateProject(s,barInput,sharedInput);
-  if(!base.combined.valid)return {valid:false,capacity:base.wave.ticketCapacity};
+  if(!base.combined.valid)return {valid:false,reason:'Corrija o financiamento e a compatibilidade do local.',capacity:base.wave.ticketCapacity};
+  const unitMargin=s.ticketPrice*(1-(s.concessionRate+s.mgmtPct)/100-s.distributionPct/100*s.commissionPct/100)-s.equipmentPerVisit;
+  if(unitMargin<0)return {valid:false,reason:'Margem direta por bilhete negativa. Os resultados continuam disponiveis, mas o limiar por volume requer rever preco e custos variaveis.',capacity:base.wave.ticketCapacity};
   const capacity=base.wave.ticketCapacity;
   const solve=metric=>{
     const value=t=>metric(calculateProject({...s,ticketsDay:t},barInput,sharedInput));

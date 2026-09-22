@@ -36,12 +36,10 @@ const results={assumptions:{passengers:1100000,barCapturePct:2,barTicket:10.5,wa
   thresholds:[1,2,3].flatMap(capture=>[6,8,10].map(riders=>({capture,riders,wacc:threshold(riders,capture,wacc),target12:threshold(riders,capture,.12)}))),
   schedules:[{operatingHoursDay:8,sessionMinutes:60,sessionGapMinutes:0},{operatingHoursDay:10,sessionMinutes:60,sessionGapMinutes:0},{operatingHoursDay:10,sessionMinutes:60,sessionGapMinutes:10},{operatingHoursDay:10,sessionMinutes:45,sessionGapMinutes:5},{operatingHoursDay:12,sessionMinutes:60,sessionGapMinutes:0}].map(w=>run({...w,ridersPerSession:8,sessionsDay:10}).metrics),
   hoursAtPeak12:[7,8,9,10,11,12].map(operatingHoursDay=>run({operatingHoursDay,ridersPerSession:8,sessionsDay:12}).metrics),
-  noClinicThresholds:[8,10].map(riders=>({riders,wacc:threshold(riders,2,wacc,{clinicPct:0}),target12:threshold(riders,2,.12,{clinicPct:0})})),
   levers:{base:run({ridersPerSession:8,sessionsDay:10}).metrics,
     demand12:run({ridersPerSession:8,sessionsDay:12}).metrics,
     private400:run({ridersPerSession:8,sessionsDay:10,privatePrice:400}).metrics,
     pump80:run({ridersPerSession:8,sessionsDay:10,avgPumpLoad:80}).metrics,
-    noClinics:run({ridersPerSession:8,sessionsDay:10,clinicPct:0}).metrics,
     extraBarStaff:run({ridersPerSession:8,sessionsDay:10},2,{staffCount:4}).metrics,
     downside:run({ridersPerSession:8,sessionsDay:10,clinicPct:0},1,{staffCount:4}).metrics},
 };

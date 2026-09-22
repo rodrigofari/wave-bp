@@ -1,0 +1,110 @@
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatórios atuais — Citywave Funchal</title><style>body{font:16px/1.6 system-ui;margin:24px auto;padding:0 18px;max-width:1100px;color:#222}h1{line-height:1.2}article{border-top:2px solid #222;margin-top:36px;padding-top:20px}.scroll{overflow:auto}table{border-collapse:collapse;font-size:14px;width:100%}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}a{color:#075d9b}code{background:#f5f5f5}nav a{display:inline-block;margin:4px 12px 4px 0}</style></head><body><a href="./">← Voltar ao simulador</a><h1>Relatórios e pressupostos atuais</h1><p>Versão 23/09/2026. Valores gerados do mesmo motor financeiro da página. São cenários fixos identificados; não refletem alterações feitas na sua sessão.</p><nav><a href="#report-0">BAR_ANALYSIS</a><a href="#report-1">OPERATING_ANALYSIS</a><a href="#report-2">TICKET_BREAKEVEN</a><a href="#report-3">MODEL_CLARIFICATIONS</a></nav><article id="report-0"><h1>Onda e bar — análise atual</h1>
+
+<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+
+<h2>Cenário inicial da página</h2>
+
+<p>O modo inicial é bilhetes: procura de 70/dia, limitada a <strong>66 vendas/dia</strong> por oito minutos de onda + um de troca em dez horas. Bar com 36 lugares, 45 visitas externas/dia de referência antes da sazonalidade de 50%, seis clientes a trabalhar/dia e três funcionários adicionais.</p>
+
+<div class="scroll"><table><tr><th>Indicador</th><th>Onda no projeto</th><th>Bar no projeto</th><th>Conjunto</th></tr>
+
+<tr><td>Investimento</td><td>2 292 400 €</td><td>159 000 €</td><td>2 451 400 €</td></tr>
+<tr><td>Receita ano 1</td><td>938 149 €</td><td>300 551 €</td><td>1 238 700 €</td></tr>
+<tr><td>EBITDA ano 1</td><td>180 162 €</td><td>70 670 €</td><td>250 832 €</td></tr>
+<tr><td>VAL</td><td>-1 143 369 €</td><td>274 820 €</td><td>-868 549 €</td></tr>
+<tr><td>TIR</td><td>-3.82%</td><td>36.09%</td><td>0.14%</td></tr>
+</table></div>
+<p>Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 165 762 €. A melhoria real ao acrescentar o bar é 85 070 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.</p>
+
+<div class="scroll"><table><tr><th>Origem do consumo do bar</th><th>Receita anual</th></tr>
+
+<tr><td>Surfistas</td><td>80 784 €</td></tr>
+<tr><td>Acompanhantes</td><td>53 856 €</td></tr>
+<tr><td>Publico externo</td><td>141 431 €</td></tr>
+<tr><td>Clientes a trabalhar</td><td>24 480 €</td></tr>
+</table></div>
+<p>Sem consumo dos surfistas/acompanhantes, mantendo os outros clientes e custos, o EBITDA do bar seria -12 133 €. É uma sensibilidade, não a previsão de um bar autónomo noutro local. Quem trabalha paga consumo por visita, não mensalidades.</p>
+
+<p>A localização pretendida junto ao Teleférico do Funchal é informação do promotor. O <a href="https://www.dnoticias.pt/2026/5/27/493459-teleferico-do-funchal-investe-45-milhoes/">Diário de Notícias de 27/05/2026</a> reporta cerca de 1,1 milhões de passageiros em 2025. É contexto histórico, não contagem de clientes distintos nem de peões à porta. Não somamos teleférico, hotéis e cruzeiros, pois existe sobreposição. Os canais de venda devem ser avaliados por reservas e comissões, não somados como populações independentes.</p>
+
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+</article><article id="report-1"><h1>Participantes, sessões e horários — análise atual</h1>
+
+<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+
+<h2>Sessões de grupo</h2>
+
+<p>Este quadro usa explicitamente o modo de sessões: dez horas, sessões de 60 minutos sem intervalo adicional, máximo dez sessões/dia. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.</p>
+
+<div class="scroll"><table><tr><th>Participantes públicos/sessão</th><th>Procura de pico</th><th>Sessões vendidas/dia</th><th>Participações públicas/dia</th><th>EBITDA conjunto</th><th>TIR</th><th>VAL</th></tr>
+
+<tr><td>6</td><td>10</td><td>7.61</td><td>43.36</td><td>33 001 €</td><td>-21.45%</td><td>-2 297 721 €</td></tr>
+<tr><td>6</td><td>12</td><td>8.49</td><td>48.39</td><td>111 774 €</td><td>-10.08%</td><td>-1 714 713 €</td></tr>
+<tr><td>6</td><td>14</td><td>9.12</td><td>51.98</td><td>168 073 €</td><td>-5.29%</td><td>-1 349 633 €</td></tr>
+<tr><td>8</td><td>10</td><td>7.61</td><td>57.82</td><td>248 418 €</td><td>-0.01%</td><td>-882 581 €</td></tr>
+<tr><td>8</td><td>12</td><td>8.49</td><td>64.52</td><td>352 150 €</td><td>5.74%</td><td>-279 613 €</td></tr>
+<tr><td>8</td><td>14</td><td>9.12</td><td>69.30</td><td>426 290 €</td><td>9.39%</td><td>151 338 €</td></tr>
+<tr><td>10</td><td>10</td><td>7.61</td><td>72.27</td><td>463 834 €</td><td>11.13%</td><td>369 573 €</td></tr>
+<tr><td>10</td><td>12</td><td>8.49</td><td>80.64</td><td>592 527 €</td><td>16.73%</td><td>1 117 629 €</td></tr>
+<tr><td>10</td><td>14</td><td>9.12</td><td>86.63</td><td>684 506 €</td><td>20.47%</td><td>1 652 276 €</td></tr>
+</table></div>
+<h2>Horário com procura de pico de 12 e oito participantes</h2>
+
+<div class="scroll"><table><tr><th>Horas/dia</th><th>Sessões vendidas/dia</th><th>EBITDA conjunto</th><th>TIR</th></tr>
+
+<tr><td>8</td><td>7.48</td><td>298 711 €</td><td>2.74%</td></tr>
+<tr><td>9</td><td>8.07</td><td>335 295 €</td><td>4.79%</td></tr>
+<tr><td>10</td><td>8.49</td><td>352 150 €</td><td>5.74%</td></tr>
+<tr><td>11</td><td>8.88</td><td>365 060 €</td><td>6.46%</td></tr>
+<tr><td>12</td><td>9.13</td><td>362 186 €</td><td>6.38%</td></tr>
+</table></div>
+<p>A energia aumenta com as horas mesmo que não haja vendas. A equipa não aumenta automaticamente: extensões de horário exigem orçamento de escala. A média de participantes representa lugares vendidos, não surfistas simultâneos. Encurtar sessões não prova que se consiga manter preço e procura.</p>
+
+<p>As referências operacionais <a href="https://www.city-wave.at/faqs/">Citywave Viena</a> e <a href="https://citywave-tokyo.jp/english/">Citywave Tokyo</a> mostram grupos de dimensão variável; não certificam a configuração local. O produto turístico deve ter material e acompanhamento definidos e preço líquido compatível com os custos de venda.</p>
+
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+</article><article id="report-2"><h1>Bilhetes e break-even — análise atual</h1>
+
+<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+
+<h2>Exemplo reproduzível na interface</h2>
+
+<p>Selecionar bilhetes; procura 70/dia; preço médio 41,807 € após descontos e antes de comissões; sete minutos de onda + um de troca; dez horas/dia e 340 dias. Capacidade de 75 bilhetes/dia, sem utilizações simultâneas. No bar: sazonalidade externa zero, restantes pressupostos iniciais. Este exemplo difere do arranque da página (oito minutos + um, capacidade 66).</p>
+
+<p>Não há receitas de privadas, clínicas, alugueres, eventos ou cartões neste modo. O bar continua a receber surfistas e acompanhantes; mantém também seis clientes/dia a trabalhar. Os valores da tabela são bilhetes por dia aberto em média.</p>
+
+<div class="scroll"><table><tr><th>Clientes externos bar/dia</th><th>EBITDA zero</th><th>FCFE ano 1 zero</th><th>VAL zero dentro de 75/dia</th><th>TIR com 70 bilhetes</th></tr>
+
+<tr><td>0</td><td>54.90</td><td>65.89</td><td>Não atinge a capacidade</td><td>-1.58%</td></tr>
+<tr><td>30</td><td>50.43</td><td>61.43</td><td>Não atinge a capacidade</td><td>2.34%</td></tr>
+<tr><td>60</td><td>45.97</td><td>56.96</td><td>73.09</td><td>5.87%</td></tr>
+</table></div>
+<p>Com 70 bilhetes e 60 clientes externos/dia: receita da onda 995 007 €, receita do bar 381 480 €, EBITDA conjunto 354 618 €, FCFE do ano 1 160 720 €, VAL -265 271 € e TIR 5.87%.</p>
+
+<p>O limiar de VAL zero é 73.09 bilhetes/dia à taxa de 8.14%. EBITDA zero cobre operação; FCFE zero cobre também imposto, dívida e manutenção no ano 1; VAL zero remunera o investimento no horizonte. FCFE não é dividendo automaticamente distribuível.</p>
+
+<p>No limite inicial de 66 bilhetes/dia, não se podem usar metas acima de 66 como atingíveis. O simulador limita vendas e sinaliza o retorno que não cabe nessa capacidade. Alterar a permanência é alterar a experiência; não é uma poupança garantida.</p>
+
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+</article><article id="report-3"><h1>Pressupostos comerciais e energia — versão atual</h1>
+
+<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+
+<h2>Experiência e material</h2>
+
+<p>Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, líquidos de IVA, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.</p>
+
+<p>O custo unitário de material é editável e inicia a zero por falta de orçamento. Lavagem/reposição corrente devem ser distinguidas do investimento inicial e da manutenção capitalizada. Participantes por privada são um único input usado no material e no bar.</p>
+
+<h2>Energia</h2>
+
+<p>Referência de reunião registada no repositório: potência máxima de 600 kW para 10 m. Com carga de 100%, dez horas/dia, 340 dias e 0,16 €/kWh, o custo da onda é <strong>326 400 €/ano</strong> para <strong>2 040 000 kWh/ano</strong>. Cada 0,01 €/kWh altera o custo em 20 400 €/ano. O custo mantém-se durante o horário sem vendas.</p>
+
+<p>A referência não substitui uma ficha técnica final. A tarifa de 0,16 €/kWh não é orçamento da EEM. Há campo adicional para potência e consumos auxiliares; não duplicar esses encargos se já estiverem num preço integral por kWh. O bar tem uma rubrica própria de consumos. <a href="https://www.erse.pt/media/lipjxgih/estrutura-tarif%C3%A1ria-se-2026.pdf">ERSE: estrutura tarifária 2026</a>.</p>
+
+<h2>Coerência das vistas</h2>
+
+<p>Conjunto agrega onda e bar como uma entidade. Onda sem bar, incluindo os seus separadores Investidores, P&amp;L e Análise, refere-se apenas à piscina. Bar mostra a contribuição com custos comuns imputados. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.</p>
+
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+</article></body></html>

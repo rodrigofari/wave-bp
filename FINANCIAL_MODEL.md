@@ -1,9 +1,9 @@
 # Convenções e correções do simulador
 
-O motor único está em `src/finance.js`, usado pelo browser e pelos testes.
+Os motores `src/finance.js` (onda) e `src/hospitality.js` (bar/conjunto) são partilhados pelo browser, testes e relatórios. `APP_INIT` define o estado inicial da página; `INIT` mantém a referência de sessões.
 Executar os testes: `node --test tests/*.test.cjs`.
 
-## Operação e receitas
+## Operação e receitas — sessões de grupo
 
 - Os dias de operação são distribuídos por mês pelo método dos maiores restos.
   São dias inteiros e a soma coincide exatamente com o input anual.
@@ -16,7 +16,7 @@ Executar os testes: `node --test tests/*.test.cjs`.
 - O preço de clinic é um suplemento ao bilhete. Eventos e cartões são receitas
   acessórias sem sessões incluídas; eventos exclusivos devem entrar como privadas.
 - O mix é normalizado como pesos; a interface avisa se não somar 100%. Um mix
-  vazio ou um financiamento que não feche impede apresentar retornos válidos.
+  vazio impede retornos em sessões; não é utilizado em bilhetes. Financiamento que não feche impede retornos em ambos os modos.
 - Todos os preços e custos são líquidos de IVA. Não se presume uma taxa fiscal
   legal: a taxa efetiva é um pressuposto editável.
 - As categorias, os meses e os totais derivam dos mesmos registos, sem
@@ -71,7 +71,7 @@ Não há perpetuidade automática. O input de venda residual é o recebimento l�
 de impostos e custos de saída no fim da concessão, zero por defeito. Pode ser
 negativo se os custos de desmantelamento excederem a recuperação dos ativos.
 
-O VAL do projeto desconta FCFF e venda residual ao WACC e deduz o CAPEX inicial.
+O VAL do projeto desconta FCFF e venda residual ao WACC e deduz o investimento inicial (CAPEX e, no bar/conjunto, stock). O stock é recuperado na saída.
 O WACC é uma taxa de desconto constante assumida, calculada com os pesos iniciais
 D/E; não é uma valorização dinâmica da vantagem fiscal da dívida amortizável.
 
@@ -115,13 +115,12 @@ capacidades físicas ou fiscalidade. Estes continuam a ser pressupostos do utili
   financiamento e distribuições recalculados como uma única entidade.
 
 Todos os inputs iniciais do bar são **ilustrativos e não validados**, conforme a
-indicação do utilizador de que ainda não existem estimativas. A análise narrativa
-inicial está em `BAR_ANALYSIS.md` e deve ser recalculada se os inputs mudarem.
+indicação do utilizador de que ainda não existem estimativas. Os relatórios atuais são gerados por `analysis/generate-reports.cjs`, com verificação automática antes de publicar. Os cenários publicados são fixos e não acompanham edições locais na interface.
 
 As visitas do bar pertencem a quatro grupos disjuntos: surfistas, acompanhantes,
 público externo e pessoas que vão trabalhar. As duas primeiras origens dependem
 das participações vendidas pela onda (incluindo uma dimensão assumida para grupos
-privados), da conversão em consumo e da coincidência dos horários/dias de abertura.
+privados, pelo mesmo input usado nos custos de material), da conversão em consumo e da coincidência dos horários/dias de abertura.
 Não se presume que toda a participação seja um cliente único nem que gere consumo.
 
 A contagem externa é uma referência diária antes da sazonalidade editável. Os
@@ -171,8 +170,7 @@ consumo médio simulados, sem presumir que essa procura possa ser captada.
 
 Material incluído nos bilhetes, exceto avançados: aluguer opcional aplica-se apenas
 à proporção de avançados. Coaching extra (`clinicPct`) desativado por defeito.
-O preço elétrico é hipótese não validada pela EEM; não separa potência, períodos
-horários nem consumos auxiliares. Ver `MODEL_CLARIFICATIONS.md` para limitações
+O preço elétrico é hipótese não validada pela EEM; há um campo mensal adicional para potência e consumos auxiliares, mas não uma fatura EEM por períodos horários. Ver `MODEL_CLARIFICATIONS.md` para limitações
 e impacto nos cenários anteriores.
 
 ## Simulação interativa de bilhetes (23/09/2026)
@@ -192,3 +190,13 @@ Na sensibilidade a preço/receita, o volume e custo de material mantêm-se const
 zero e VAL zero dentro da capacidade diária. Um limiar fora da capacidade retorna
 indisponível. Financiamento inválido ou local incompatível desativa os limiares.
 Partilha de custos não melhora artificialmente o resultado total.
+
+## Revisão de coerência e publicação (23/09/2026)
+
+Relatórios Markdown e HTML são gerados do mesmo motor com pressupostos explícitos.
+A tabela energética inclui a tarifa exata configurada; não marca uma tarifa próxima
+como atual. Dimensão das privadas é única para material e visitantes do bar.
+Permanências de qualquer origem do bar devem caber no horário de abertura.
+Margem direta negativa por bilhete desativa o limiar automático por volume e
+apresenta uma explicação; os resultados financeiros do cenário continuam visíveis.
+Testes de cenários variados verificam impostos, dívida, caixa e reconciliações.

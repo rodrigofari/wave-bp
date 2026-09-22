@@ -37,6 +37,9 @@ As alterações ficam na sessão da página; recarregar repõe os valores inicia
 
 `node --test tests/*.test.cjs`
 
+`node analysis/generate-reports.cjs --check` verifica que todos os relatórios
+publicados correspondem ao motor atual. Para regenerar, executar sem `--check`.
+
 Os testes verificam reconciliações, limites de capacidade, custos, dívida, impostos,
 caixa, dividendos, TIR, VAL e raízes do break-even. Não comprovam procura, preços de
 mercado, orçamento EEM, especificação final da máquina ou conformidade fiscal.
@@ -45,7 +48,7 @@ de abertura, calendário de IVA ou financiamento automático de défices intranu
 O prazo do empréstimo pode exceder a concessão: o saldo é liquidado na saída.
 
 Os custos de material por participação são uma média; nas privadas, a estimativa
-usa o número de participantes por grupo da onda. Não duplicar reposição corrente
+usa o input único de participantes por privada, também usado no bar. Não duplicar reposição corrente
 com investimento de manutenção. O material inicial deve constar do orçamento CAPEX.
 Custos fixos adicionais da eletricidade entram todos os meses, mesmo com zero dias.
 
@@ -55,8 +58,15 @@ são analíticas e incluem rateio de custos. As TIR não se somam. A taxa de des
 
 [Convenções financeiras](FINANCIAL_MODEL.md) · [Clarificações](MODEL_CLARIFICATIONS.md)
 
-Os relatórios `BAR_ANALYSIS.md` e `OPERATING_ANALYSIS.md` conservam cenários
-históricos, identificados como tal. `TICKET_BREAKEVEN.md` explica um cenário de
-volume sem validar capacidade; o simulador atual acrescenta o limite de utilização.
-Os scripts em `analysis/` permitem reproduzir exercícios e usam os pressupostos
-indicados nos próprios ficheiros. Para simular novos cenários, usar a interface.
+Os relatórios `BAR_ANALYSIS.md`, `OPERATING_ANALYSIS.md`, `TICKET_BREAKEVEN.md`
+e `MODEL_CLARIFICATIONS.md` são gerados automaticamente do motor atual, tal como
+`reports.html`, acessível na página através de **Relatórios e pressupostos atuais**.
+Cada relatório identifica o cenário e distingue-o do estado inicial da interface.
+Os scripts em `analysis/` permitem reproduzir os exercícios.
+
+## Publicação
+
+A branch de publicação é `claude/setup-citywave-simulator-CnaHi`. O workflow
+executa testes e verifica os relatórios antes de publicar apenas `index.html`,
+`reports.html` e `src/` no GitHub Pages. A branch de trabalho não publica
+automaticamente. Após publicar, confirmar o commit no workflow e a versão servida.

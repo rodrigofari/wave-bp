@@ -127,7 +127,7 @@ function Bar({label,value,maxVal,dark=false}) {
 
 /* ═══════════════════════════════════ */
 function App() {
-  const [s, setS] = useState({...INIT,salesMode:"tickets"});
+  const [s, setS] = useState(CitywaveFinance.APP_INIT);
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("project");
   const [barInputs, setBarInputs] = useState(CitywaveHospitality.BAR_INIT);
@@ -163,10 +163,10 @@ function App() {
   const calc = project.wave;
   const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
 
-  useEffect(()=>{if(s.salesMode==="tickets" && ["revenue","energy"].includes(tab))setTab("overview");},[s.salesMode,tab]);
+  useEffect(()=>{if(s.salesMode==="tickets" && tab==="revenue")setTab("overview");},[s.salesMode,tab]);
 
   const fundAlert = Math.abs(calc.fundPct-100)>0.000001;
-  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}].filter(t=>s.salesMode!=="tickets" || !["revenue","energy"].includes(t.id));
+  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}].filter(t=>s.salesMode!=="tickets" || t.id!=="revenue");
 
   return (
     <div className="root-container" style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
@@ -220,6 +220,7 @@ function App() {
             <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
           </div>
         </div>
+        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 23/09/2026 · <a href="./reports.html">Relatorios e pressupostos atuais</a></div>
       </header>
 
       <nav aria-label="Componentes do projeto" style={{display:'flex',gap:8,marginBottom:20,flexWrap:'wrap'}}>
@@ -228,7 +229,7 @@ function App() {
       <SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} />
       {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
       {component === 'wave' && <>
-      <p style={{fontSize:12,color:'#666'}}>Cenario de referencia: onda sem bar, com todos os seus custos originais. A imputacao de custos partilhados aparece na vista Conjunto.</p>
+      <p style={{fontSize:12,color:'#666'}}>Todos os separadores abaixo (incluindo Investidores, P&L e Analise) referem-se apenas a onda sem bar. Contas e retorno consolidados aparecem na vista Conjunto.</p>
       {/* ── DISCOVERY CALL BANNER ── */}
       <div style={{ background:"#f5f5f3", border:"1px solid #e0e0e0", borderLeft:"3px solid #000", padding:"10px 14px", marginBottom:24, fontSize:11, lineHeight:1.5, color:"#444" }}>
         <strong style={{color:"#000",letterSpacing:0.5,textTransform:"uppercase",fontSize:10}}>DADOS CITYWAVE CONFIRMADOS · 12 Mai 2026</strong> ·
@@ -372,7 +373,7 @@ function App() {
               Pacote Citywave confirmado: equipamento + instalacao (€89k) + shipping. Sem royalties.
             </div>
             <Row label={`Citywave ${s.waveSize}m (base)`} value={s.citywaveCost} onChange={v=>u("citywaveCost",v)} suffix="€" info="10m: €1,7-1,8M · 7,5m: €1,2-1,3M" min={500000} max={4000000} step={50000} />
-            <Row label="Saltwater uplift" value={s.saltwaterUplift} onChange={v=>u("saltwaterUplift",v)} suffix="%" info="⚠ Preco exato pendente Citywave. Anti-corrosao + bombas SW. Pode ser exigido em Madeira por leg. agua." min={0} max={50} step={5} />
+            <Row label="Saltwater uplift" value={s.saltwaterUplift} onChange={v=>u("saltwaterUplift",v)} suffix="%" info="⚠ Preco exato pendente Citywave. Anti-corrosao + bombas SW. Necessidade tecnica e enquadramento local por confirmar." min={0} max={50} step={5} />
             <Row label="Instalacao (Citywave)" value={s.installation} onChange={v=>u("installation",v)} suffix="€" info="Equipa Citywave confirmou €89k" min={50000} max={200000} step={5000} />
             <Row label="Shipping (containers)" value={s.shipping} onChange={v=>u("shipping",v)} suffix="€" info="4-5 containers, €2-3k cada (Madeira)" min={5000} max={50000} step={1000} />
             <Row label="Preparacao local" value={s.sitePrep} onChange={v=>u("sitePrep",v)} suffix="€" info={s.siteId==="lawn"?"Relvado precisa de slab/gravel — TBC":s.siteId==="concrete"?"Concreto existente":"Variavel"} min={20000} max={600000} step={10000} />
@@ -592,6 +593,7 @@ function App() {
               <Row label="Coaching extra opcional (% pessoas)" value={s.clinicPct} onChange={v=>u("clinicPct",v)} suffix="%" info="Desligado por defeito. Apenas servico distinto do acompanhamento incluido; validar custo e tempo." min={0} max={30} />
               <Row label="Preco coaching extra opcional" value={s.clinicPrice} onChange={v=>u("clinicPrice",v)} suffix="€/pessoa" min={20} max={200} />
               <Row label="Onda Privada (% sessoes)" value={s.privatePct} onChange={v=>u("privatePct",v)} suffix="%" info="Substitui sessoes publicas; nao acresce capacidade" min={0} max={30} />
+              <Row label="Participantes por privada" value={s.privateGroupSize} onChange={v=>u("privateGroupSize",v)} suffix="pessoas" min={1} max={20} info="Usado no consumo de material e nas visitas ao bar" />
               <Row label="Preco Onda Privada" value={s.privatePrice} onChange={v=>u("privatePrice",v)} suffix="€/sessao" min={50} max={500} step={10} />
               <Row label="Avancados que alugam material (%)" value={s.rentalAdvancedPct} onChange={v=>u("rentalAdvancedPct",v)} suffix="%" info="Apenas avancados; nos restantes niveis o material esta incluido" min={0} max={80} />
               <Row label="Preco aluguer" value={s.rentalAdvancedPrice} onChange={v=>u("rentalAdvancedPrice",v)} suffix="€" min={5} max={30} />
@@ -623,7 +625,7 @@ function App() {
           {tab==="energy" && <>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Onda {s.waveSize}m — {s.pumpsCount} Bombas (estimado)</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginBottom:14, fontSize:11, color:"#444" }}>
-              Especificacao Citywave (Mai 2026): peak {s.kwhMax} kW para sistema 10m. Numero de bombas a confirmar — Citywave nao publica especificacoes detalhadas. Ambos valores editaveis.
+              Hipotese atual: {s.kwhMax} kW para a onda de {s.waveSize}m. Referencia da reuniao para 10m: maximo 600 kW. Perfil de consumo e numero de bombas a confirmar. Comparacoes de outros tamanhos sao estimativas; encargos adicionais ficam separados.
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#000", borderRadius:2, overflow:"hidden", marginBottom:20 }}>
               {[
@@ -660,8 +662,8 @@ function App() {
               <thead><tr style={{ borderBottom:"2px solid #000" }}>
                 {["€/kWh","Energia/ano","EBITDA","Margem","vs Atual"].map(h=><th key={h} style={{ padding:"7px 5px", textAlign:"right", fontSize:10, fontWeight:700 }}>{h}</th>)}
               </tr></thead>
-              <tbody>{[0.08,0.10,0.13,0.156,0.18,0.20,0.25,0.30].map(r=>{
-                const ec=calc.dailyKwh*r*s.opDays;const eb=calc.annRev-(calc.opex-calc.annEnergy+ec);const d=eb-calc.ebitda;const cur=Math.abs(r-s.electricityRate)<0.005;
+              <tbody>{[...new Set([0.08,0.10,0.13,s.electricityRate,0.18,0.20,0.25,0.30])].sort((a,b)=>a-b).map(r=>{
+                const ec=calc.dailyKwh*r*s.opDays;const eb=calc.annRev-(calc.opex-calc.annEnergy+ec);const d=eb-calc.ebitda;const cur=r===s.electricityRate;
                 return(<tr key={r} style={{ borderBottom:"1px solid #eee", background:cur?"#f5f5f5":"transparent" }}>
                   <td style={{ padding:"6px 5px", textAlign:"right", fontWeight:cur?800:400, fontFamily:"'IBM Plex Mono',monospace" }}>{r.toFixed(3)}€</td>
                   <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(ec)}€</td>
@@ -852,7 +854,7 @@ function App() {
 
             {/* ── REVENUE SENSITIVITY ── */}
             <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>3. Sensibilidade à Receita</h3>
-            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Sensibilidade a precos/receita por participante, com volume e horario constantes. Energia e marketing mantem-se; concessao e gestao acompanham a receita. FCFF do ano 1.</div>
+            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Sensibilidade a precos/receita por participante, com volume e horario constantes. Energia e marketing mantem-se; concessao, gestao e comissoes de venda acompanham a receita. FCFF do ano 1.</div>
             <div style={{ overflowX:"auto", marginBottom:20 }}>
               <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:640 }}>
                 <thead><tr style={{ borderBottom:"2px solid #000" }}>

@@ -23,9 +23,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate financial model and reports
+        run: |
+          node --test tests/*.test.cjs
+          node analysis/generate-reports.cjs --check
+      - name: Prepare public site
+        run: |
+          mkdir -p _site
+          cp index.html reports.html _site/
+          cp -R src _site/src
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

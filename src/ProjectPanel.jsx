@@ -93,7 +93,6 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
         <Section title="Consumo ligado a onda">
           {barFields([
             ['surfConversion','Surfistas que consomem','%',100],['surfTicket','Consumo por surfista','€',100,.5],['surfStay','Permanencia do surfista','h',6,.25,.25],
-            ['privateGroupSize','Participantes por privada','',20,1,0,'Usado apenas para estimar visitantes do bar'],
             ['companionsPerSurfer','Acompanhantes por surfista','',5,.1],['companionConversion','Acompanhantes que consomem','%',100],
             ['companionTicket','Consumo por acompanhante','€',100,.5],['companionStay','Permanencia acompanhante','h',6,.25,.25],
           ])}
@@ -248,6 +247,6 @@ function SimulationControls({s,b,shared,updateWave,project}) {
       ]}/>
       <p style={{fontSize:11,lineHeight:1.6}}>Inclui o bar e os custos comuns. Se a meta excede a capacidade, nao e apresentado um retorno atingivel. Caixa positiva nao equivale a dividendos nem recuperacao do investimento. Todos os limiares mantem os restantes pressupostos atuais.</p>
     </>}
-    {ticket&&!thresholds.valid&&<p role="alert">Corrija o financiamento e a compatibilidade do local para calcular os limiares de retorno.</p>}
+    {ticket&&!thresholds.valid&&<p role="alert">{thresholds.reason}</p>}
   </section>;
 }
