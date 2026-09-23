@@ -1,6 +1,6 @@
 # Citywave Funchal — guia do investidor
 
-Atualizado em 23/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
+Atualizado em 24/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
 
 ## Em 60 segundos
 
@@ -46,6 +46,17 @@ Isto é diferente de uma sessão de aula no mar. Os minutos configurados são te
 
 O preço médio do bilhete é um input independente, já líquido de descontos e IVA. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.
 
+## Sessões de grupo: comparação de 45 e 60 minutos
+
+Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se assume que cada participante usa a onda durante todo esse período: o tempo efetivo varia conforme o nível e a dinâmica do grupo. Com dez horas abertas, sem intervalo entre sessões, cabem até 13 sessões (182 lugares) de 45 minutos ou dez sessões (140 lugares) de 60 minutos por dia. A procura efetiva é limitada por este teto e ajustada pelos fatores mensais de sazonalidade.
+
+| Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 45 min | 13 | 182 | 47 017 | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
+| 60 min | 10 | 140 | 41 235 | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+
+Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (14 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.
+
 ## Como ganha dinheiro o bar
 
 O simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram **consumo por visita**, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.
@@ -85,7 +96,7 @@ O caso inicial usa potência máxima de 600 kW, carga média de 100%, dez horas/
 ## Pressupostos e limites que um investidor deve testar
 
 - **Procura e preços:** não há estudo de mercado que valide conversão, preço, volume ou sazonalidade. O crescimento anual aumenta receita/preços, não cria novos clientes automaticamente.
-- **Capacidade e segurança:** os minutos por bilhete e a regra de uma pessoa de cada vez são hipótese de planeamento. A lotação de 12–14 e o número real de ondas/tempo útil exigem confirmação operacional.
+- **Capacidade e segurança:** o modo de sessões simula grupos de 45 ou 60 minutos, limitados a 14 pessoas; a capacidade segura, rotação e tempo efetivo na onda exigem confirmação operacional. O modo de bilhetes flexíveis é uma hipótese separada de utilização individual.
 - **Bar:** cenário totalmente ilustrativo, sem estimativas fornecidas pela equipa promotora. Valide lugares, consumo, permanência, horários, pessoal, salários, renda, obras, stock e comissões.
 - **Eletricidade:** tarifa e perfil de carga são hipóteses; o consumo real e o custo contratado podem alterar materialmente o break-even.
 - **Imposto e IVA:** taxa efetiva editável e simplificada; sem reporte de prejuízos, calendário de IVA ou consulta fiscal. Não é aconselhamento fiscal.

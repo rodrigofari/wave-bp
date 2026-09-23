@@ -1,6 +1,6 @@
 # Citywave Funchal — investor guide
 
-Updated 23 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
+Updated 24 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
 
 ## The idea in 60 seconds
 
@@ -46,6 +46,17 @@ This is different from a surf lesson in the ocean. The input is pool-use time pe
 
 Average ticket price is an independent input, net of discounts and VAT. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.
 
+## Group sessions: comparing 45 and 60 minutes
+
+Each group session lasts 45 or 60 minutes in total and can include up to 14 people. The model does not assume each participant uses the wave for that entire period: actual use varies by skill level and group rotation. With ten opening hours and no gap between sessions, the ceiling is 13 sessions (182 places) at 45 minutes or ten sessions (140 places) at 60 minutes per day. Actual demand is capped at this limit and adjusted by monthly seasonality factors.
+
+| Group session | Max sessions/day | Max people/day | Public participants/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 45 min | 13 | 182 | 47 017 | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
+| 60 min | 10 | 140 | 41 235 | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+
+Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (14 sessions/day), energy, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. The gap between sessions is editable and reduces available capacity.
+
 ## How the bar makes money
 
 The simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate **spend per visit**, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.
@@ -85,7 +96,7 @@ The starting case uses 600 kW peak power, 100% average load, ten hours/day, 340 
 ## Assumptions and limits investors should test
 
 - **Demand and pricing:** no market study validates conversion, price, volume or seasonality. Annual growth raises price/revenue; it does not automatically add customers.
-- **Capacity and safety:** minutes per ticket and one rider at a time are planning assumptions. The 12–14 person cap and actual waves/use time need operational confirmation.
+- **Capacity and safety:** session mode models 45- or 60-minute groups capped at 14 people; safe capacity, rotation and actual wave-use time need operational confirmation. Flexible-ticket mode is a separate one-at-a-time planning assumption.
 - **Bar:** wholly illustrative scenario; the promoters have not supplied estimates. Validate seats, spend, stay, opening hours, staffing, wages, rent, fit-out, stock and commissions.
 - **Electricity:** tariff and load profile are assumptions; actual consumption and contracted cost can materially change break-even.
 - **Tax and VAT:** editable, simplified effective tax; no tax-loss carry-forward, VAT timing or tax advice.

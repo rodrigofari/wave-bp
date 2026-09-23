@@ -30,6 +30,12 @@ test('session duration and turnaround determine daily capacity',()=>{
  assert.equal(run({sessionMinutes:30}).maxSlotsDay,20);
  assert.equal(run({sessionMinutes:45,sessionGapMinutes:15}).maxSlotsDay,10);
  assert.equal(run({sessionMinutes:90}).maxSlotsDay,6);
+ const fortyFive=run({sessionMinutes:45,sessionGapMinutes:0,ridersPerSession:14,sessionsDay:14});
+ const sixty=run({sessionMinutes:60,sessionGapMinutes:0,ridersPerSession:14,sessionsDay:14});
+ assert.equal(fortyFive.maxSlotsDay,13);assert.equal(fortyFive.maxRidersDay,182);
+ assert.equal(sixty.maxSlotsDay,10);assert.equal(sixty.maxRidersDay,140);
+ fortyFive.monthly.forEach(m=>assert.ok(m.people<=m.sessions*14+1e-8));
+ sixty.monthly.forEach(m=>assert.ok(m.people<=m.sessions*14+1e-8));
  assert.ok(run({sessionMinutes:30}).annRev>run({}).annRev);
 });
 test('mix is normalized and zero mix disables return indicators',()=>{

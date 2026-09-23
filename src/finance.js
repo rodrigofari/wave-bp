@@ -305,7 +305,7 @@ function calculate(input) {
     projectCashflows,equityCashflows,equityMultiple,equityExit,revScenarios,sensRevPcts,sensElec,sensMatrix,benchmarks,benchmarkRows,
     projectAnnReturn:projectIRR,equityAnnReturn:equityIRR,first,last};
 }
-const APP_INIT={...INIT,salesMode:"tickets"};
+const APP_INIT={...INIT,salesMode:"tickets",ridersPerSession:14};
 const api = {APP_INIT,MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,npv,irr,debtSchedule,allocateDays,paybackOf};
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.CitywaveFinance = api;

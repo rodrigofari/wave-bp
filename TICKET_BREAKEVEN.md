@@ -1,6 +1,6 @@
 # Bilhetes e break-even — análise atual
 
-Atualizado em 23/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 24/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Exemplo reproduzível na interface
 

@@ -1,6 +1,6 @@
 <!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatórios atuais — Citywave Funchal</title><style>body{font:16px/1.6 system-ui;margin:24px auto;padding:0 18px;max-width:1100px;color:#222}h1{line-height:1.2}article{border-top:2px solid #222;margin-top:36px;padding-top:20px}.scroll{overflow:auto}table{border-collapse:collapse;font-size:14px;width:100%}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}a{color:#075d9b}code{background:#f5f5f5}nav a{display:inline-block;margin:4px 12px 4px 0}</style></head><body><a href="./">← Voltar ao simulador</a> · <a href="./investor-guide.html">Guia do investidor / Investor guide</a><h1>Relatórios e pressupostos atuais</h1><p>Versão 23/09/2026. Valores gerados do mesmo motor financeiro da página. São cenários fixos identificados; não refletem alterações feitas na sua sessão.</p><nav><a href="#report-0">BAR_ANALYSIS</a><a href="#report-1">OPERATING_ANALYSIS</a><a href="#report-2">TICKET_BREAKEVEN</a><a href="#report-3">MODEL_CLARIFICATIONS</a><a href="#report-4">INVESTOR_GUIDE_PT</a><a href="#report-5">INVESTOR_GUIDE_EN</a></nav><article id="report-0"><h1>Onda e bar — análise atual</h1>
 
-<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 24/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Cenário inicial da página</h2>
 
@@ -30,11 +30,22 @@
 <p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-1"><h1>Participantes, sessões e horários — análise atual</h1>
 
-<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 24/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
-<h2>Sessões de grupo</h2>
+<h2>Comparação pedida: sessões de 45 e 60 minutos, até 14 pessoas</h2>
 
-<p>Este quadro usa explicitamente o modo de sessões: dez horas, sessões de 60 minutos sem intervalo adicional, máximo dez sessões/dia. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.</p>
+<p>A sessão é um bloco de grupo com duração total de 45 ou 60 minutos; não se atribui essa duração a cada pessoa. O tempo de utilização individual varia pelo nível e pela rotação, e não é necessário para esta conta de capacidade comercial. Com dez horas abertas, sem intervalo adicional, cabem até 13 grupos/182 lugares de 45 minutos ou dez grupos/140 lugares de 60 minutos. O número efetivo é ainda limitado pela procura e pela sazonalidade. A energia mantém-se ligada às horas de operação, não ao número de sessões vendidas.</p>
+
+<div class="scroll"><table><tr><th>Duração</th><th>Máx. sessões/dia</th><th>Máx. pessoas/dia</th><th>Participantes públicos/ano</th><th>Receita onda</th><th>EBITDA conjunto</th><th>VAL conjunto</th><th>TIR projeto</th></tr>
+
+<tr><td>45 min</td><td>13</td><td>182</td><td>47 017</td><td>2 064 279 €</td><td>1 415 257 €</td><td>5 899 923 €</td><td>46.51%</td></tr>
+<tr><td>60 min</td><td>10</td><td>140</td><td>41 235</td><td>1 814 536 €</td><td>1 156 186 €</td><td>4 394 018 €</td><td>37.72%</td></tr>
+</table></div>
+<p>Cenário indicativo com restantes pressupostos iniciais mantidos: procura de pico de 14 sessões/dia, mix/preços, energia, custos, bar e financiamento. As participações anuais são vendas públicas após sazonalidade, não capacidade teórica.</p>
+
+<h2>Sensibilidade ao tamanho do grupo e procura de pico</h2>
+
+<p>Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 minutos sem intervalo adicional. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.</p>
 
 <div class="scroll"><table><tr><th>Participantes públicos/sessão</th><th>Procura de pico</th><th>Sessões vendidas/dia</th><th>Participações públicas/dia</th><th>EBITDA conjunto</th><th>TIR</th><th>VAL</th></tr>
 
@@ -47,6 +58,9 @@
 <tr><td>10</td><td>10</td><td>7.61</td><td>72.27</td><td>463 834 €</td><td>11.13%</td><td>369 573 €</td></tr>
 <tr><td>10</td><td>12</td><td>8.49</td><td>80.64</td><td>592 527 €</td><td>16.73%</td><td>1 117 629 €</td></tr>
 <tr><td>10</td><td>14</td><td>9.12</td><td>86.63</td><td>684 506 €</td><td>20.47%</td><td>1 652 276 €</td></tr>
+<tr><td>14</td><td>10</td><td>7.61</td><td>101.18</td><td>894 667 €</td><td>28.45%</td><td>2 873 881 €</td></tr>
+<tr><td>14</td><td>12</td><td>8.49</td><td>112.90</td><td>1 073 281 €</td><td>34.84%</td><td>3 912 113 €</td></tr>
+<tr><td>14</td><td>14</td><td>9.12</td><td>121.28</td><td>1 200 939 €</td><td>39.27%</td><td>4 654 154 €</td></tr>
 </table></div>
 <h2>Horário com procura de pico de 12 e oito participantes</h2>
 
@@ -65,7 +79,7 @@
 <p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-2"><h1>Bilhetes e break-even — análise atual</h1>
 
-<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 24/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Exemplo reproduzível na interface</h2>
 
@@ -88,7 +102,7 @@
 <p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-3"><h1>Pressupostos comerciais e energia — versão atual</h1>
 
-<p>Atualizado em 23/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 24/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Experiência e material</h2>
 
@@ -109,7 +123,7 @@
 <p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-4"><h1>Citywave Funchal — guia do investidor</h1>
 
-<p>Atualizado em 23/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.</p>
+<p>Atualizado em 24/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.</p>
 
 <h2>Em 60 segundos</h2>
 
@@ -155,6 +169,17 @@
 
 <p>O preço médio do bilhete é um input independente, já líquido de descontos e IVA. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.</p>
 
+<h2>Sessões de grupo: comparação de 45 e 60 minutos</h2>
+
+<p>Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se assume que cada participante usa a onda durante todo esse período: o tempo efetivo varia conforme o nível e a dinâmica do grupo. Com dez horas abertas, sem intervalo entre sessões, cabem até 13 sessões (182 lugares) de 45 minutos ou dez sessões (140 lugares) de 60 minutos por dia. A procura efetiva é limitada por este teto e ajustada pelos fatores mensais de sazonalidade.</p>
+
+<div class="scroll"><table><tr><th>Sessão de grupo</th><th>Máx. sessões/dia</th><th>Máx. pessoas/dia</th><th>Participantes públicos/ano</th><th>Receita da onda</th><th>EBITDA conjunto</th><th>VAL conjunto</th><th>TIR projeto</th></tr>
+
+<tr><td>45 min</td><td>13</td><td>182</td><td>47 017</td><td>2 064 279 €</td><td>1 415 257 €</td><td>5 899 923 €</td><td>46.51%</td></tr>
+<tr><td>60 min</td><td>10</td><td>140</td><td>41 235</td><td>1 814 536 €</td><td>1 156 186 €</td><td>4 394 018 €</td><td>37.72%</td></tr>
+</table></div>
+<p>Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (14 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.</p>
+
 <h2>Como ganha dinheiro o bar</h2>
 
 <p>O simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram <strong>consumo por visita</strong>, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.</p>
@@ -194,7 +219,7 @@
 <h2>Pressupostos e limites que um investidor deve testar</h2>
 
 <p>- <strong>Procura e preços:</strong> não há estudo de mercado que valide conversão, preço, volume ou sazonalidade. O crescimento anual aumenta receita/preços, não cria novos clientes automaticamente.</p>
-<p>- <strong>Capacidade e segurança:</strong> os minutos por bilhete e a regra de uma pessoa de cada vez são hipótese de planeamento. A lotação de 12–14 e o número real de ondas/tempo útil exigem confirmação operacional.</p>
+<p>- <strong>Capacidade e segurança:</strong> o modo de sessões simula grupos de 45 ou 60 minutos, limitados a 14 pessoas; a capacidade segura, rotação e tempo efetivo na onda exigem confirmação operacional. O modo de bilhetes flexíveis é uma hipótese separada de utilização individual.</p>
 <p>- <strong>Bar:</strong> cenário totalmente ilustrativo, sem estimativas fornecidas pela equipa promotora. Valide lugares, consumo, permanência, horários, pessoal, salários, renda, obras, stock e comissões.</p>
 <p>- <strong>Eletricidade:</strong> tarifa e perfil de carga são hipóteses; o consumo real e o custo contratado podem alterar materialmente o break-even.</p>
 <p>- <strong>Imposto e IVA:</strong> taxa efetiva editável e simplificada; sem reporte de prejuízos, calendário de IVA ou consulta fiscal. Não é aconselhamento fiscal.</p>
@@ -205,7 +230,7 @@
 <p>Use este simulador para perguntar “o que teria de ser verdade?” e identificar inputs críticos. Para decisão de investimento, substitua os valores ilustrativos por estudos, especificação/garantias Citywave, orçamentos EEM/obras, plano operacional, propostas de dívida, contratos e revisão fiscal/legal.</p>
 </article><article id="report-5"><h1>Citywave Funchal — investor guide</h1>
 
-<p>Updated 23 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.</p>
+<p>Updated 24 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.</p>
 
 <h2>The idea in 60 seconds</h2>
 
@@ -251,6 +276,17 @@
 
 <p>Average ticket price is an independent input, net of discounts and VAT. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.</p>
 
+<h2>Group sessions: comparing 45 and 60 minutes</h2>
+
+<p>Each group session lasts 45 or 60 minutes in total and can include up to 14 people. The model does not assume each participant uses the wave for that entire period: actual use varies by skill level and group rotation. With ten opening hours and no gap between sessions, the ceiling is 13 sessions (182 places) at 45 minutes or ten sessions (140 places) at 60 minutes per day. Actual demand is capped at this limit and adjusted by monthly seasonality factors.</p>
+
+<div class="scroll"><table><tr><th>Group session</th><th>Max sessions/day</th><th>Max people/day</th><th>Public participants/year</th><th>Wave revenue</th><th>Combined EBITDA</th><th>Combined NPV</th><th>Project IRR</th></tr>
+
+<tr><td>45 min</td><td>13</td><td>182</td><td>47 017</td><td>2 064 279 €</td><td>1 415 257 €</td><td>5 899 923 €</td><td>46.51%</td></tr>
+<tr><td>60 min</td><td>10</td><td>140</td><td>41 235</td><td>1 814 536 €</td><td>1 156 186 €</td><td>4 394 018 €</td><td>37.72%</td></tr>
+</table></div>
+<p>Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (14 sessions/day), energy, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. The gap between sessions is editable and reduces available capacity.</p>
+
 <h2>How the bar makes money</h2>
 
 <p>The simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate <strong>spend per visit</strong>, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.</p>
@@ -290,7 +326,7 @@
 <h2>Assumptions and limits investors should test</h2>
 
 <p>- <strong>Demand and pricing:</strong> no market study validates conversion, price, volume or seasonality. Annual growth raises price/revenue; it does not automatically add customers.</p>
-<p>- <strong>Capacity and safety:</strong> minutes per ticket and one rider at a time are planning assumptions. The 12–14 person cap and actual waves/use time need operational confirmation.</p>
+<p>- <strong>Capacity and safety:</strong> session mode models 45- or 60-minute groups capped at 14 people; safe capacity, rotation and actual wave-use time need operational confirmation. Flexible-ticket mode is a separate one-at-a-time planning assumption.</p>
 <p>- <strong>Bar:</strong> wholly illustrative scenario; the promoters have not supplied estimates. Validate seats, spend, stay, opening hours, staffing, wages, rent, fit-out, stock and commissions.</p>
 <p>- <strong>Electricity:</strong> tariff and load profile are assumptions; actual consumption and contracted cost can materially change break-even.</p>
 <p>- <strong>Tax and VAT:</strong> editable, simplified effective tax; no tax-loss carry-forward, VAT timing or tax advice.</p>

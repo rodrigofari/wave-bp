@@ -166,6 +166,7 @@ function App() {
   }, []);
 
   const project = useMemo(() => CitywaveHospitality.calculateProject(s,barInputs,sharedInputs), [s,barInputs,sharedInputs]);
+  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveHospitality.calculateProject({...s,salesMode:"sessions",sessionMinutes:minutes,ridersPerSession:14},barInputs,sharedInputs)})), [s,barInputs,sharedInputs]);
   const calc = project.wave;
   const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
 
@@ -377,12 +378,12 @@ function App() {
           {/* REVENUE */}
           {s.salesMode!=="tickets" && <Section title="Receitas" number="2">
             <div style={{ fontSize:10, color:"#999", marginBottom:6 }}>Precos liquidos de IVA · Venda limitada pela capacidade</div>
-            <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={15} max={90} step={15} />
+              <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={45} max={60} step={15} />
             <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
-            <Row label="Pessoas por grupo" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={10} />
+            <Row label="Pessoas por sessão" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={14} info="Limite máximo por grupo: 14 pessoas" />
             <Row label="Sessoes por hora" value={calc.slotsPerHour} suffix="" step={0.01} />
             <Row label="Procura de sessoes/dia (pico)" value={s.sessionsDay} onChange={v=>u("sessionsDay",v)} suffix="" min={1} max={50} info={`Media anual: ${fd(calc.avgPeopleDay,1)} participantes publicos/dia · ${fd(calc.avgOccupancy,0)}% ocupacao`} />
-            <div style={{ background:"#f5f5f5", borderRadius:4, padding:6, margin:"4px 0 8px", fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}>
+              <div style={{ background:"#f5f5f5", borderRadius:4, padding:6, margin:"4px 0 8px", fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Max/dia</span><strong>{calc.maxRidersDay} pessoas</strong></div>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Preco medio</span><strong>{fd(calc.effectiveAvgPrice,1)}€/pessoa</strong></div>
             </div>
@@ -452,6 +453,7 @@ function App() {
                 <span style={{ fontSize:12, fontWeight:700 }}>Investidores</span>
                 <button onClick={addInv} style={{ background:"#000", color:"#fff", border:"none", borderRadius:3, padding:"3px 10px", fontSize:10, cursor:"pointer", fontWeight:700 }}>+ Adicionar</button>
               </div>
+              <p style={{fontSize:10,color:"#666",lineHeight:1.5}}>A duração é da sessão de grupo (45 ou 60 minutos), não o tempo individual de cada cliente na onda. Os níveis podem usar a onda de forma diferente. O grupo tem um máximo de 14 pessoas.</p>
               {s.investors.map(inv=>(
                 <div key={inv.id} style={{ background:"#f8f8f8", borderRadius:4, padding:8, marginBottom:4 }}>
                   <div style={{ display:"flex", gap:4, alignItems:"center", marginBottom:4 }}>
@@ -554,19 +556,19 @@ function App() {
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de Receitas — Capacidade e Precos Liquidos</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:14, marginBottom:16, fontSize:11, lineHeight:1.6, color:"#444" }}>
               <p style={{margin:"0 0 6px"}}><strong style={{color:"#000"}}>Cada pessoa paga por sessao</strong>, com preco diferenciado por nivel. Principiantes incluem prancha, fato e instrutor.</p>
-              <p style={{margin:0}}>Precos liquidos de IVA. Privadas substituem sessoes publicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. Duracao e participantes sao pressupostos editaveis.</p>
+              <p style={{margin:0}}>Precos liquidos de IVA. Privadas substituem sessoes publicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. A sessao total dura 45 ou 60 minutos e aceita ate 14 pessoas; o tempo individual na onda varia com o nivel e nao e usado como duracao do bilhete.</p>
             </div>
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>1. Configuracao das Sessoes</h2>
             <div className="twocol-charts" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
               <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={15} max={90} step={15} />
+                <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={45} max={60} step={15} />
             <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
-                <Row label="Pessoas por grupo" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={10} />
+                <Row label="Pessoas por sessão" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={14} info="Limite máximo por grupo: 14 pessoas" />
                 <Row label="Sessoes por hora" value={calc.slotsPerHour} suffix="" step={0.01} />
                 <Row label="Procura de sessoes/dia (pico)" value={s.sessionsDay} onChange={v=>u("sessionsDay",v)} suffix="" min={1} max={50} info={`Capacidade: ${calc.maxSlotsDay}/dia · Ocupacao anual: ${fd(calc.avgOccupancy,0)}%`} />
               </div>
-              <div style={{ background:"#000", borderRadius:4, padding:14, color:"#fff" }}>
+            <div style={{ background:"#000", borderRadius:4, padding:14, color:"#fff" }}>
                 <div style={{ fontSize:9, letterSpacing:2, textTransform:"uppercase", color:"#888", marginBottom:10 }}>Capacidade</div>
                 <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                   <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.ridersPerHour,1)}</div><div style={{ fontSize:9, color:"#888" }}>pessoas / hora</div></div>
@@ -574,8 +576,17 @@ function App() {
                   <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.avgPeopleDay,1)}</div><div style={{ fontSize:9, color:"#888" }}>participantes publicos / dia (media)</div></div>
                   <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.avgOccupancy,0)}%</div><div style={{ fontSize:9, color:"#888" }}>ocupacao</div></div>
                 </div>
-              </div>
             </div>
+            </div>
+
+            <section aria-label="Comparacao de sessoes de 45 e 60 minutos" style={{border:"1px solid #ddd",padding:14,margin:"0 0 22px"}}>
+              <h2 style={{fontSize:13,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px"}}>Comparacao: 45 vs 60 minutos · grupo de 14</h2>
+              <p style={{fontSize:11,color:"#666",lineHeight:1.55,marginTop:0}}>Mantem os restantes pressupostos atuais, incluindo preços, procura, energia, bar e financiamento. Cada linha recalcula o projeto completo; a capacidade máxima pressupõe o intervalo entre sessões que está definido acima.</p>
+              <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:650}}>
+                <thead><tr style={{borderBottom:"2px solid #111",textAlign:"right"}}><th style={{textAlign:"left",padding:8}}>Duração</th><th style={{padding:8}}>Máx. sessões/dia</th><th style={{padding:8}}>Máx. pessoas/dia</th><th style={{padding:8}}>Participantes públicos/ano</th><th style={{padding:8}}>EBITDA conjunto</th><th style={{padding:8}}>VAL conjunto</th><th style={{padding:8}}>TIR projeto</th></tr></thead>
+                <tbody>{sessionComparison.map(({minutes,project:scenario})=><tr key={minutes} style={{borderBottom:"1px solid #eee",textAlign:"right"}}><td style={{textAlign:"left",padding:8,fontWeight:700}}>{minutes} min</td><td style={{padding:8}}>{scenario.wave.maxSlotsDay}</td><td style={{padding:8}}>{scenario.wave.maxRidersDay}</td><td style={{padding:8}}>{fmt(scenario.wave.monthly.reduce((total,m)=>total+m.people,0))}</td><td style={{padding:8}}>{fmt(scenario.combined.ebitda)}€</td><td style={{padding:8}}>{fmt(scenario.combined.npvProject)}€</td><td style={{padding:8}}>{pct(scenario.combined.projectIRR)}</td></tr>)}</tbody>
+              </table></div>
+            </section>
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>2. Precos por Pessoa / Nivel</h2>
             <div style={{ marginBottom:20 }}>
