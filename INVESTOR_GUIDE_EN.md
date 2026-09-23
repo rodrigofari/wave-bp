@@ -50,12 +50,12 @@ Average ticket price is an independent input, net of discounts and VAT. Sales co
 
 Each group session lasts 45 or 60 minutes in total and can include up to 14 people. The model does not assume each participant uses the wave for that entire period: actual use varies by skill level and group rotation. With ten opening hours and no gap between sessions, the ceiling is 13 sessions (182 places) at 45 minutes or ten sessions (140 places) at 60 minutes per day. Actual demand is capped at this limit and adjusted by monthly seasonality factors.
 
-| Group session | Max sessions/day | Max people/day | Public participants/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| Group session | Max sessions/day | Max people/day | Public participants/year | Energy tariff | Energy/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
 
-Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (14 sessions/day), energy, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. The gap between sessions is editable and reduces available capacity.
+Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (14 sessions/day), €0.16/kWh tariff, power/load, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. Editing the tariff, power, load or hours recalculates energy cost in both scenarios. The session gap is editable and reduces available capacity.
 
 ## How the bar makes money
 

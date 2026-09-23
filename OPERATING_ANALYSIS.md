@@ -6,12 +6,12 @@ Atualizado em 24/09/2026. Gerado por `node analysis/generate-reports.cjs` a part
 
 A sessão é um bloco de grupo com duração total de 45 ou 60 minutos; não se atribui essa duração a cada pessoa. O tempo de utilização individual varia pelo nível e pela rotação, e não é necessário para esta conta de capacidade comercial. Com dez horas abertas, sem intervalo adicional, cabem até 13 grupos/182 lugares de 45 minutos ou dez grupos/140 lugares de 60 minutos. O número efetivo é ainda limitado pela procura e pela sazonalidade. A energia mantém-se ligada às horas de operação, não ao número de sessões vendidas.
 
-| Duração | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Receita onda | EBITDA conjunto | VAL conjunto | TIR projeto |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| Duração | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita onda | EBITDA conjunto | VAL conjunto | TIR projeto |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
 
-Cenário indicativo com restantes pressupostos iniciais mantidos: procura de pico de 14 sessões/dia, mix/preços, energia, custos, bar e financiamento. As participações anuais são vendas públicas após sazonalidade, não capacidade teórica.
+Cenário indicativo com restantes pressupostos iniciais mantidos: procura de pico de 14 sessões/dia, mix/preços, tarifa de 0,16 €/kWh, potência/carga, custos, bar e financiamento. As participações anuais são vendas públicas após sazonalidade, não capacidade teórica. Como o horário de operação é igual, o custo energético anual é igual nos dois formatos; editar tarifa, potência, carga ou horário recalcula este custo nos dois cenários.
 
 ## Sensibilidade ao tamanho do grupo e procura de pico
 

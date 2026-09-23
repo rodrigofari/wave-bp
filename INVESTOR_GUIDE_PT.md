@@ -50,10 +50,10 @@ O preço médio do bilhete é um input independente, já líquido de descontos e
 
 Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se assume que cada participante usa a onda durante todo esse período: o tempo efetivo varia conforme o nível e a dinâmica do grupo. Com dez horas abertas, sem intervalo entre sessões, cabem até 13 sessões (182 lugares) de 45 minutos ou dez sessões (140 lugares) de 60 minutos por dia. A procura efetiva é limitada por este teto e ajustada pelos fatores mensais de sazonalidade.
 
-| Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
 
 Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (14 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.
 
