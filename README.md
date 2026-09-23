@@ -58,6 +58,10 @@ são analíticas e incluem rateio de custos. As TIR não se somam. A taxa de des
 
 [Convenções financeiras](FINANCIAL_MODEL.md) · [Clarificações](MODEL_CLARIFICATIONS.md)
 
+[Guia do investidor em português](INVESTOR_GUIDE_PT.md) · [Investor guide in English](INVESTOR_GUIDE_EN.md) · [Guia bilingue online](investor-guide.html)
+
+O simulador tem seletor PT/EN. Em cada secção, o ícone **i** mostra uma explicação ao passar o cursor ou ao receber foco. O idioma inglês cobre os controlos e componentes do modelo; as fórmulas e valores não mudam. Os inputs alterados ficam apenas no navegador de cada investidor e não são guardados no link partilhado.
+
 Os relatórios `BAR_ANALYSIS.md`, `OPERATING_ANALYSIS.md`, `TICKET_BREAKEVEN.md`
 e `MODEL_CLARIFICATIONS.md` são gerados automaticamente do motor atual, tal como
 `reports.html`, acessível na página através de **Relatórios e pressupostos atuais**.

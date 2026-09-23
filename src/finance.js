@@ -3,7 +3,7 @@
 "use strict";
 const MONTHS = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const SF = [0.55,0.50,0.65,0.75,0.90,1.0,1.0,1.0,0.90,0.75,0.60,0.50];
-const fmt = n => Number.isFinite(n) ? n.toLocaleString("pt-PT",{maximumFractionDigits:0}) : "—";
+const fmt = n => Number.isFinite(n) ? n.toLocaleString(root.CitywaveI18n?.getLanguage()==="en"?"en-GB":"pt-PT",{maximumFractionDigits:0}) : "—";
 const fmtK = n => !Number.isFinite(n) ? "—" : Math.abs(n)>=1e6?(n/1e6).toFixed(2)+"M":Math.abs(n)>=1000?(n/1000).toFixed(0)+"K":fmt(n);
 const fd = (n,d=1) => Number.isFinite(n) ? n.toFixed(d) : "—";
 const pct = n => Number.isFinite(n) ? (n*100).toFixed(1)+"%" : "—";

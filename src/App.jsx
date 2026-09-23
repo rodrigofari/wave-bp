@@ -46,7 +46,7 @@ function Editable({value, onChange, prefix="", suffix="", color="#000", size=14,
       cursor:"pointer", borderBottom:"1px dashed rgba(0,0,0,0.2)", paddingBottom:1,
       transition:"border-color 0.2s"
     }} title="Clicar para editar">
-      {prefix}{step<1?fd(value,2):fmt(value)}{suffix}
+      {prefix}{step<1?fd(value,2):fmt(value)}{suffix && <span style={{marginLeft:suffix==="€"||suffix==="%"?0:3}}>{suffix}</span>}
     </span>
   );
 }
@@ -76,7 +76,7 @@ function Row({label, value, onChange, suffix="€", info, indent=false, highligh
           <span style={{
             fontFamily:"'IBM Plex Mono',monospace", fontSize:total?16:13,
             fontWeight:total?800:600, color: value < 0 ? "#c00" : "#000"
-          }}>{prefix}{step<1?fd(value,2):fmt(value)}{suffix}</span>
+          }}>{prefix}{step<1?fd(value,2):fmt(value)}{suffix && <span style={{marginLeft:suffix==="€"||suffix==="%"?0:3}}>{suffix}</span>}</span>
         )}
       </div>
     </div>
@@ -86,8 +86,10 @@ function Row({label, value, onChange, suffix="€", info, indent=false, highligh
 /* ── Section ── */
 function Section({title, children, number, open=true}) {
   const [isOpen, setIsOpen] = useState(open);
+  const sectionHelp = CitywaveI18n.sectionHelp(title);
   return (
     <div style={{ marginBottom:2 }}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
       <button onClick={()=>setIsOpen(!isOpen)} style={{
         display:"flex", alignItems:"center", gap:10, width:"100%", padding:"14px 0",
         background:"transparent", border:"none", borderBottom:"1px solid #e0e0e0", cursor:"pointer",
@@ -104,6 +106,8 @@ function Section({title, children, number, open=true}) {
           transform:isOpen?"rotate(0)":"rotate(-90deg)"
         }}>▾</span>
       </button>
+      {sectionHelp && <span className="model-help" tabIndex={0} title={sectionHelp} aria-label={CitywaveI18n.helpLabel()} role="img">i</span>}
+      </div>
       {isOpen && <div style={{ padding:"8px 0 16px" }}>{children}</div>}
     </div>
   );
@@ -127,6 +131,8 @@ function Bar({label,value,maxVal,dark=false}) {
 
 /* ═══════════════════════════════════ */
 function App() {
+  const [language,setLanguage] = useState(()=>new URLSearchParams(location.search).get("lang")==="en"?"en":"pt");
+  useEffect(()=>{CitywaveI18n.setLanguage(language);},[language]);
   const [s, setS] = useState(CitywaveFinance.APP_INIT);
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("wave");
@@ -204,6 +210,8 @@ function App() {
           .wave-grid{grid-template-columns:repeat(3,1fr) !important}
           .analise-risk-grid{grid-template-columns:1fr !important}
         }
+        .model-help{display:inline-flex;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:19px;border:1px solid #999;border-radius:50%;font:700 12px Georgia,serif;color:#666;cursor:help;outline-offset:3px}
+        .model-help:hover,.model-help:focus{color:#000;border-color:#000}
       `}</style>
 
       {/* ── HEADER ── */}
@@ -215,11 +223,15 @@ function App() {
             <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Onda {s.waveSize}m · Dados da reuniao Citywave de 12 Mai 2026 · Bar: cenario ilustrativo, nao validado</div>
           </div>
           <div style={{ textAlign:"right" }}>
+            <div aria-label="Language" style={{marginBottom:8,display:"flex",justifyContent:"flex-end",gap:4}}>
+              <button onClick={()=>{CitywaveI18n.setLanguage("pt");setLanguage("pt");}} aria-pressed={language==="pt"} style={{padding:"4px 7px",border:"1px solid #bbb",background:language==="pt"?"#111":"#fff",color:language==="pt"?"#fff":"#111",cursor:"pointer"}}>PT</button>
+              <button onClick={()=>{CitywaveI18n.setLanguage("en");setLanguage("en");}} aria-pressed={language==="en"} style={{padding:"4px 7px",border:"1px solid #bbb",borderLeft:0,background:language==="en"?"#111":"#fff",color:language==="en"?"#fff":"#111",cursor:"pointer"}}>EN</button>
+            </div>
             <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(displayed.annRev)}€</div>
             <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
           </div>
         </div>
-        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 23/09/2026 · <a href="./reports.html">Relatorios e pressupostos atuais</a></div>
+        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 23/09/2026 · <a href="./reports.html">Relatorios e pressupostos atuais</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
       </header>
 
       <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
