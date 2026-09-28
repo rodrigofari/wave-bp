@@ -222,6 +222,51 @@ function BreakEvenCharts({s,barInputs,sharedInputs,project,component,language}) 
   </section>;
 }
 
+function ScenarioPresets({activeId,onApply,language}) {
+  const scenarios = CitywaveScenarios.all();
+  const projected = useMemo(()=>scenarios.map(scenario=>({
+    ...scenario,
+    project:CitywaveHospitality.calculateProject(scenario.inputs.wave,scenario.inputs.bar,scenario.inputs.shared),
+  })),[]);
+  const english=language==='en';
+  return <section className="scenario-dashboard" aria-label={english?'Investor planning scenarios':'Cenarios de planeamento para investidores'} style={{margin:'16px 0 22px',padding:16,border:'1px solid #d8dee7',borderRadius:10,background:'#f7f9fc'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:10,flexWrap:'wrap'}}>
+      <h2 style={{fontSize:17,margin:'0 0 5px',fontWeight:800}}>{english?'Three investor scenarios':'Três cenários para investidores'}</h2>
+      <span style={{fontSize:10,color:'#657184'}}>{english?'Illustrative · editable · not forecasts':'Ilustrativos · editáveis · não são previsões'}</span>
+    </div>
+    <p style={{fontSize:11,color:'#657184',lineHeight:1.55,margin:'0 0 12px'}}>{english
+      ?'Each card shows the exact assumptions and the combined project result calculated by the same model below. Sessions/day is peak demand; the model applies monthly seasonality and the duration-based capacity limit. External bar visits/day is a reference before seasonality. Applying a case resets wave, bar and shared inputs to that preset; you can edit every input afterwards. Passenger totals are context, not converted directly into customers.'
+      :'Cada cartão mostra os pressupostos exatos e o resultado do projeto conjunto calculado pelo mesmo modelo abaixo. As sessões/dia indicam procura de pico; o modelo aplica sazonalidade mensal e o limite de capacidade baseado na duração. As visitas externas/dia ao bar são uma referência antes da sazonalidade. Aplicar um cenário repõe os pressupostos da onda, do bar e partilhados; depois pode editar qualquer valor. Os totais de passageiros são contexto e não são convertidos diretamente em clientes.'}</p>
+    <div className="scenario-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10}}>
+      {projected.map(({id,title,positioning,explanation,assumptions,caution,project})=>{
+        const active=activeId===id;
+        return <article key={id} className="scenario-card" style={{minWidth:0,padding:14,border:active?'2px solid #2878d0':'1px solid #d8dee7',borderRadius:8,background:'#fff',display:'flex',flexDirection:'column'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
+            <h3 style={{fontSize:15,margin:0}}>{title[english?'en':'pt']}</h3>
+            {active&&<span style={{fontSize:9,fontWeight:800,color:'#2878d0',textTransform:'uppercase'}}>{english?'Applied':'Aplicado'}</span>}
+          </div>
+          <strong style={{fontSize:11,marginTop:4}}>{positioning[english?'en':'pt']}</strong>
+          <p style={{fontSize:10,lineHeight:1.5,color:'#596474',margin:'6px 0 9px'}}>{explanation[english?'en':'pt']}</p>
+          <div style={{borderTop:'1px solid #e5e8ed',paddingTop:6,flex:1}}>
+            {assumptions.map(item=><div key={item.pt} style={{fontSize:9.5,lineHeight:1.45,margin:'4px 0'}}><strong>{item[english?'en':'pt']}:</strong> {item[english?'enValue':'ptValue']}</div>)}
+          </div>
+          <div className="scenario-metrics" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,margin:'9px 0',padding:'8px 0',borderTop:'1px solid #e5e8ed',borderBottom:'1px solid #e5e8ed'}}>
+            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Year 1 combined EBITDA':'EBITDA conjunto ano 1'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13}}>{fmtK(project.combined.ebitda)}€</strong></div>
+            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Combined project NPV':'VAL do projeto conjunto'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13}}>{fmtK(project.combined.npvProject)}€</strong></div>
+            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Initial total investment':'Investimento total inicial'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>{fmtK(project.combined.investment)}€</strong></div>
+            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Combined project IRR':'TIR do projeto conjunto'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>{pct(project.combined.projectIRR)}</strong></div>
+          </div>
+          <p style={{fontSize:9,lineHeight:1.4,color:'#748092',margin:'0 0 9px'}}>{caution[english?'en':'pt']}</p>
+          <button type="button" onClick={()=>onApply(id)} aria-pressed={active} style={{width:'100%',padding:'9px 10px',border:'1px solid #1b2736',borderRadius:4,background:active?'#2878d0':'#17202b',color:'#fff',fontWeight:700,fontSize:11,cursor:'pointer'}}>{english?'Simulate this scenario':'Simular este cenário'}</button>
+        </article>;
+      })}
+    </div>
+    <p style={{fontSize:9,color:'#657184',lineHeight:1.5,margin:'10px 0 0'}}>{english
+      ?'Common assumptions held: 10 m wave/site and funding structure from the current reference, 12 wave staff and 3 bar staff, tax and bar fixed costs. The site/concession, staffing plan, prices, external footfall, energy tariff and supplier quotes still need evidence. Bar figures remain illustrative.'
+      :'Pressupostos comuns: onda de 10 m/local e financiamento da referência atual, 12 pessoas na equipa da onda e 3 no bar, imposto e custos fixos do bar. Local/concessão, plano de equipa, preços, fluxo externo, tarifa energética e propostas de fornecedores ainda precisam de confirmação. Os valores do bar são ilustrativos.'}</p>
+  </section>;
+}
+
 /* ═══════════════════════════════════ */
 function App() {
   const [language,setLanguage] = useState(()=>new URLSearchParams(location.search).get("lang")==="en"?"en":"pt");
@@ -229,21 +274,28 @@ function App() {
   useEffect(()=>{CitywaveI18n.setLanguage(language);},[language]);
   useEffect(()=>{localStorage.setItem('citywave-theme',theme);document.body.style.backgroundColor=theme==='dark'?'#101319':'#fff';},[theme]);
   const [s, setS] = useState(CitywaveFinance.APP_INIT);
+  const [scenarioId,setScenarioId] = useState(null);
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("wave");
   const [barInputs, setBarInputs] = useState(CitywaveHospitality.BAR_INIT);
   const [sharedInputs, setSharedInputs] = useState(CitywaveHospitality.SHARED_INIT);
-  const updateBar = useCallback((k,v)=>setBarInputs(p=>({...p,[k]:v})),[]);
-  const updateShared = useCallback((k,v)=>setSharedInputs(p=>({...p,[k]:v})),[]);
-  const u = useCallback((k,v) => setS(p=>({...p,[k]:v})), []);
-  const uInv = useCallback((id,f,v)=>setS(p=>({...p,investors:p.investors.map(i=>i.id===id?{...i,[f]:v}:i)})),[]);
-  const addInv = useCallback(()=>setS(p=>({...p,investors:[...p.investors,{id:Date.now(),name:`Investidor ${String.fromCharCode(65+p.investors.length)}`,pct:5}]})),[]);
-  const rmInv = useCallback((id)=>setS(p=>({...p,investors:p.investors.filter(i=>i.id!==id)})),[]);
+  const updateBar = useCallback((k,v)=>{setScenarioId(null);setBarInputs(p=>({...p,[k]:v}));},[]);
+  const updateShared = useCallback((k,v)=>{setScenarioId(null);setSharedInputs(p=>({...p,[k]:v}));},[]);
+  const u = useCallback((k,v) => {setScenarioId(null);setS(p=>({...p,[k]:v}));}, []);
+  const uInv = useCallback((id,f,v)=>{setScenarioId(null);setS(p=>({...p,investors:p.investors.map(i=>i.id===id?{...i,[f]:v}:i)}));},[]);
+  const addInv = useCallback(()=>{setScenarioId(null);setS(p=>({...p,investors:[...p.investors,{id:Date.now(),name:`Investidor ${String.fromCharCode(65+p.investors.length)}`,pct:5}]}));},[]);
+  const rmInv = useCallback((id)=>{setScenarioId(null);setS(p=>({...p,investors:p.investors.filter(i=>i.id!==id)}));},[]);
+
+  const applyScenario = useCallback((id)=>{
+    const preset=CitywaveScenarios.build(id);
+    setS(preset.wave);setBarInputs(preset.bar);setSharedInputs(preset.shared);setScenarioId(id);
+  },[]);
 
   // Site scenario selector — applies preset
   const selectSite = useCallback((siteId) => {
     const site = SITES.find(x=>x.id===siteId);
     if(!site) return;
+    setScenarioId(null);
     setS(p => {
       const newWaveSize = (site.id !== "custom" && p.waveSize > site.maxWave) ? site.maxWave : p.waveSize;
       const newWave = WAVES.find(w=>w.size===newWaveSize);
@@ -305,6 +357,11 @@ function App() {
         .root-container[data-theme="dark"] .break-even-card strong{color:#eef2f8!important}
         .root-container[data-theme="dark"] .break-even-card svg text{fill:#aeb8c6!important}
         .root-container[data-theme="dark"] .threshold-readout{border-color:#343c49!important}
+        .root-container[data-theme="dark"] .scenario-dashboard{background:#141922!important;border-color:#343c49!important}
+        .root-container[data-theme="dark"] .scenario-dashboard p,.root-container[data-theme="dark"] .scenario-dashboard span{color:#b6c0cf!important}
+        .root-container[data-theme="dark"] .scenario-card{background:#191f29!important;border-color:#343c49!important}
+        .root-container[data-theme="dark"] .scenario-card h3,.root-container[data-theme="dark"] .scenario-card strong{color:#eef2f8!important}
+        .root-container[data-theme="dark"] .scenario-metrics{border-color:#343c49!important}
         .root-container[data-theme="dark"] .model-help{color:#c1c8d2!important;border-color:#737e8d!important}
         .root-container[data-theme="dark"] ::selection{background:#c6d9f2;color:#111}
         input[type=range]{-webkit-appearance:none;height:3px;background:#ddd;border-radius:2px;outline:none;width:100%}
@@ -318,6 +375,7 @@ function App() {
           .grid-main{grid-template-columns:1fr !important;gap:16px !important}
           .grid-main aside{border-right:none !important;padding-right:0 !important;border-bottom:1px solid #eee;padding-bottom:16px}
           .breakeven-grid{grid-template-columns:1fr 1fr !important}
+          .scenario-grid{grid-template-columns:1fr 1fr !important}
         }
 
         @media(max-width:700px){
@@ -332,6 +390,7 @@ function App() {
           .analise-risk-grid{grid-template-columns:1fr 1fr !important}
           .twocol-charts{grid-template-columns:1fr !important}
           .breakeven-grid{grid-template-columns:1fr !important}
+          .scenario-grid{grid-template-columns:1fr !important}
           table{font-size:10px !important}
           .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
           .header-row{flex-direction:column;align-items:flex-start !important}
@@ -371,6 +430,7 @@ function App() {
         {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
       </nav>
       <BreakEvenCharts s={s} barInputs={barInputs} sharedInputs={sharedInputs} project={project} component={component} language={language}/>
+      <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language}/>
       {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
       {component !== 'wave' && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
