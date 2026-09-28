@@ -129,10 +129,105 @@ function Bar({label,value,maxVal,dark=false}) {
   );
 }
 
+function crossingAtZero(points,key) {
+  const finite=points.filter(p=>Number.isFinite(p[key]));
+  if(!finite.length)return null;
+  if(finite[0][key]>=0)return 0;
+  for(let i=1;i<finite.length;i++){
+    const a=finite[i-1],b=finite[i];
+    if(a[key]<=0&&b[key]>=0){
+      const span=b[key]-a[key];
+      return span===0?b.volume:a.volume+(b.volume-a.volume)*(-a[key]/span);
+    }
+  }
+  return null;
+}
+
+function BreakEvenChart({title,points,valueKey,currentInput,capacity,language}) {
+  const width=560,height=220,left=48,right=12,top=16,bottom=36;
+  const valid=points.filter(p=>Number.isFinite(p[valueKey])&&Number.isFinite(p.volume));
+  const threshold=crossingAtZero(valid,valueKey);
+  const minX=Math.min(0,...valid.map(p=>p.volume));
+  const maxX=Math.max(1,...valid.map(p=>p.volume));
+  const rawValues=valid.map(p=>p[valueKey]);
+  const minY=Math.min(0,...rawValues),maxY=Math.max(0,...rawValues);
+  const pad=Math.max(1,(maxY-minY)*.08);
+  const yMin=minY===maxY?minY-1:minY-pad,yMax=minY===maxY?maxY+1:maxY+pad;
+  const xPos=x=>left+(x-minX)/(maxX-minX)*(width-left-right);
+  const yPos=y=>top+(yMax-y)/(yMax-yMin)*(height-top-bottom);
+  const path=valid.map((p,i)=>`${i?'L':'M'}${xPos(p.volume).toFixed(2)},${yPos(p[valueKey]).toFixed(2)}`).join(' ');
+  const current=valid.reduce((best,p)=>!best||Math.abs(p.input-currentInput)<Math.abs(best.input-currentInput)?p:best,null);
+  const thresholdText=threshold===null
+    ?(language==='en'?'Not reached within current capacity':'Nao atingido dentro da capacidade atual')
+    :threshold===0
+      ?(language==='en'?'Already positive at zero wave customers':'Ja positivo sem clientes da onda')
+      :`${fd(threshold,1)} ${language==='en'?'customers/day':'clientes/dia'}`;
+  const unavailable=valid.length<2;
+  return <article className="break-even-card" style={{background:'#fff',border:'1px solid #e2e5e9',borderRadius:8,padding:14,minWidth:0}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
+      <strong style={{fontSize:12,letterSpacing:.3}}>{title}</strong>
+      <span style={{fontSize:10,color:'#687386',fontFamily:"'IBM Plex Mono',monospace"}}>{fmtK(Math.round(current?.[valueKey]||0))}€</span>
+    </div>
+    <svg role="img" aria-label={`${title} ${language==='en'?'by average daily wave customers':'por clientes medios diarios da onda'}`} viewBox={`0 0 ${width} ${height}`} style={{display:'block',width:'100%',height:'auto',marginTop:6,overflow:'visible'}}>
+      <line x1={left} x2={width-right} y1={yPos(0)} y2={yPos(0)} stroke="#7d8795" strokeDasharray="5 4" strokeWidth="1.5" />
+      <line x1={left} x2={left} y1={top} y2={height-bottom} stroke="#a3aab4" strokeWidth="1" />
+      <line x1={left} x2={width-right} y1={height-bottom} y2={height-bottom} stroke="#a3aab4" strokeWidth="1" />
+      {path&&<path d={path} fill="none" stroke="#2878d0" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />}
+      {current&&<g><circle cx={xPos(current.volume)} cy={yPos(current[valueKey])} r="6" fill="#e39424" stroke="#fff" strokeWidth="2"><title>{language==='en'?'Current simulation':'Simulacao atual'}: {fd(current.volume,1)} {language==='en'?'customers/day':'clientes/dia'}, {fmt(Math.round(current[valueKey]))}€</title></circle></g>}
+      <text x={left-7} y={yPos(0)+4} textAnchor="end" fontSize="10" fill="#758091">0€</text>
+      <text x={left} y={height-9} textAnchor="middle" fontSize="10" fill="#758091">{fd(minX,0)}</text>
+      <text x={width-right} y={height-9} textAnchor="end" fontSize="10" fill="#758091">{fd(maxX,0)}</text>
+      <text x={(left+width-right)/2} y={height-1} textAnchor="middle" fontSize="9" fill="#758091">{language==='en'?'Average wave customers / open day':'Clientes medios da onda / dia aberto'}</text>
+      {unavailable&&<text x={width/2} y={height/2} textAnchor="middle" fontSize="13" fill="#758091">{language==='en'?'Unavailable — review inputs':'Indisponivel — reveja os pressupostos'}</text>}
+    </svg>
+    <div className="threshold-readout" style={{borderTop:'1px solid #e5e7eb',paddingTop:8,fontSize:10,color:'#566170'}}>
+      <span>{language==='en'?'Break-even level':'Limiar de break-even'}: </span><strong style={{color:'#1f2937'}}>{thresholdText}</strong>
+    </div>
+    <div style={{fontSize:9,color:'#7b8491',marginTop:4}}>{language==='en'?'Dashed line = zero · Amber dot = current simulation':'Linha tracejada = zero · Ponto âmbar = simulacao atual'}{` · ${language==='en'?'Max average capacity':'Capacidade max. media'} ${fd(capacity,0)}/day`}</div>
+  </article>;
+}
+
+function BreakEvenCharts({s,barInputs,sharedInputs,project,component,language}) {
+  const capacity=s.salesMode==='tickets'?project.wave.ticketCapacity:project.wave.maxSlotsDay;
+  const maxInput=Math.max(1,s.salesMode==='tickets'?capacity:capacity/Math.min(...SF),s.salesMode==='sessions'?s.sessionsDay:0);
+  const points=useMemo(()=>{
+    const steps=41;
+    return Array.from({length:steps},(_,i)=>{
+      const input=maxInput*i/(steps-1);
+      const overrides=s.salesMode==='tickets'?{ticketsDay:input}:{sessionsDay:input};
+      const p=CitywaveHospitality.calculateProject({...s,...overrides},barInputs,sharedInputs);
+      const result=component==='wave'?p.wave:component==='bar'?p.bar:p.combined;
+      return {input,volume:p.wave.avgPeopleDay,ebitda:result.ebitda,fcfe:result.first.fcfe,npv:result.npvProject};
+    });
+  },[s,barInputs,sharedInputs,component,maxInput]);
+  const currentInput=s.salesMode==='tickets'?s.ticketsDay:s.sessionsDay;
+  const modeLabel=s.salesMode==='tickets'
+    ?(language==='en'?'ticket demand per open day':'procura de bilhetes por dia aberto')
+    :(language==='en'?'peak group sessions/day with seasonality':'sessoes de pico/dia com sazonalidade');
+  const currentVolume=project.wave.avgPeopleDay;
+  const currentPoint=points.reduce((best,p)=>!best||Math.abs(p.input-currentInput)<Math.abs(best.input-currentInput)?p:best,null);
+  const maxPoint=points.at(-1);
+  return <section className="break-even-dashboard" aria-label={language==='en'?'Live break-even charts':'Graficos dinamicos de break-even'} style={{margin:'16px 0 22px',padding:16,border:'1px solid #d8dee7',borderRadius:10,background:'#f7f9fc'}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:12,flexWrap:'wrap',marginBottom:5}}>
+      <h2 style={{fontSize:15,margin:'0 0 4px',fontWeight:800}}>{language==='en'?'Live break-even charts':'Graficos dinamicos de break-even'}</h2>
+      <span style={{fontSize:10,color:'#657184'}}>{language==='en'?'Current volume':'Volume atual'}: {fd(currentVolume,1)} {language==='en'?'wave customers/open day':'clientes da onda/dia aberto'}</span>
+    </div>
+    <p style={{fontSize:10,color:'#657184',lineHeight:1.5,margin:'0 0 12px'}}>{language==='en'?'Varying':'Variacao de'} {modeLabel}; {language==='en'?'all other current inputs are held constant. Session demand is seasonalized; decimals are annual expected averages, not a bookable timetable. Bar estimates and zero-cost inputs remain assumptions.':'mantem os restantes pressupostos. A procura de sessoes recebe sazonalidade; valores fracionarios sao medias esperadas, nao uma agenda reservavel. Bar e custos sem valor continuam a ser hipoteses.'}</p>
+    <div className="breakeven-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10}}>
+      <BreakEvenChart title={language==='en'?'Annual EBITDA':'EBITDA anual'} points={points} valueKey="ebitda" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
+      <BreakEvenChart title={language==='en'?'Year 1 FCFE':'FCFE ano 1'} points={points} valueKey="fcfe" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
+      <BreakEvenChart title={language==='en'?'Project NPV':'VAL do projeto'} points={points} valueKey="npv" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
+    </div>
+    <div style={{fontSize:9,color:'#7b8491',marginTop:8}}>{language==='en'?'Input swept':'Input variado'}: {modeLabel} · {language==='en'?'Displayed break-even is in average wave customers per open day.':'O limiar mostrado usa a media de clientes da onda por dia aberto.'}</div>
+  </section>;
+}
+
 /* ═══════════════════════════════════ */
 function App() {
   const [language,setLanguage] = useState(()=>new URLSearchParams(location.search).get("lang")==="en"?"en":"pt");
+  const [theme,setTheme] = useState(()=>localStorage.getItem('citywave-theme')==='dark'?'dark':'light');
   useEffect(()=>{CitywaveI18n.setLanguage(language);},[language]);
+  useEffect(()=>{localStorage.setItem('citywave-theme',theme);document.body.style.backgroundColor=theme==='dark'?'#101319':'#fff';},[theme]);
   const [s, setS] = useState(CitywaveFinance.APP_INIT);
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("wave");
@@ -176,9 +271,42 @@ function App() {
   const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}];
 
   return (
-    <div className="root-container" style={{ background:"#fff", color:"#000", fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
+    <div className="root-container" data-theme={theme} style={{ background:theme==='dark'?'#101319':'#fff', color:theme==='dark'?'#e5e9ef':'#000', fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
       <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
       <style>{`
+        .root-container[data-theme="dark"]{background:#101319!important;color:#e5e9ef!important;color-scheme:dark}
+        .root-container[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(248, 248, 248)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(247, 247, 245)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(245, 245, 243)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(245, 245, 245)"]{background:#171c24!important;color:#e5e9ef!important}
+        .root-container[data-theme="dark"] [style*="background: rgb(255, 249, 235)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(255, 248, 232)"],
+        .root-container[data-theme="dark"] [style*="background: rgb(255, 250, 240)"]{background:#30291b!important;color:#f5e9c9!important}
+        .root-container[data-theme="dark"] [style*="color: rgb(0, 0, 0)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(17, 17, 17)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(51, 51, 51)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(68, 68, 68)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(85, 85, 85)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(102, 102, 102)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(119, 119, 119)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(136, 136, 136)"],
+        .root-container[data-theme="dark"] [style*="color: rgb(153, 153, 153)"]{color:#c1c8d2!important}
+        .root-container[data-theme="dark"] button:not([disabled]){border-color:#46505f!important}
+        .root-container[data-theme="dark"] button[style*="background: rgb(255, 255, 255)"]{background:#1d232d!important;color:#e5e9ef!important}
+        .root-container[data-theme="dark"] button[style*="background: rgb(17, 17, 17)"],
+        .root-container[data-theme="dark"] button[style*="background: rgb(0, 0, 0)"]{background:#d8e2f1!important;color:#11151b!important}
+        .root-container[data-theme="dark"] input,.root-container[data-theme="dark"] select{background:#141922!important;color:#e5e9ef!important;border-color:#46505f!important}
+        .root-container[data-theme="dark"] header{border-color:#536071!important}
+        .root-container[data-theme="dark"] table,.root-container[data-theme="dark"] th,.root-container[data-theme="dark"] td,.root-container[data-theme="dark"] tr{border-color:#343c49!important}
+        .root-container[data-theme="dark"] .break-even-dashboard{background:#141922!important;border-color:#343c49!important}
+        .root-container[data-theme="dark"] .break-even-card{background:#191f29!important;border-color:#343c49!important}
+        .root-container[data-theme="dark"] .break-even-dashboard p,.root-container[data-theme="dark"] .break-even-dashboard span,.root-container[data-theme="dark"] .break-even-dashboard div{color:#b6c0cf!important}
+        .root-container[data-theme="dark"] .break-even-card strong{color:#eef2f8!important}
+        .root-container[data-theme="dark"] .break-even-card svg text{fill:#aeb8c6!important}
+        .root-container[data-theme="dark"] .threshold-readout{border-color:#343c49!important}
+        .root-container[data-theme="dark"] .model-help{color:#c1c8d2!important;border-color:#737e8d!important}
+        .root-container[data-theme="dark"] ::selection{background:#c6d9f2;color:#111}
         input[type=range]{-webkit-appearance:none;height:3px;background:#ddd;border-radius:2px;outline:none;width:100%}
         input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
         input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
@@ -189,6 +317,7 @@ function App() {
         @media(max-width:900px){
           .grid-main{grid-template-columns:1fr !important;gap:16px !important}
           .grid-main aside{border-right:none !important;padding-right:0 !important;border-bottom:1px solid #eee;padding-bottom:16px}
+          .breakeven-grid{grid-template-columns:1fr 1fr !important}
         }
 
         @media(max-width:700px){
@@ -202,6 +331,7 @@ function App() {
           .analise-grid-3{grid-template-columns:1fr 1fr !important}
           .analise-risk-grid{grid-template-columns:1fr 1fr !important}
           .twocol-charts{grid-template-columns:1fr !important}
+          .breakeven-grid{grid-template-columns:1fr !important}
           table{font-size:10px !important}
           .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
           .header-row{flex-direction:column;align-items:flex-start !important}
@@ -228,17 +358,19 @@ function App() {
             <div aria-label="Language" style={{marginBottom:8,display:"flex",justifyContent:"flex-end",gap:4}}>
               <button onClick={()=>{CitywaveI18n.setLanguage("pt");setLanguage("pt");}} aria-pressed={language==="pt"} style={{padding:"4px 7px",border:"1px solid #bbb",background:language==="pt"?"#111":"#fff",color:language==="pt"?"#fff":"#111",cursor:"pointer"}}>PT</button>
               <button onClick={()=>{CitywaveI18n.setLanguage("en");setLanguage("en");}} aria-pressed={language==="en"} style={{padding:"4px 7px",border:"1px solid #bbb",borderLeft:0,background:language==="en"?"#111":"#fff",color:language==="en"?"#fff":"#111",cursor:"pointer"}}>EN</button>
+              <button onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?(language==='en'?'Switch to light mode':'Mudar para modo claro'):(language==='en'?'Switch to dark mode':'Mudar para modo escuro')} style={{padding:'4px 8px',border:'1px solid #bbb',background:theme==='dark'?'#111':'#fff',color:theme==='dark'?'#fff':'#111',cursor:'pointer'}}>{theme==='dark'?'☀':'◐'} {theme==='dark'?(language==='en'?'Light':'Claro'):(language==='en'?'Dark':'Escuro')}</button>
             </div>
             <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(displayed.annRev)}€</div>
             <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
           </div>
         </div>
-        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 23/09/2026 · <a href="./reports.html">Relatorios e pressupostos atuais</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
+        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 29/09/2026 · <a href="./reports.html">Relatorios (cenarios fixos)</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
       </header>
 
       <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
         {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
       </nav>
+      <BreakEvenCharts s={s} barInputs={barInputs} sharedInputs={sharedInputs} project={project} component={component} language={language}/>
       {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
       {component !== 'wave' && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
@@ -310,6 +442,7 @@ function App() {
           {/* SITE & CONFIG */}
           <Section title="Local e Configuracao" number="0">
             <div style={{ fontSize:10, color:"#999", marginBottom:8 }}>Selecione o cenario do local (Jardins do Teleferico)</div>
+            <div style={{fontSize:10,color:'#7b5d21',background:'#fff8e8',border:'1px solid #e7d6ad',padding:'7px 9px',marginBottom:8,lineHeight:1.5}}>O preset de betao e apenas um cenario de dimensionamento. Nao confirma a parcela nem a concessao do local pretendido junto ao Teleferico.</div>
             <div style={{ display:"grid", gap:6, marginBottom:10 }}>
               {SITES.map(site=>(
                 <button key={site.id} onClick={()=>selectSite(site.id)} style={{
@@ -1055,17 +1188,17 @@ function App() {
               {calc.equityExit < 0 && <span> O saldo negativo representa capital adicional necessario para liquidar a divida.</span>}
             </div>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>EBITDA — {calc.N} Anos</h2>
-            <div style={{ display:"flex", gap:8, alignItems:"flex-end", height:130, marginBottom:24 }}>
+            <div className="scroll-x"><div style={{ display:"flex", gap:8, alignItems:"flex-end", height:130, marginBottom:24, minWidth:Math.max(450,calc.N*40) }}>
               {calc.proj.map((yr,i)=>{
                 const mx=Math.max(...calc.proj.map(y=>Math.abs(y.ebitda)),1);
                 const h=Math.max((Math.abs(yr.ebitda)/(mx*1.2))*110,3);
                 return(<div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
-                  <div style={{ fontSize:9, fontWeight:700, color:yr.ebitda<0?"#c00":"#000", marginBottom:3, fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(yr.ebitda)}€</div>
+                  <div title={`${fmt(yr.ebitda)}€`} style={{ fontSize:9, fontWeight:700, color:yr.ebitda<0?"#c00":"#000", marginBottom:3, fontFamily:"'IBM Plex Mono',monospace",whiteSpace:'nowrap' }}>{fmtK(yr.ebitda)}€</div>
                   <div style={{ width:"60%", height:h, borderRadius:"2px 2px 0 0", background:yr.ebitda>=0?"#000":"#c00", transition:"height 0.3s" }} />
                   <div style={{ fontSize:10, color:"#666", marginTop:4, fontWeight:700 }}>A{yr.y}</div>
                 </div>);
               })}
-            </div>
+            </div></div>
 
             <div style={{ background:"#f8f8f8", border:"1px solid #eee", borderRadius:4, padding:16 }}>
               <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>Proposta Investidores</h2>

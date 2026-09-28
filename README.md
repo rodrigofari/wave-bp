@@ -8,7 +8,7 @@ Na pasta do repositório, executar `python3 -m http.server 8766` e abrir
 http://localhost:8766. A página usa React/Babel via CDN, pelo que necessita de internet.
 
 1. A página abre no painel **Onda sem bar**, com indicadores, gráficos e parâmetros à esquerda. Escolher **Bilhetes / entrada flexível** ou **Sessões de grupo** nessa coluna.
-2. Alterar os números sublinhados. O separador **Receitas** inclui a configuração detalhada e o break-even do conjunto em modo bilhetes. Em bilhetes, definir procura diária, receita
+2. Os gráficos de break-even permanecem no topo em todas as vistas e recalculam EBITDA, FCFE do ano 1 e VAL quando se alteram inputs. A curva varia bilhetes/dia ou sessões de pico/dia com sazonalidade; o marcador âmbar mostra o cenário atual. O separador **Receitas** também inclui a tabela de break-even do conjunto em modo bilhetes. Em bilhetes, definir procura diária, receita
    líquida média, minutos de onda e intervalo por bilhete. O tempo limita as vendas.
 3. Introduzir comissões, material e encargos elétricos adicionais quando conhecidos.
    Zero significa que ainda não foi incluído um custo, não que não exista.
@@ -31,7 +31,9 @@ Em bilhetes, privadas, coaching, alugueres, eventos e cartões não geram receit
 Os três break-even do conjunto são diferentes: operação (EBITDA zero), caixa do
 primeiro ano (imposto, dívida e manutenção incluídos) e investimento (VAL zero).
 Quando a capacidade não chega, o simulador apresenta **Não atinge na capacidade atual**.
-As alterações ficam na sessão da página; recarregar repõe os valores iniciais.
+No modo de sessões, os dias seguem sazonalidade e os valores fracionários são médias
+esperadas, não uma agenda diária reservável. As alterações ficam na sessão da página;
+recarregar repõe os valores iniciais. O botão **Escuro** alterna e memoriza o tema local.
 
 ## Validação e limites
 

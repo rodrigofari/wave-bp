@@ -1,6 +1,6 @@
 # Participantes, sessões e horários — análise atual
 
-Atualizado em 24/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 29/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Comparação pedida: sessões de 45 e 60 minutos, até 14 pessoas
 

@@ -1,6 +1,6 @@
 # Citywave Funchal — guia do investidor
 
-Atualizado em 24/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
+Atualizado em 29/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
 
 ## Em 60 segundos
 
@@ -25,6 +25,7 @@ Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista iso
 3. Abra cada secção pelo título. Passe o cursor pelo círculo **i** para ver uma explicação da secção.
 4. Edite os inputs do bar no painel **Bar / trabalhar**. No cenário inicial, todos os inputs do bar são exemplos editáveis porque ainda não existem estimativas validadas para lugares, obras, equipa, consumo ou procura.
 5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere visitantes externos do bar e bilhetes da onda; não trate passageiros turísticos como conversões automáticas.
+6. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.
 
 As alterações vivem apenas na sessão do navegador e desaparecem ao recarregar. Partilhe o link do simulador para cada investidor testar os seus próprios cenários; este link não grava nem transmite os valores alterados.
 

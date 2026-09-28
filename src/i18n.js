@@ -60,6 +60,18 @@
     "Analise do bar":"Bar-only economics, including its allocated share of existing overhead. This is an analytical view within the project, not a standalone bar budget.",
     "Analise do conjunto":"Combined wave and bar results. Consolidated tax and financing are recalculated; component IRRs and NPVs cannot be added together."
   };
+  Object.assign(text, {
+    "Modelo revisto em 29/09/2026 · ":"Model reviewed 29 Sep 2026 · ",
+    "Modelo revisto em 29/09/2026 ·":"Model reviewed 29 Sep 2026 ·",
+    "Mudar para modo escuro":"Switch to dark mode","Mudar para modo claro":"Switch to light mode",
+    "0% = procura uniforme; 100% = fatores mensais da onda":"0% = uniform demand; 100% = wave monthly factors",
+    "Inclui participantes de privadas; os dias de abertura sao considerados coincidentes ate ao menor numero de dias de cada mes. O horario mais curto reduz a exposicao proporcionalmente.":"Includes private-session participants; opening days overlap up to the lower monthly operating-day count. Shorter opening hours reduce exposure proportionally.",
+    "Anos de concessao do conjunto":"Combined concession years","Imposto apos juros":"Tax after interest","Divida final":"Closing debt",
+    "Ponto de equilibrio operacional":"Operating break-even",
+    "Relatorios (cenarios fixos)":"Reports (fixed scenarios)",
+    "O preset de betao e apenas um cenario de dimensionamento. Nao confirma a parcela nem a concessao do local pretendido junto ao Teleferico.":"The concrete preset is a sizing scenario only. It does not confirm the plot or concession at the proposed cable-car site.",
+    "Concrete (Backup)":"Concrete site (backup; provisional, not a confirmed concession plot)"
+  });
   const reverse=Object.fromEntries(Object.entries(text).map(([pt,en])=>[en,pt]));
   let language='pt',observer;
   function lookup(s,lang=language){if(lang==='en'){const m=/^Procura de ([0-9.,]+) bilhetes\/dia excede capacidade de ([0-9.,]+)\. Vendas limitadas pelo tempo de utilizacao e troca\.$/.exec(s);if(m)return `Demand for ${m[1]} tickets/day exceeds the capacity of ${m[2]}. Sales are capped by use and changeover time.`;const irr=/^TIR:(.*)$/.exec(s);if(irr)return `IRR:${irr[1]}`;if(text[s])return text[s];let result=s;for(const [pt,en]of Object.entries(text).filter(([k])=>k.length>=12).sort((a,b)=>b[0].length-a[0].length))if(result.includes(pt))result=result.split(pt).join(en);return result;}return reverse[s]||s;}

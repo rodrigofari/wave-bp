@@ -1,6 +1,6 @@
 # Citywave Funchal — investor guide
 
-Updated 24 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
+Updated 29 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
 
 ## The idea in 60 seconds
 
