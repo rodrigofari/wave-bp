@@ -13,9 +13,17 @@ http://localhost:8766. A página usa React/Babel via CDN, pelo que necessita de 
 3. Introduzir comissões, material e encargos elétricos adicionais quando conhecidos.
    Zero significa que ainda não foi incluído um custo, não que não exista.
 4. Comparar **Conjunto**, **Onda sem bar** e **Bar / trabalhar**. Na vista do bar,
-   editar procura externa, lugares, conversão, equipa, investimento e custos comuns.
+   alternar entre operação própria e concessão; editar pressupostos do modelo escolhido.
 5. Em **Onda sem bar**, editar CAPEX, pessoal e estrutura de capital. No modo de
    sessões, a aba **Receitas** permite definir preços por nível e grupos.
+
+No topo, os três cenários para investidores (pessimista, referência e otimista)
+aplicam conjuntos completos de inputs e mostram resultados do mesmo motor. Os
+cenários usam concessão do bar: a empresa recebe renda fixa; vendas, stock e equipa
+do operador ficam fora. As rendas e os custos do proprietário são hipóteses
+editáveis, não ofertas nem referências de mercado. A equipa da onda varia entre
+6, 7 e 9 pessoas para análise; estes números de folha salarial não são uma escala
+de turnos validada.
 
 O modo inicial é bilhetes. Os valores iniciais de oito minutos + um minuto de troca,
 com dez horas de abertura, permitem 66 bilhetes/dia. A procura inicial de 70 é
@@ -57,6 +65,8 @@ Custos fixos adicionais da eletricidade entram todos os meses, mesmo com zero di
 As contas consolidadas assumem uma entidade operacional. As contas por componente
 são analíticas e incluem rateio de custos. As TIR não se somam. A taxa de desconto
 é comum para comparabilidade; não mede separadamente o risco do bar.
+No modo de concessão, só a renda fixa e os custos/CAPEX retidos pelo proprietário
+entram nas contas do projeto; os encargos do concessionário não são imputados.
 
 [Convenções financeiras](FINANCIAL_MODEL.md) · [Clarificações](MODEL_CLARIFICATIONS.md)
 

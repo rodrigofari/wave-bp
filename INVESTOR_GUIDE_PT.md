@@ -6,15 +6,15 @@ Atualizado em 29/09/2026. Este guia explica como ler e testar o simulador. Os va
 
 A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do bar e a receita é o consumo por visita. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
 
-O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 451 400 €, receita anual de 1 238 700 €, EBITDA de 250 832 €, VAL de -868 549 € e TIR do projeto de 0.14%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
+O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 451 400 €, receita anual de 1 238 700 €, EBITDA de 354 782 €, VAL de -287 784 € e TIR do projeto de 5.66%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
 
 | Indicador — cenário inicial | Onda (quota no conjunto) | Bar no conjunto | Conjunto |
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 159 000 € | 2 451 400 € |
 | Receita ano 1 | 938 149 € | 300 551 € | 1 238 700 € |
-| EBITDA ano 1 | 180 162 € | 70 670 € | 250 832 € |
-| VAL | -1 143 369 € | 274 820 € | -868 549 € |
-| TIR do projeto | -3.82% | 36.09% | 0.14% |
+| EBITDA ano 1 | 284 112 € | 70 670 € | 354 782 € |
+| VAL | -562 604 € | 274 820 € | -287 784 € |
+| TIR do projeto | 2.74% | 36.09% | 5.66% |
 
 Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista isolada da onda mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
 
@@ -53,8 +53,8 @@ Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se as
 
 | Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 519 207 € | 6 480 688 € | 49.90% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 260 136 € | 4 974 783 € | 41.21% |
 
 Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (14 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.
 

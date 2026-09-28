@@ -10,11 +10,11 @@ O modo inicial é bilhetes: procura de 70/dia, limitada a **66 vendas/dia** por 
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 159 000 € | 2 451 400 € |
 | Receita ano 1 | 938 149 € | 300 551 € | 1 238 700 € |
-| EBITDA ano 1 | 180 162 € | 70 670 € | 250 832 € |
-| VAL | -1 143 369 € | 274 820 € | -868 549 € |
-| TIR | -3.82% | 36.09% | 0.14% |
+| EBITDA ano 1 | 284 112 € | 70 670 € | 354 782 € |
+| VAL | -562 604 € | 274 820 € | -287 784 € |
+| TIR | 2.74% | 36.09% | 5.66% |
 
-Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 165 762 €. A melhoria real ao acrescentar o bar é 85 070 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
+Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 269 712 €. A melhoria real ao acrescentar o bar é 85 070 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
 
 | Origem do consumo do bar | Receita anual |
 | --- | --- |

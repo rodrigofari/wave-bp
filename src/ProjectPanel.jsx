@@ -31,21 +31,34 @@ function ComponentMonthly({data}) {
     </div>)}
   </div>;
 }
-function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared,onWave}) {
+function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared,onWave,language='pt'}) {
   const {bar,combined,wave,waveAllocated,withoutWaveCustomers,incremental}=project;
   const isBar=mode==='bar', data=isBar?bar:combined;
+  const isConcession=b.operatingMode==='concession',en=language==='en';
   const money=n=>`${fmt(n)}€`;
   const barFields=fields=>fields.map(([key,label,suffix='',max=100000,step=1,min=0,info])=><Row key={key} label={label} value={b[key]} onChange={v=>updateBar(key,v)} suffix={suffix} max={max} step={step} min={min} info={info} />);
   const card={background:'#f7f7f5',padding:18,marginBottom:18,fontSize:12,lineHeight:1.65};
   const linkedRevenue=bar.revenueBreakdown.filter(g=>g.id==='surfers'||g.id==='companions').reduce((a,g)=>a+g.rev,0);
   return <section aria-label={isBar?'Analise do bar':'Analise do conjunto'}>
     <div role="note" style={{...card,borderLeft:'3px solid #b88422',background:'#fff9eb'}}>
-      <strong>CENARIO ILUSTRATIVO DO BAR — SEM ESTIMATIVAS VALIDADAS</strong><br/>
-      Os valores iniciais servem para explorar a ideia e podem ser editados. O espaco para trabalhar faz parte do bar: nao ha passes, aluguer de postos ou mensalidades.
-      Receita = consumo por visita. Os clientes a trabalhar nao entram novamente no publico externo.
+      <strong>{isConcession?(en?'ILLUSTRATIVE BAR CONCESSION — RENT NOT QUOTED':'CONCESSÃO ILUSTRATIVA DO BAR — RENDA NÃO VALIDADA'):(en?'ILLUSTRATIVE OWNER-OPERATED BAR — NO VALIDATED ESTIMATES':'BAR EXPLORADO PELA EMPRESA — SEM ESTIMATIVAS VALIDADAS')}</strong><br/>
+      {isConcession
+        ?(en?'The project receives the editable monthly rent. The concessionaire pays bar staff, product costs, stock and operating bills; only owner-retained costs and any landlord-funded fit-out remain in this project model.':'O projeto recebe a renda mensal editável. O concessionário suporta equipa, produtos, stock e contas operacionais; só os custos retidos pelo proprietário e eventual investimento do senhorio ficam neste modelo.')
+        :(en?'Starting values are editable placeholders. The work area is part of the bar: there are no desk passes or memberships. Revenue is spend per visit.':'Os valores iniciais são hipóteses editáveis. O espaço de trabalho faz parte do bar: não há passes nem mensalidades. A receita é o consumo por visita.')}
     </div>
     <h2 style={{fontSize:23,marginBottom:5}}>{isBar?'Bar e espaco para trabalhar':'Onda + bar — visao conjunta'}</h2>
     <p style={{fontSize:12,color:'#666',lineHeight:1.6}}>{isBar?'Resultado do bar dentro do projeto, incluindo clientes trazidos pela onda e a sua quota dos custos comuns.':'Componentes separadas e contas consolidadas. Os impostos e o financiamento do conjunto sao recalculados; nao se somam TIR nem dividendos.'}</p>
+    <div style={{...card,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,flexWrap:'wrap',border:'1px solid #e0e4e9'}}>
+      <label style={{fontSize:12,fontWeight:700}}>{en?'Bar operating model':'Modelo de exploração do bar'}
+        <select aria-label={en?'Bar operating model':'Modelo de exploração do bar'} value={b.operatingMode||'own'} onChange={e=>updateBar('operatingMode',e.target.value)} style={{display:'block',marginTop:5,padding:8,maxWidth:'100%'}}>
+          <option value="own">{en?'Company-operated':'Operação própria'}</option>
+          <option value="concession">{en?'Concessionaire pays rent':'Concessão com renda'}</option>
+        </select>
+      </label>
+      <span style={{fontSize:10,color:'#657184',maxWidth:600,lineHeight:1.5}}>{isConcession
+        ?(en?'Rent is project revenue; concessionaire sales and payroll do not enter combined project revenue or costs.':'A renda é receita do projeto; vendas e folha salarial do concessionário não entram nas contas consolidadas.')
+        :(en?'Customer sales, bar payroll, operating costs and bar fit-out are included in the project.':'Vendas aos clientes, equipa, custos operacionais e investimento no bar entram no projeto.')}</span>
+    </div>
     <ComponentKpis data={data} />
     <h3 style={{fontSize:13,textTransform:'uppercase'}}>EBITDA mensal — {isBar?'bar':'conjunto'}</h3>
     <ComponentMonthly data={data.monthly} />
@@ -86,6 +99,18 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
     </>}
     {isBar&&<div className="grid-main" style={{display:'grid',gridTemplateColumns:'340px 1fr',gap:24,alignItems:'start'}}>
       <aside style={{minWidth:0}}>
+        {isConcession?<>
+          <Section title={en?'Concession rent and owner costs':'Renda da concessão e custos do proprietário'}>
+            <Row label={en?'Fixed rent received / month':'Renda fixa recebida / mês'} value={b.concessionRentMonth} onChange={v=>updateBar('concessionRentMonth',v)} suffix="€/mes" max={50000} step={100} />
+            <Row label={en?'Owner-retained costs / month':'Custos retidos pelo proprietário / mês'} value={b.concessionOwnerCostsMonth} onChange={v=>updateBar('concessionOwnerCostsMonth',v)} suffix="€/mes" max={20000} step={50} />
+            <Row label={en?'Landlord-funded fit-out CAPEX':'CAPEX de instalação pago pelo senhorio'} value={b.concessionFitoutCapex} onChange={v=>updateBar('concessionFitoutCapex',v)} max={1000000} step={1000} />
+            <Row label={en?'Owner asset residual value at exit':'Valor residual dos ativos do proprietário na saída'} value={b.concessionExitValue} onChange={v=>updateBar('concessionExitValue',v)} max={1000000} step={1000} />
+            <Row label={en?'Contingency on owner CAPEX':'Contingência no CAPEX do proprietário'} value={b.contingency} onChange={v=>updateBar('contingency',v)} suffix="%" max={50} step={1} />
+            <Row label={en?'Annual rent growth':'Crescimento anual da renda'} value={b.revenueGrowth} onChange={v=>updateBar('revenueGrowth',v)} suffix="%" max={20} step={.5} min={-20} />
+            <Row label={en?'Annual owner-cost growth':'Crescimento anual dos custos do proprietário'} value={b.costGrowth} onChange={v=>updateBar('costGrowth',v)} suffix="%" max={20} step={.5} min={-20} />
+            <p style={{fontSize:10,color:'#657184',lineHeight:1.5}}>{en?'Rent is assumed to be paid in all 12 months. The bar operator is responsible for staffing, stock, product costs, utilities and day-to-day operation unless the concession contract assigns a cost to the owner. Enter that cost above.':'Assume-se o pagamento da renda nos 12 meses. O operador suporta equipa, stock, produtos, consumos e operação diária, salvo custos que o contrato atribua ao proprietário. Introduza esses custos acima.'}</p>
+          </Section>
+        </>:<>
         <Section title="Lugares e horario">
           {barFields([
             ['seats','Lugares totais','',200],['hoursDay','Horas aberto/dia','h',24,1,1],['opDays','Dias aberto/ano','',365],
@@ -132,31 +157,40 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
             ['costGrowth','Crescimento custos fixos','%/ano',20,.5,-20],['exitValue','Venda residual liquida','€',1000000,10000,-1000000],
           ])}
         </Section>
+        </>}
       </aside>
       <main style={{minWidth:0}}>
-        <h3>Receitas do bar por origem</h3>
-        <ComponentTable headings={['Clientes','Visitas/ano','Consumo/ano','% receita']} rows={bar.revenueBreakdown.map(g=>[g.label,fmt(g.visits),money(g.rev),pct(bar.annRev?g.rev/bar.annRev:0)])} />
-        <p style={{fontSize:11,lineHeight:1.6,color:'#666'}}>Surfistas e acompanhantes geram {money(linkedRevenue)}, {pct(bar.annRev?linkedRevenue/bar.annRev:0)} da receita do bar. Inclui participantes de privadas; os dias de abertura sao considerados coincidentes ate ao menor numero de dias de cada mes. O horario mais curto reduz a exposicao proporcionalmente.</p>
-        <h3>Custos do bar</h3>
+        <h3>{isConcession?(en?'Rent received by the project':'Renda recebida pelo projeto'):(en?'Bar revenue by source':'Receitas do bar por origem')}</h3>
+        <ComponentTable headings={isConcession?(en?['Item','Annual revenue','% revenue']:['Rubrica','Receita anual','% receita']):(en?['Customers','Visits/year','Spend/year','% revenue']:['Clientes','Visitas/ano','Consumo/ano','% receita'])} rows={bar.revenueBreakdown.map(g=>isConcession?[g.label,money(g.rev),pct(bar.annRev?g.rev/bar.annRev:0)]:[g.label,fmt(g.visits),money(g.rev),pct(bar.annRev?g.rev/bar.annRev:0)])} />
+        {isConcession
+          ?<p style={{fontSize:11,lineHeight:1.6,color:'#666'}}>{en?'Project revenue here is the fixed rent only. The concessionaire’s sales and customer conversion are not counted as company revenue.':'A receita do projeto é apenas a renda fixa. As vendas do operador e a conversão dos seus clientes não são contadas como receita da empresa.'}</p>
+          :<p style={{fontSize:11,lineHeight:1.6,color:'#666'}}>Surfistas e acompanhantes geram {money(linkedRevenue)}, {pct(bar.annRev?linkedRevenue/bar.annRev:0)} da receita do bar. Inclui participantes de privadas; os dias de abertura sao considerados coincidentes ate ao menor numero de dias de cada mes. O horario mais curto reduz a exposicao proporcionalmente.</p>}
+        <h3>{isConcession?(en?'Costs retained by the owner':'Custos suportados pelo proprietário'):(en?'Bar costs':'Custos do bar')}</h3>
         {bar.costBreakdown.map(c=><Row key={c.label} label={c.label} value={c.v} />)}
         <Row label="EBITDA apos custos comuns" value={bar.ebitda} total />
         <div style={{...card,marginTop:20}}>
-          <strong>Ponto de equilibrio operacional</strong>
-          <Row label="Receita anual para EBITDA zero" value={bar.breakEvenRevenue} />
-          <Row label="Visitas/dia ao consumo medio atual" value={bar.breakEvenCustomersDay} suffix="" step={.1} />
-          <Row label="Visitas/dia simuladas" value={bar.visitsDay} suffix="" step={.1} />
-          <Row label="Consumo medio por visita" value={bar.avgTicket} step={.01} />
-          <p style={{marginBottom:0}}>Inclui custos comuns. Nao cobre impostos, divida ou recuperacao do investimento. O mix e o consumo medio sao mantidos constantes neste indicador.</p>
+          <strong>{isConcession?(en?'Concession EBITDA break-even':'Equilíbrio EBITDA da concessão'):(en?'Operating break-even':'Ponto de equilibrio operacional')}</strong>
+          <Row label={en?'Annual revenue for zero EBITDA':'Receita anual para EBITDA zero'} value={bar.breakEvenRevenue} />
+          {isConcession?<Row label={en?'Monthly rent assumed':'Renda mensal assumida'} value={b.concessionRentMonth} suffix={en?'€/month':'€/mês'} />:<>
+            <Row label="Visitas/dia ao consumo medio atual" value={bar.breakEvenCustomersDay} suffix="" step={.1} />
+            <Row label="Visitas/dia simuladas" value={bar.visitsDay} suffix="" step={.1} />
+            <Row label="Consumo medio por visita" value={bar.avgTicket} step={.01} />
+          </>}
+          <p style={{marginBottom:0}}>{isConcession
+            ?(en?'Includes owner-retained and allocated shared costs, but excludes concessionaire costs. Excludes tax, debt and investment recovery.':'Inclui custos retidos pelo proprietário e custos comuns imputados, mas exclui custos do concessionário. Não inclui impostos, dívida nem recuperação do investimento.')
+            :(en?'Includes shared costs, but excludes tax, debt and investment recovery. Current customer mix and average spend are held constant.':'Inclui custos comuns. Não cobre impostos, dívida ou recuperação do investimento. O mix e o consumo médio simulados mantêm-se constantes neste indicador.')}</p>
         </div>
-        <h3>Trabalhar no bar: uso de lugares</h3>
-        <Row label="Ocupacao media das horas-lugar" value={bar.occupancy*100} suffix="%" step={.1} />
-        <ComponentTable headings={['Origem','Receita / hora-lugar','Margem de contribuicao / hora-lugar']} rows={bar.revenueBreakdown.map(g=>[g.label,`${fd(g.seatHours?g.rev/g.seatHours:NaN,2)}€/h`,`${fd(g.seatHours?g.rev*bar.contributionMargin/g.seatHours:NaN,2)}€/h`])} />
-        <p style={{fontSize:11,color:'#666'}}>Margem de contribuicao depois de produtos, pagamentos, concessao e gestao; antes de pessoal e restantes custos fixos.</p>
-        <p style={{fontSize:11,color:'#666',lineHeight:1.6}}>Os clientes a trabalhar usam os mesmos lugares e permanecem mais tempo. O limite e aplicado por horas-lugar mensais; nao garante capacidade em horas de ponta. As visitas de trabalho sao limitadas primeiro aos seus lugares/janela, e as restantes origens partilham a capacidade residual proporcionalmente. Nao ha receita de cowork separada.</p>
-        <h3>Bar sem o consumo trazido pela onda</h3>
-        <Row label="Receita" value={withoutWaveCustomers.annRev} />
-        <Row label="EBITDA (mesmos custos)" value={withoutWaveCustomers.ebitda} />
-        <Row label="VAL" value={withoutWaveCustomers.npvProject} />
+        {!isConcession&&<>
+          <h3>Trabalhar no bar: uso de lugares</h3>
+          <Row label="Ocupacao media das horas-lugar" value={bar.occupancy*100} suffix="%" step={.1} />
+          <ComponentTable headings={['Origem','Receita / hora-lugar','Margem de contribuicao / hora-lugar']} rows={bar.revenueBreakdown.map(g=>[g.label,`${fd(g.seatHours?g.rev/g.seatHours:NaN,2)}€/h`,`${fd(g.seatHours?g.rev*bar.contributionMargin/g.seatHours:NaN,2)}€/h`])} />
+          <p style={{fontSize:11,color:'#666'}}>Margem de contribuicao depois de produtos, pagamentos, concessao e gestao; antes de pessoal e restantes custos fixos.</p>
+          <p style={{fontSize:11,color:'#666',lineHeight:1.6}}>Os clientes a trabalhar usam os mesmos lugares e permanecem mais tempo. O limite e aplicado por horas-lugar mensais; nao garante capacidade em horas de ponta. As visitas de trabalho sao limitadas primeiro aos seus lugares/janela, e as restantes origens partilham a capacidade residual proporcionalmente. Nao ha receita de cowork separada.</p>
+          <h3>Bar sem o consumo trazido pela onda</h3>
+          <Row label="Receita" value={withoutWaveCustomers.annRev} />
+          <Row label="EBITDA (mesmos custos)" value={withoutWaveCustomers.ebitda} />
+          <Row label="VAL" value={withoutWaveCustomers.npvProject} />
+        </>}
       </main>
     </div>}
     <Section title="Custos partilhados e financiamento" open={!isBar}>

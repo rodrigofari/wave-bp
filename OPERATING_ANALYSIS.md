@@ -8,8 +8,8 @@ A sessão é um bloco de grupo com duração total de 45 ou 60 minutos; não se 
 
 | Duração | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita onda | EBITDA conjunto | VAL conjunto | TIR projeto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 519 207 € | 6 480 688 € | 49.90% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 260 136 € | 4 974 783 € | 41.21% |
 
 Cenário indicativo com restantes pressupostos iniciais mantidos: procura de pico de 14 sessões/dia, mix/preços, tarifa de 0,16 €/kWh, potência/carga, custos, bar e financiamento. As participações anuais são vendas públicas após sazonalidade, não capacidade teórica. Como o horário de operação é igual, o custo energético anual é igual nos dois formatos; editar tarifa, potência, carga ou horário recalcula este custo nos dois cenários.
 
@@ -19,28 +19,28 @@ Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 mi
 
 | Participantes públicos/sessão | Procura de pico | Sessões vendidas/dia | Participações públicas/dia | EBITDA conjunto | TIR | VAL |
 | --- | --- | --- | --- | --- | --- | --- |
-| 6 | 10 | 7.61 | 43.36 | 33 001 € | -21.45% | -2 297 721 € |
-| 6 | 12 | 8.49 | 48.39 | 111 774 € | -10.08% | -1 714 713 € |
-| 6 | 14 | 9.12 | 51.98 | 168 073 € | -5.29% | -1 349 633 € |
-| 8 | 10 | 7.61 | 57.82 | 248 418 € | -0.01% | -882 581 € |
-| 8 | 12 | 8.49 | 64.52 | 352 150 € | 5.74% | -279 613 € |
-| 8 | 14 | 9.12 | 69.30 | 426 290 € | 9.39% | 151 338 € |
-| 10 | 10 | 7.61 | 72.27 | 463 834 € | 11.13% | 369 573 € |
-| 10 | 12 | 8.49 | 80.64 | 592 527 € | 16.73% | 1 117 629 € |
-| 10 | 14 | 9.12 | 86.63 | 684 506 € | 20.47% | 1 652 276 € |
-| 14 | 10 | 7.61 | 101.18 | 894 667 € | 28.45% | 2 873 881 € |
-| 14 | 12 | 8.49 | 112.90 | 1 073 281 € | 34.84% | 3 912 113 € |
-| 14 | 14 | 9.12 | 121.28 | 1 200 939 € | 39.27% | 4 654 154 € |
+| 6 | 10 | 7.61 | 43.36 | 136 951 € | -8.19% | -1 568 747 € |
+| 6 | 12 | 8.49 | 48.39 | 215 724 € | -2.36% | -1 096 090 € |
+| 6 | 14 | 9.12 | 51.98 | 272 023 € | 1.12% | -768 836 € |
+| 8 | 10 | 7.61 | 57.82 | 352 368 € | 5.53% | -301 816 € |
+| 8 | 12 | 8.49 | 64.52 | 456 100 € | 10.60% | 301 153 € |
+| 8 | 14 | 9.12 | 69.30 | 530 240 € | 13.93% | 732 103 € |
+| 10 | 10 | 7.61 | 72.27 | 567 784 € | 15.55% | 950 338 € |
+| 10 | 12 | 8.49 | 80.64 | 696 477 € | 20.81% | 1 698 395 € |
+| 10 | 14 | 9.12 | 86.63 | 788 456 € | 24.38% | 2 233 041 € |
+| 14 | 10 | 7.61 | 101.18 | 998 617 € | 32.11% | 3 454 646 € |
+| 14 | 12 | 8.49 | 112.90 | 1 177 231 € | 38.37% | 4 492 879 € |
+| 14 | 14 | 9.12 | 121.28 | 1 304 889 € | 42.73% | 5 234 919 € |
 
 ## Horário com procura de pico de 12 e oito participantes
 
 | Horas/dia | Sessões vendidas/dia | EBITDA conjunto | TIR |
 | --- | --- | --- | --- |
-| 8 | 7.48 | 298 711 € | 2.74% |
-| 9 | 8.07 | 335 295 € | 4.79% |
-| 10 | 8.49 | 352 150 € | 5.74% |
-| 11 | 8.88 | 365 060 € | 6.46% |
-| 12 | 9.13 | 362 186 € | 6.38% |
+| 8 | 7.48 | 402 661 € | 7.94% |
+| 9 | 8.07 | 439 245 € | 9.76% |
+| 10 | 8.49 | 456 100 € | 10.60% |
+| 11 | 8.88 | 469 010 € | 11.25% |
+| 12 | 9.13 | 466 136 € | 11.17% |
 
 A energia aumenta com as horas mesmo que não haja vendas. A equipa não aumenta automaticamente: extensões de horário exigem orçamento de escala. A média de participantes representa lugares vendidos, não surfistas simultâneos. Encurtar sessões não prova que se consiga manter preço e procura.
 

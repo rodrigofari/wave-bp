@@ -6,7 +6,7 @@ const near = (actual,expected,tolerance=1e-6) => assert.ok(Math.abs(actual-expec
 const run = changes => calculate({...INIT,...changes});
 
 test('CAPEX, salaries and annuity match independent arithmetic',()=>{
- const c=run({}); near(c.capex,2292400);near(c.annStaff,249480);near(c.mp,8707.49738588114);
+ const c=run({}); near(c.capex,2292400);near(c.annStaff,145530);near(c.mp,8707.49738588114);
  const zero=debtSchedule(1200,0,2,3);near(zero.payment,50);near(zero.annual[0].principal,600);near(zero.annual[2].debt,0);
 });
 test('whole operating days reconcile for every allowed annual count',()=>{

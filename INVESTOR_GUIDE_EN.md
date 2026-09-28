@@ -6,15 +6,15 @@ Updated 29 Sep 2026. This guide explains how to read and test the simulator. The
 
 The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: those visitors are bar customers, and revenue is their spend per visit. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
 
-The simulator separates **Wave only**, **Bar / work** and **Combined**. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 451 400 €, annual revenue of 1 238 700 €, EBITDA of 250 832 €, NPV of -868 549 € and project IRR of 0.14%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
+The simulator separates **Wave only**, **Bar / work** and **Combined**. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 451 400 €, annual revenue of 1 238 700 €, EBITDA of 354 782 €, NPV of -287 784 € and project IRR of 5.66%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
 
 | Starting scenario | Wave (allocated share) | Bar within combined | Combined |
 | --- | --- | --- | --- |
 | Investment | 2 292 400 € | 159 000 € | 2 451 400 € |
 | Year 1 revenue | 938 149 € | 300 551 € | 1 238 700 € |
-| Year 1 EBITDA | 180 162 € | 70 670 € | 250 832 € |
-| NPV | -1 143 369 € | 274 820 € | -868 549 € |
-| Project IRR | -3.82% | 36.09% | 0.14% |
+| Year 1 EBITDA | 284 112 € | 70 670 € | 354 782 € |
+| NPV | -562 604 € | 274 820 € | -287 784 € |
+| Project IRR | 2.74% | 36.09% | 5.66% |
 
 In the wave column, common costs are already shared with the bar; the standalone wave view retains all of those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
 
@@ -52,8 +52,8 @@ Each group session lasts 45 or 60 minutes in total and can include up to 14 peop
 
 | Group session | Max sessions/day | Max people/day | Public participants/year | Energy tariff | Energy/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 415 257 € | 5 899 923 € | 46.51% |
-| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 156 186 € | 4 394 018 € | 37.72% |
+| 45 min | 13 | 182 | 47 017 | 0.16 €/kWh | 326 400 € | 2 064 279 € | 1 519 207 € | 6 480 688 € | 49.90% |
+| 60 min | 10 | 140 | 41 235 | 0.16 €/kWh | 326 400 € | 1 814 536 € | 1 260 136 € | 4 974 783 € | 41.21% |
 
 Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (14 sessions/day), €0.16/kWh tariff, power/load, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. Editing the tariff, power, load or hours recalculates energy cost in both scenarios. The session gap is editable and reduces available capacity.
 

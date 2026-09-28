@@ -10,13 +10,13 @@ Não há receitas de privadas, clínicas, alugueres, eventos ou cartões neste m
 
 | Clientes externos bar/dia | EBITDA zero | FCFE ano 1 zero | VAL zero dentro de 75/dia | TIR com 70 bilhetes |
 | --- | --- | --- | --- | --- |
-| 0 | 54.90 | 65.89 | Não atinge a capacidade | -1.58% |
-| 30 | 50.43 | 61.43 | Não atinge a capacidade | 2.34% |
-| 60 | 45.97 | 56.96 | 73.09 | 5.87% |
+| 0 | 47.85 | 58.84 | Não atinge a capacidade | 4.19% |
+| 30 | 43.39 | 54.38 | 70.79 | 7.57% |
+| 60 | 38.93 | 49.92 | 66.32 | 10.72% |
 
-Com 70 bilhetes e 60 clientes externos/dia: receita da onda 995 007 €, receita do bar 381 480 €, EBITDA conjunto 354 618 €, FCFE do ano 1 160 720 €, VAL -265 271 € e TIR 5.87%.
+Com 70 bilhetes e 60 clientes externos/dia: receita da onda 995 007 €, receita do bar 381 480 €, EBITDA conjunto 458 568 €, FCFE do ano 1 241 281 €, VAL 315 494 € e TIR 10.72%.
 
-O limiar de VAL zero é 73.09 bilhetes/dia à taxa de 8.14%. EBITDA zero cobre operação; FCFE zero cobre também imposto, dívida e manutenção no ano 1; VAL zero remunera o investimento no horizonte. FCFE não é dividendo automaticamente distribuível.
+O limiar de VAL zero é 66.32 bilhetes/dia à taxa de 8.14%. EBITDA zero cobre operação; FCFE zero cobre também imposto, dívida e manutenção no ano 1; VAL zero remunera o investimento no horizonte. FCFE não é dividendo automaticamente distribuível.
 
 No limite inicial de 66 bilhetes/dia, não se podem usar metas acima de 66 como atingíveis. O simulador limita vendas e sinaliza o retorno que não cabe nessa capacidade. Alterar a permanência é alterar a experiência; não é uma poupança garantida.
 

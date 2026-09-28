@@ -235,8 +235,8 @@ function ScenarioPresets({activeId,onApply,language}) {
       <span style={{fontSize:10,color:'#657184'}}>{english?'Illustrative · editable · not forecasts':'Ilustrativos · editáveis · não são previsões'}</span>
     </div>
     <p style={{fontSize:11,color:'#657184',lineHeight:1.55,margin:'0 0 12px'}}>{english
-      ?'Each card shows the exact assumptions and the combined project result calculated by the same model below. Sessions/day is peak demand; the model applies monthly seasonality and the duration-based capacity limit. External bar visits/day is a reference before seasonality. Applying a case resets wave, bar and shared inputs to that preset; you can edit every input afterwards. Passenger totals are context, not converted directly into customers.'
-      :'Cada cartão mostra os pressupostos exatos e o resultado do projeto conjunto calculado pelo mesmo modelo abaixo. As sessões/dia indicam procura de pico; o modelo aplica sazonalidade mensal e o limite de capacidade baseado na duração. As visitas externas/dia ao bar são uma referência antes da sazonalidade. Aplicar um cenário repõe os pressupostos da onda, do bar e partilhados; depois pode editar qualquer valor. Os totais de passageiros são contexto e não são convertidos diretamente em clientes.'}</p>
+      ?'Each card shows the exact assumptions and combined result calculated by the same model below. Sessions/day is peak demand; monthly seasonality and duration-based capacity are applied. All three scenarios treat the bar as a concession: only fixed rent less owner-retained costs is project revenue; the operator’s sales and payroll are excluded. Applying a case resets wave, bar and shared inputs; every input remains editable. Passenger totals are context, not customers.'
+      :'Cada cartão mostra os pressupostos exatos e o resultado conjunto calculado pelo mesmo modelo abaixo. Sessões/dia indica procura de pico; aplicam-se sazonalidade mensal e o limite de capacidade pela duração. Os três cenários tratam o bar como concessão: para o projeto conta apenas a renda fixa menos os custos retidos pelo proprietário; as vendas e a equipa do operador ficam excluídas. Aplicar um cenário repõe os pressupostos da onda, bar e custos partilhados; tudo continua editável. Passageiros são contexto, não clientes.'}</p>
     <div className="scenario-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10}}>
       {projected.map(({id,title,positioning,explanation,assumptions,caution,project})=>{
         const active=activeId===id;
@@ -262,8 +262,8 @@ function ScenarioPresets({activeId,onApply,language}) {
       })}
     </div>
     <p style={{fontSize:9,color:'#657184',lineHeight:1.5,margin:'10px 0 0'}}>{english
-      ?'Common assumptions held: 10 m wave/site and funding structure from the current reference, 12 wave staff and 3 bar staff, tax and bar fixed costs. The site/concession, staffing plan, prices, external footfall, energy tariff and supplier quotes still need evidence. Bar figures remain illustrative.'
-      :'Pressupostos comuns: onda de 10 m/local e financiamento da referência atual, 12 pessoas na equipa da onda e 3 no bar, imposto e custos fixos do bar. Local/concessão, plano de equipa, preços, fluxo externo, tarifa energética e propostas de fornecedores ainda precisam de confirmação. Os valores do bar são ilustrativos.'}</p>
+      ?'Common assumptions: 10 m wave/site, financing and tax inputs from the current reference. Wave payroll headcount varies by case and is not a validated shift roster. Monthly concession rent (€1,500 / €2,500 / €3,500) is a placeholder, not a market estimate or offer; the model assumes zero landlord fit-out contribution unless entered. Confirm the concession terms, staff rota, site, energy tariff and supplier quotes.'
+      :'Pressupostos comuns: onda de 10 m/local, financiamento e imposto da referência atual. A equipa varia por cenário e não é uma escala de turnos validada. As rendas mensais (1.500€ / 2.500€ / 3.500€) são hipóteses, não avaliações de mercado nem propostas; assume-se CAPEX do senhorio igual a zero até ser introduzido. Falta validar contrato, turnos, local, tarifa energética e propostas de fornecedores.'}</p>
   </section>;
 }
 
@@ -431,7 +431,7 @@ function App() {
       </nav>
       <BreakEvenCharts s={s} barInputs={barInputs} sharedInputs={sharedInputs} project={project} component={component} language={language}/>
       <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language}/>
-      {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} />}
+      {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} language={language} />}
       {component !== 'wave' && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
       <p style={{fontSize:12,color:'#666'}}>Onda sem bar · Indicadores, graficos e separadores desta vista referem-se a piscina. Consulte Conjunto para o projeto completo.</p>

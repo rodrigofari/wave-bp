@@ -5,6 +5,8 @@ const F = typeof module !== 'undefined' && module.exports ? require('./finance.j
 const {INIT, SF, calculate, allocateDays, debtSchedule, npv, irr, paybackOf} = F;
 const sum = values => values.reduce((a,b)=>a+b,0);
 const BAR_INIT = {
+  operatingMode:'own',
+  concessionRentMonth:0, concessionOwnerCostsMonth:0, concessionFitoutCapex:0, concessionExitValue:0,
   seats:36, hoursDay:12, opDays:340,
   externalDaily:45, externalTicket:10.5, externalStay:0.8, seasonalPct:50,
   surfConversion:45, surfTicket:8, surfStay:0.75,
@@ -64,6 +66,7 @@ function valueComponent({operatingYears, capex, workingCapital=0, exitValue=0, s
 }
 
 function barOperations(b, wave, s, shared, trafficFactor=1) {
+  if(b.operatingMode==='concession') return concessionOperations(b,wave,s,shared);
   const warnings=[];
   const days=allocateDays(Math.max(0,Math.min(365,Math.round(b.opDays))));
   const annStaff=b.staffCount*b.salary*(1+s.ssRate/100)*14;
@@ -144,6 +147,49 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
       {label:'Custos comuns imputados',v:sharedYear1}]};
 }
 
+// In concession mode the project is the lessor: only fixed rent, retained
+// owner costs, shared overhead and any landlord-funded fit-out enter its P&L.
+// The concessionaire's sales, payroll, stock and operating bills are outside
+// the project and are not fabricated from the own-operated bar assumptions.
+function concessionOperations(b,wave,s,shared) {
+  const days=allocateDays(Math.max(0,Math.min(365,Math.round(b.opDays))));
+  const warnings=['Bar em concessão: a renda, os custos do proprietário e eventual CAPEX são hipóteses editáveis; vendas, pessoal, stock e custos do concessionário ficam fora das contas do projeto.'];
+  const sharedPool=12*(s.accountingMonth*shared.accountingPct/100+s.marketingMonth*shared.marketingPct/100+s.miscMonth*shared.miscPct/100);
+  const sharedYear1=(sharedPool+shared.extraMonth*12)*shared.barSharePct/100;
+  const rentMonth=Math.max(0,b.concessionRentMonth);
+  const fixedDirect=12*Math.max(0,b.concessionOwnerCostsMonth);
+  const monthly=days.map((d,i)=>{
+    const rent=rentMonth;
+    const ownerCost=Math.max(0,b.concessionOwnerCostsMonth);
+    const group={id:'concessionRent',label:'Renda da concessão',visits:0,requested:0,ticket:0,stay:0,seatHours:0,rev:rent};
+    const allocated=sharedYear1/12;
+    return {days:d,overlapDays:Math.min(d,wave.monthly[i].days),surfVisits:0,groups:[group],rev:rent,
+      cogs:0,payments:0,concession:0,mgmt:0,opexDirect:ownerCost,allocated,
+      opex:ownerCost+allocated,ebitda:rent-ownerCost-allocated,seatHours:0,totalSeatHours:0,unserved:0};
+  });
+  const baseCAPEX=Math.max(0,b.concessionFitoutCapex);
+  const capex=baseCAPEX*(1+b.contingency/100),maintCapex=capex*b.maintCapexPct/100;
+  const annRev=rentMonth*12;
+  const variablePct=0;
+  const revenueBreakdown=[{id:'concessionRent',label:'Renda da concessão',rev:annRev,visits:0,seatHours:0}];
+  const operatingYears=Array.from({length:wave.N},(_,i)=>{
+    const rev=annRev*(1+b.revenueGrowth/100)**i;
+    const directFixed=fixedDirect*(1+b.costGrowth/100)**i;
+    const allocated=sharedYear1*(1+s.costGrowth/100)**i;
+    const dep=(i<b.depreciationYears?capex/b.depreciationYears:0)+Math.min(i,b.depreciationYears)*maintCapex/b.depreciationYears;
+    return {rev,opex:directFixed+allocated,ebitda:rev-directFixed-allocated,dep,maintCapex,
+      directFixed,directOpex:directFixed,allocated,concession:0,mgmt:0};
+  });
+  const visits=0,annDays=sum(days),contributionMargin=1;
+  const breakEvenRevenue=fixedDirect+sharedYear1;
+  return {monthly,days,warnings,annStaff:0,fixedDirect,sharedPool,sharedYear1,baseCAPEX,capex,
+    workingCapital:0,exitValue:Math.max(0,b.concessionExitValue),maintCapex,annRev,operatingYears,revenueBreakdown,contributionMargin,
+    directEBITDA:annRev-fixedDirect,breakEvenRevenue,breakEvenCustomersDay:NaN,
+    avgTicket:NaN,visits,visitsDay:0,occupancy:0,
+    costBreakdown:[{label:'Custos retidos pelo proprietário',v:fixedDirect},
+      {label:'Custos comuns imputados',v:sharedYear1}]};
+}
+
 function calculateProject(waveInput=INIT,barInput=BAR_INIT,sharedInput=SHARED_INIT) {
   const s={...INIT,...waveInput}, b={...BAR_INIT,...barInput}, shared={...SHARED_INIT,...sharedInput};
   const wave=calculate(s);
@@ -158,7 +204,8 @@ function calculateProject(waveInput=INIT,barInput=BAR_INIT,sharedInput=SHARED_IN
   });
   const common={s,wacc:wave.wacc,valid};
   const waveAllocated=valueComponent({...common,operatingYears:waveYears,capex:wave.capex,exitValue:s.exitValue});
-  const bar={...operation,...valueComponent({...common,operatingYears:operation.operatingYears,capex:operation.capex,workingCapital:b.initialStock,exitValue:b.exitValue})};
+  const barExit=operation.exitValue??b.exitValue;
+  const bar={...operation,...valueComponent({...common,operatingYears:operation.operatingYears,capex:operation.capex,workingCapital:operation.workingCapital,exitValue:barExit})};
   const totalYears=waveYears.map((w,i)=>{
     const by=bar.years[i];
     return {rev:w.rev+by.rev,opex:w.opex+by.opex,ebitda:w.ebitda+by.ebitda,
@@ -167,7 +214,7 @@ function calculateProject(waveInput=INIT,barInput=BAR_INIT,sharedInput=SHARED_IN
   // One operating entity: aggregate EBIT before tax. Do not add separate taxes,
   // IRRs or dividends, which are not additive.
   const combined=valueComponent({...common,operatingYears:totalYears,capex:wave.capex+bar.capex,
-    workingCapital:b.initialStock,exitValue:s.exitValue+b.exitValue});
+    workingCapital:operation.workingCapital,exitValue:s.exitValue+barExit});
   combined.monthly=wave.monthly.map((w,i)=>({rev:w.rev+bar.monthly[i].rev,
     opex:w.cost+bar.monthly[i].opexDirect+shared.extraMonth,
     ebitda:w.ebitda+bar.monthly[i].rev-bar.monthly[i].opexDirect-shared.extraMonth}));
@@ -175,8 +222,9 @@ function calculateProject(waveInput=INIT,barInput=BAR_INIT,sharedInput=SHARED_IN
     opex:w.cost-sharedPool*shared.barSharePct/100/12+shared.extraMonth*(1-shared.barSharePct/100),
     ebitda:w.ebitda+sharedPool*shared.barSharePct/100/12-shared.extraMonth*(1-shared.barSharePct/100)}));
   const independent=barOperations(b,wave,s,shared,0);
+  const independentExit=independent.exitValue??b.exitValue;
   const withoutWaveCustomers={...independent,...valueComponent({...common,operatingYears:independent.operatingYears,
-    capex:independent.capex,workingCapital:b.initialStock,exitValue:b.exitValue})};
+    capex:independent.capex,workingCapital:independent.workingCapital,exitValue:independentExit})};
   const incrementalFlows=combined.projectCashflows.map((cf,i)=>cf-wave.projectCashflows[i]);
   const incremental={investment:bar.investment,ebitda:combined.ebitda-wave.ebitda,
     fcff:combined.first.fcff-wave.first.fcff,
