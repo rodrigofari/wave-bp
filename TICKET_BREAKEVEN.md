@@ -1,10 +1,10 @@
 # Bilhetes e break-even — análise atual
 
-Atualizado em 29/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Exemplo reproduzível na interface
 
-Selecionar bilhetes; procura 70/dia; preço médio 41,807 € após descontos e antes de comissões; sete minutos de onda + um de troca; dez horas/dia e 340 dias. Capacidade de 75 bilhetes/dia, sem utilizações simultâneas. No bar: sazonalidade externa zero, restantes pressupostos iniciais. Este exemplo difere do arranque da página (oito minutos + um, capacidade 66).
+Selecionar bilhetes; procura 70/dia; preço médio 41,807 € após descontos e antes de comissões; sete minutos de onda + um de troca; dez horas/dia e 340 dias. Capacidade de 75 bilhetes/dia, sem utilizações simultâneas. No bar: operação própria ilustrativa, com sazonalidade externa zero; esta é uma alternativa ao arranque em concessão. O exemplo também difere do arranque da página no tempo de onda (oito minutos + um, capacidade 66).
 
 Não há receitas de privadas, clínicas, alugueres, eventos ou cartões neste modo. O bar continua a receber surfistas e acompanhantes; mantém também seis clientes/dia a trabalhar. Os valores da tabela são bilhetes por dia aberto em média.
 
@@ -20,4 +20,4 @@ O limiar de VAL zero é 66.32 bilhetes/dia à taxa de 8.14%. EBITDA zero cobre o
 
 No limite inicial de 66 bilhetes/dia, não se podem usar metas acima de 66 como atingíveis. O simulador limita vendas e sinaliza o retorno que não cabe nessa capacidade. Alterar a permanência é alterar a experiência; não é uma poupança garantida.
 
-A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.
+A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.

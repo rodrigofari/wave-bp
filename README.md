@@ -12,8 +12,8 @@ http://localhost:8766. A página usa React/Babel via CDN, pelo que necessita de 
    líquida média, minutos de onda e intervalo por bilhete. O tempo limita as vendas.
 3. Introduzir comissões, material e encargos elétricos adicionais quando conhecidos.
    Zero significa que ainda não foi incluído um custo, não que não exista.
-4. Comparar **Conjunto**, **Onda sem bar** e **Bar / trabalhar**. Na vista do bar,
-   alternar entre operação própria e concessão; editar pressupostos do modelo escolhido.
+4. Comparar **Conjunto**, **Onda sem bar** e **Bar / trabalhar**. O arranque usa uma
+   concessão ilustrativa do bar; na vista do bar, é possível testar operação própria.
 5. Em **Onda sem bar**, editar CAPEX, pessoal e estrutura de capital. No modo de
    sessões, a aba **Receitas** permite definir preços por nível e grupos.
 
@@ -30,9 +30,12 @@ com dez horas de abertura, permitem 66 bilhetes/dia. A procura inicial de 70 é
 limitada a 66; o aviso não pode ser interpretado como venda de 70 bilhetes.
 O tempo de utilização é uma hipótese operacional, não capacidade certificada.
 
-Preços são líquidos de IVA. O preço médio dos bilhetes já inclui descontos;
-comissões são custos separados sobre a receita intermediada. Não descontar duas
-vezes. O modelo não converte automaticamente preços ao consumidor com IVA.
+O painel **IVA e caixa** deixa escolher se cada preço introduzido é antes de IVA
+ou preço final com IVA. Como essa política comercial ainda não foi decidida, o
+arranque preserva a convenção histórica de valores antes de IVA. O preço médio
+dos bilhetes já inclui descontos; comissões são custos separados sobre a receita
+intermediada. Não descontar duas vezes. O painel mostra dedução do IVA, IVA
+autoliquidado, reembolso ilustrativo e pico de caixa temporariamente empatada.
 Em sessões, material incluído exceto avançados; coaching adicional está desativado.
 Em bilhetes, privadas, coaching, alugueres, eventos e cartões não geram receita extra.
 
@@ -53,8 +56,10 @@ publicados correspondem ao motor atual. Para regenerar, executar sem `--check`.
 Os testes verificam reconciliações, limites de capacidade, custos, dívida, impostos,
 caixa, dividendos, TIR, VAL e raízes do break-even. Não comprovam procura, preços de
 mercado, orçamento EEM, especificação final da máquina ou conformidade fiscal.
-O imposto é simplificado, sem reporte de prejuízos; não há tesouraria mensal, rampa
-de abertura, calendário de IVA ou financiamento automático de défices intranuais.
+O IRC é simplificado, sem reporte de prejuízos. A ponte mensal de IVA cobre apenas
+o primeiro ano, assume liquidação no próprio mês e não inclui o custo financeiro
+da espera pelo reembolso no VAL/TIR. Não há tesouraria mensal completa, rampa de
+abertura nem financiamento automático de défices intranuais.
 O prazo do empréstimo pode exceder a concessão: o saldo é liquidado na saída.
 
 Os custos de material por participação são uma média; nas privadas, a estimativa
@@ -74,8 +79,8 @@ entram nas contas do projeto; os encargos do concessionário não são imputados
 
 O simulador tem seletor PT/EN. Em cada secção, o ícone **i** mostra uma explicação ao passar o cursor ou ao receber foco. O idioma inglês cobre os controlos e componentes do modelo; as fórmulas e valores não mudam. Os inputs alterados ficam apenas no navegador de cada investidor e não são guardados no link partilhado.
 
-Os relatórios `BAR_ANALYSIS.md`, `OPERATING_ANALYSIS.md`, `TICKET_BREAKEVEN.md`
-e `MODEL_CLARIFICATIONS.md` são gerados automaticamente do motor atual, tal como
+Os relatórios `BAR_ANALYSIS.md`, `OPERATING_ANALYSIS.md`, `TICKET_BREAKEVEN.md`,
+`MODEL_CLARIFICATIONS.md` e `IVA_ANALYSIS.md` são gerados automaticamente, tal como
 `reports.html`, acessível na página através de **Relatórios e pressupostos atuais**.
 Cada relatório identifica o cenário e distingue-o do estado inicial da interface.
 Os scripts em `analysis/` permitem reproduzir os exercícios.

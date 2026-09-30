@@ -6,6 +6,9 @@ const {INIT, SF, calculate, allocateDays, debtSchedule, npv, irr, paybackOf} = F
 const sum = values => values.reduce((a,b)=>a+b,0);
 const BAR_INIT = {
   operatingMode:'own',
+  pricesIncludeVat:false, vatSalesRate:22, vatTaxableSalesPct:100,
+  concessionRentIncludesVat:false, concessionVatRate:22, concessionTaxablePct:100,
+  vatCapexAdditional:0, vatCostUpliftPct:0,
   concessionRentMonth:0, concessionOwnerCostsMonth:0, concessionFitoutCapex:0, concessionExitValue:0,
   seats:36, hoursDay:12, opDays:340,
   externalDaily:45, externalTicket:10.5, externalStay:0.8, seasonalPct:50,
@@ -19,6 +22,8 @@ const BAR_INIT = {
   permits:5000, contingency:10, initialStock:5000,
   depreciationYears:10, maintCapexPct:3, revenueGrowth:3, costGrowth:2, exitValue:0,
 };
+const APP_BAR_INIT={...BAR_INIT,operatingMode:'concession',concessionRentMonth:2500,
+  concessionOwnerCostsMonth:300,concessionFitoutCapex:0};
 const SHARED_INIT = {
   // These costs already exist in the wave inputs. They are transferred, not added.
   accountingPct:100, marketingPct:100, miscPct:100,
@@ -70,8 +75,10 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
   const warnings=[];
   const days=allocateDays(Math.max(0,Math.min(365,Math.round(b.opDays))));
   const annStaff=b.staffCount*b.salary*(1+s.ssRate/100)*14;
-  const fixedDirect=annStaff+12*(b.utilitiesMonth+b.rentMonth+b.insuranceMonth+b.otherMonth);
-  const sharedPool=12*(s.accountingMonth*shared.accountingPct/100+s.marketingMonth*shared.marketingPct/100+s.miscMonth*shared.miscPct/100);
+  const vatFactor=1+b.vatCostUpliftPct/100;
+  const priceFactor=b.pricesIncludeVat?1-b.vatTaxableSalesPct/100+b.vatTaxableSalesPct/100/(1+b.vatSalesRate/100):1;
+  const fixedDirect=annStaff+12*(b.utilitiesMonth*vatFactor+b.rentMonth+b.insuranceMonth+b.otherMonth*vatFactor);
+  const sharedPool=12*(s.accountingMonth*(1+s.vatSharedAccountingUpliftPct/100)*shared.accountingPct/100+s.marketingMonth*(1+s.vatSharedMarketingUpliftPct/100)*shared.marketingPct/100+s.miscMonth*(1+s.vatSharedMiscUpliftPct/100)*shared.miscPct/100);
   const sharedYear1=(sharedPool+shared.extraMonth*12)*shared.barSharePct/100;
   const workSeats=Math.min(b.workSeats,b.seats);
   if(b.workSeats>b.seats) warnings.push('Os lugares para trabalhar fazem parte dos lugares do bar; o calculo limita-os ao total.');
@@ -84,10 +91,10 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
     const surfVisits=waveMonth.days>0 ? (waveMonth.people+waveMonth.privateSessions*s.privateGroupSize)*overlapDays/waveMonth.days*hourOverlap*trafficFactor : 0;
     const season=1-b.seasonalPct/100*(1-SF[i]);
     const requested=[
-      {id:'surfers',label:'Surfistas',visits:surfVisits*b.surfConversion/100,ticket:b.surfTicket,stay:b.surfStay},
-      {id:'companions',label:'Acompanhantes',visits:surfVisits*b.companionsPerSurfer*b.companionConversion/100,ticket:b.companionTicket,stay:b.companionStay},
-      {id:'external',label:'Publico externo',visits:d*b.externalDaily*season,ticket:b.externalTicket,stay:b.externalStay},
-      {id:'workers',label:'Clientes a trabalhar',visits:d*b.workDaily,ticket:b.workTicket,stay:b.workStay},
+      {id:'surfers',label:'Surfistas',visits:surfVisits*b.surfConversion/100,ticket:b.surfTicket*priceFactor,stay:b.surfStay},
+      {id:'companions',label:'Acompanhantes',visits:surfVisits*b.companionsPerSurfer*b.companionConversion/100,ticket:b.companionTicket*priceFactor,stay:b.companionStay},
+      {id:'external',label:'Publico externo',visits:d*b.externalDaily*season,ticket:b.externalTicket*priceFactor,stay:b.externalStay},
+      {id:'workers',label:'Clientes a trabalhar',visits:d*b.workDaily,ticket:b.workTicket*priceFactor,stay:b.workStay},
     ];
     const totalSeatHours=b.seats*b.hoursDay*d;
     const workerLimit=workSeats*Math.min(b.workHours,b.hoursDay)*d;
@@ -101,7 +108,7 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
       return {...g,requested:g.visits,visits,seatHours:visits*g.stay,rev:visits*g.ticket};
     });
     const rev=sum(groups.map(g=>g.rev));
-    const cogs=rev*b.cogsPct/100, payments=rev*b.paymentPct/100;
+    const cogs=rev*b.cogsPct/100*vatFactor, payments=rev*b.paymentPct/100;
     const concession=rev*b.concessionPct/100, mgmt=rev*b.mgmtPct/100;
     const variable=cogs+payments+concession+mgmt;
     const opexDirect=variable+fixedDirect/12, allocated=sharedYear1/12;
@@ -112,9 +119,9 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
   });
   if(sum(monthly.map(m=>m.unserved))>1e-6) warnings.push('A procura excede as horas-lugar disponiveis ou a permanencia nao cabe no horario. O consumo contabiliza apenas visitas atendidas.');
   const baseCAPEX=b.works+b.equipment+b.furniture+b.wifiSockets+b.permits;
-  const capex=baseCAPEX*(1+b.contingency/100), maintCapex=capex*b.maintCapexPct/100;
+  const capex=baseCAPEX*(1+b.contingency/100)+b.vatCapexAdditional, maintCapex=capex*b.maintCapexPct/100;
   const annRev=sum(monthly.map(m=>m.rev));
-  const variablePct=(b.cogsPct+b.paymentPct+b.concessionPct+b.mgmtPct)/100;
+  const variablePct=(b.cogsPct*vatFactor+b.paymentPct+b.concessionPct+b.mgmtPct)/100;
   if(variablePct>=1) warnings.push('Custos variaveis iguais ou superiores a receita: nao existe ponto de equilibrio com estes precos e margens.');
   const revenueBreakdown=monthly[0].groups.map((g,j)=>({id:g.id,label:g.label,
     rev:sum(monthly.map(m=>m.groups[j].rev)),visits:sum(monthly.map(m=>m.groups[j].visits)),
@@ -139,11 +146,11 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
     breakEvenRevenue,breakEvenCustomersDay:avgTicket>0&&annDays>0?breakEvenRevenue/avgTicket/annDays:NaN,
     avgTicket,visits,visitsDay:annDays?visits/annDays:0,
     occupancy:sum(monthly.map(m=>m.totalSeatHours))?sum(monthly.map(m=>m.seatHours))/sum(monthly.map(m=>m.totalSeatHours)):0,
-    costBreakdown:[{label:'Produtos vendidos (CMVMC)',v:annRev*b.cogsPct/100},
+    costBreakdown:[{label:'Produtos vendidos (CMVMC)',v:annRev*b.cogsPct/100*vatFactor},
       {label:'Pagamentos',v:annRev*b.paymentPct/100},{label:'Concessao',v:annRev*b.concessionPct/100},
       {label:'Gestao',v:annRev*b.mgmtPct/100},{label:'Equipa exclusiva do bar',v:annStaff},
-      {label:'Energia, agua e internet',v:b.utilitiesMonth*12},{label:'Renda exclusiva / encargo fixo',v:b.rentMonth*12},
-      {label:'Seguro exclusivo',v:b.insuranceMonth*12},{label:'Outros exclusivos',v:b.otherMonth*12},
+      {label:'Energia, agua e internet',v:b.utilitiesMonth*12*vatFactor},{label:'Renda exclusiva / encargo fixo',v:b.rentMonth*12},
+      {label:'Seguro exclusivo',v:b.insuranceMonth*12},{label:'Outros exclusivos',v:b.otherMonth*12*vatFactor},
       {label:'Custos comuns imputados',v:sharedYear1}]};
 }
 
@@ -154,13 +161,14 @@ function barOperations(b, wave, s, shared, trafficFactor=1) {
 function concessionOperations(b,wave,s,shared) {
   const days=allocateDays(Math.max(0,Math.min(365,Math.round(b.opDays))));
   const warnings=['Bar em concessão: a renda, os custos do proprietário e eventual CAPEX são hipóteses editáveis; vendas, pessoal, stock e custos do concessionário ficam fora das contas do projeto.'];
-  const sharedPool=12*(s.accountingMonth*shared.accountingPct/100+s.marketingMonth*shared.marketingPct/100+s.miscMonth*shared.miscPct/100);
+  const sharedPool=12*(s.accountingMonth*(1+s.vatSharedAccountingUpliftPct/100)*shared.accountingPct/100+s.marketingMonth*(1+s.vatSharedMarketingUpliftPct/100)*shared.marketingPct/100+s.miscMonth*(1+s.vatSharedMiscUpliftPct/100)*shared.miscPct/100);
   const sharedYear1=(sharedPool+shared.extraMonth*12)*shared.barSharePct/100;
-  const rentMonth=Math.max(0,b.concessionRentMonth);
-  const fixedDirect=12*Math.max(0,b.concessionOwnerCostsMonth);
+  const rentFactor=b.concessionRentIncludesVat?1-b.concessionTaxablePct/100+b.concessionTaxablePct/100/(1+b.concessionVatRate/100):1;
+  const rentMonth=Math.max(0,b.concessionRentMonth)*rentFactor;
+  const fixedDirect=12*Math.max(0,b.concessionOwnerCostsMonth)*(1+b.vatCostUpliftPct/100);
   const monthly=days.map((d,i)=>{
     const rent=rentMonth;
-    const ownerCost=Math.max(0,b.concessionOwnerCostsMonth);
+    const ownerCost=Math.max(0,b.concessionOwnerCostsMonth)*(1+b.vatCostUpliftPct/100);
     const group={id:'concessionRent',label:'Renda da concessão',visits:0,requested:0,ticket:0,stay:0,seatHours:0,rev:rent};
     const allocated=sharedYear1/12;
     return {days:d,overlapDays:Math.min(d,wave.monthly[i].days),surfVisits:0,groups:[group],rev:rent,
@@ -168,7 +176,7 @@ function concessionOperations(b,wave,s,shared) {
       opex:ownerCost+allocated,ebitda:rent-ownerCost-allocated,seatHours:0,totalSeatHours:0,unserved:0};
   });
   const baseCAPEX=Math.max(0,b.concessionFitoutCapex);
-  const capex=baseCAPEX*(1+b.contingency/100),maintCapex=capex*b.maintCapexPct/100;
+  const capex=baseCAPEX*(1+b.contingency/100)+b.vatCapexAdditional,maintCapex=capex*b.maintCapexPct/100;
   const annRev=rentMonth*12;
   const variablePct=0;
   const revenueBreakdown=[{id:'concessionRent',label:'Renda da concessão',rev:annRev,visits:0,seatHours:0}];
@@ -240,7 +248,8 @@ function ticketBreakEven(waveInput,barInput,sharedInput) {
   const s={...INIT,...waveInput,salesMode:'tickets'};
   const base=calculateProject(s,barInput,sharedInput);
   if(!base.combined.valid)return {valid:false,reason:'Corrija o financiamento e a compatibilidade do local.',capacity:base.wave.ticketCapacity};
-  const unitMargin=s.ticketPrice*(1-(s.concessionRate+s.mgmtPct)/100-s.distributionPct/100*s.commissionPct/100)-s.equipmentPerVisit;
+  const priceFactor=s.pricesIncludeVat?1-s.vatTaxableSalesPct/100+s.vatTaxableSalesPct/100/(1+s.vatSalesRate/100):1;
+  const unitMargin=s.ticketPrice*priceFactor*(1-(s.concessionRate+s.mgmtPct)/100-s.distributionPct/100*s.commissionPct/100)-s.equipmentPerVisit*(1+s.vatOperatingUpliftPct/100);
   if(unitMargin<0)return {valid:false,reason:'Margem direta por bilhete negativa. Os resultados continuam disponiveis, mas o limiar por volume requer rever preco e custos variaveis.',capacity:base.wave.ticketCapacity};
   const capacity=base.wave.ticketCapacity;
   const solve=metric=>{
@@ -255,7 +264,7 @@ function ticketBreakEven(waveInput,barInput,sharedInput) {
     operating:solve(p=>p.combined.ebitda),cash:solve(p=>p.combined.first.fcfe),
     investment:solve(p=>p.combined.npvProject)};
 }
-const api={BAR_INIT,SHARED_INIT,calculateProject,valueComponent,ticketBreakEven};
+const api={BAR_INIT,APP_BAR_INIT,SHARED_INIT,calculateProject,valueComponent,ticketBreakEven};
 if(typeof module!=='undefined'&&module.exports) module.exports=api;
 else root.CitywaveHospitality=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

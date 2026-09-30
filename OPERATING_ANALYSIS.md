@@ -1,6 +1,6 @@
 # Participantes, sessões e horários — análise atual
 
-Atualizado em 29/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Comparação pedida: sessões de 45 e 60 minutos, até 14 pessoas
 
@@ -15,7 +15,7 @@ Cenário indicativo com restantes pressupostos iniciais mantidos: procura de pic
 
 ## Sensibilidade ao tamanho do grupo e procura de pico
 
-Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 minutos sem intervalo adicional. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.
+Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 minutos sem intervalo adicional. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar em operação própria alternativa, com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.
 
 | Participantes públicos/sessão | Procura de pico | Sessões vendidas/dia | Participações públicas/dia | EBITDA conjunto | TIR | VAL |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -46,4 +46,4 @@ A energia aumenta com as horas mesmo que não haja vendas. A equipa não aumenta
 
 As referências operacionais [Citywave Viena](https://www.city-wave.at/faqs/) e [Citywave Tokyo](https://citywave-tokyo.jp/english/) mostram grupos de dimensão variável; não certificam a configuração local. O produto turístico deve ter material e acompanhamento definidos e preço líquido compatível com os custos de venda.
 
-A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.
+A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.

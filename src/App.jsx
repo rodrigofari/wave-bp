@@ -222,12 +222,15 @@ function BreakEvenCharts({s,barInputs,sharedInputs,project,component,language}) 
   </section>;
 }
 
-function ScenarioPresets({activeId,onApply,language}) {
+function ScenarioPresets({activeId,onApply,language,vatInputs,wavePricesIncludeVat,barPricesIncludeVat,barRentIncludesVat}) {
   const scenarios = CitywaveScenarios.all();
   const projected = useMemo(()=>scenarios.map(scenario=>({
     ...scenario,
-    project:CitywaveHospitality.calculateProject(scenario.inputs.wave,scenario.inputs.bar,scenario.inputs.shared),
-  })),[]);
+    project:CitywaveVAT.calculate(
+      {...scenario.inputs.wave,pricesIncludeVat:wavePricesIncludeVat},
+      {...scenario.inputs.bar,pricesIncludeVat:barPricesIncludeVat,concessionRentIncludesVat:barRentIncludesVat},
+      scenario.inputs.shared,vatInputs).project,
+  })),[vatInputs,wavePricesIncludeVat,barPricesIncludeVat,barRentIncludesVat]);
   const english=language==='en';
   return <section className="scenario-dashboard" aria-label={english?'Investor planning scenarios':'Cenarios de planeamento para investidores'} style={{margin:'16px 0 22px',padding:16,border:'1px solid #d8dee7',borderRadius:10,background:'#f7f9fc'}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:10,flexWrap:'wrap'}}>
@@ -264,6 +267,7 @@ function ScenarioPresets({activeId,onApply,language}) {
     <p style={{fontSize:9,color:'#657184',lineHeight:1.5,margin:'10px 0 0'}}>{english
       ?'Common assumptions: 10 m wave/site, financing and tax inputs from the current reference. Wave payroll headcount varies by case and is not a validated shift roster. Monthly concession rent (€1,500 / €2,500 / €3,500) is a placeholder, not a market estimate or offer; the model assumes zero landlord fit-out contribution unless entered. Confirm the concession terms, staff rota, site, energy tariff and supplier quotes.'
       :'Pressupostos comuns: onda de 10 m/local, financiamento e imposto da referência atual. A equipa varia por cenário e não é uma escala de turnos validada. As rendas mensais (1.500€ / 2.500€ / 3.500€) são hipóteses, não avaliações de mercado nem propostas; assume-se CAPEX do senhorio igual a zero até ser introduzido. Falta validar contrato, turnos, local, tarifa energética e propostas de fornecedores.'}</p>
+    <p style={{fontSize:9,color:'#657184',lineHeight:1.5}}>{english?'The cards use the current VAT assumptions and price basis; applying a scenario keeps your gross/net choice.':'Os cartões usam os pressupostos atuais de IVA e a base dos preços; aplicar um cenário preserva a escolha de preço final/antes de IVA.'}</p>
   </section>;
 }
 
@@ -277,8 +281,11 @@ function App() {
   const [scenarioId,setScenarioId] = useState(null);
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("wave");
-  const [barInputs, setBarInputs] = useState(CitywaveHospitality.BAR_INIT);
+  const [barInputs, setBarInputs] = useState(CitywaveHospitality.APP_BAR_INIT);
   const [sharedInputs, setSharedInputs] = useState(CitywaveHospitality.SHARED_INIT);
+  const [vatInputs,setVatInputs] = useState(CitywaveVAT.VAT_INIT);
+  const updateVat = useCallback((k,v)=>setVatInputs(p=>({...p,[k]:v,profile:'custom'})),[]);
+  const applyVatProfile = useCallback(id=>setVatInputs(p=>({...p,...CitywaveVAT.PROFILES[id]})),[]);
   const updateBar = useCallback((k,v)=>{setScenarioId(null);setBarInputs(p=>({...p,[k]:v}));},[]);
   const updateShared = useCallback((k,v)=>{setScenarioId(null);setSharedInputs(p=>({...p,[k]:v}));},[]);
   const u = useCallback((k,v) => {setScenarioId(null);setS(p=>({...p,[k]:v}));}, []);
@@ -288,7 +295,9 @@ function App() {
 
   const applyScenario = useCallback((id)=>{
     const preset=CitywaveScenarios.build(id);
-    setS(preset.wave);setBarInputs(preset.bar);setSharedInputs(preset.shared);setScenarioId(id);
+    setS(p=>({...preset.wave,pricesIncludeVat:p.pricesIncludeVat}));
+    setBarInputs(p=>({...preset.bar,pricesIncludeVat:p.pricesIncludeVat,concessionRentIncludesVat:p.concessionRentIncludesVat}));
+    setSharedInputs(preset.shared);setScenarioId(id);
   },[]);
 
   // Site scenario selector — applies preset
@@ -312,8 +321,10 @@ function App() {
     });
   }, []);
 
-  const project = useMemo(() => CitywaveHospitality.calculateProject(s,barInputs,sharedInputs), [s,barInputs,sharedInputs]);
-  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveHospitality.calculateProject({...s,salesMode:"sessions",sessionMinutes:minutes,ridersPerSession:14},barInputs,sharedInputs)})), [s,barInputs,sharedInputs]);
+  const vatResult=useMemo(()=>CitywaveVAT.calculate(s,barInputs,sharedInputs,vatInputs),[s,barInputs,sharedInputs,vatInputs]);
+  const project=vatResult.project;
+  const modelInputs=vatResult.inputs;
+  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveVAT.calculate({...s,salesMode:"sessions",sessionMinutes:minutes,ridersPerSession:14},barInputs,sharedInputs,vatInputs).project})), [s,barInputs,sharedInputs,vatInputs]);
   const comparison45=sessionComparison[0].project, comparison60=sessionComparison[1].project;
   const calc = project.wave;
   const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
@@ -362,6 +373,10 @@ function App() {
         .root-container[data-theme="dark"] .scenario-card{background:#191f29!important;border-color:#343c49!important}
         .root-container[data-theme="dark"] .scenario-card h3,.root-container[data-theme="dark"] .scenario-card strong{color:#eef2f8!important}
         .root-container[data-theme="dark"] .scenario-metrics{border-color:#343c49!important}
+        .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(255, 255, 255)"],
+        .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(216, 222, 231)"]{background:#191f29!important;color:#e5e9ef!important}
+        .root-container[data-theme="dark"] .vat-panel p,
+        .root-container[data-theme="dark"] .vat-panel div[style*="color: rgb(89, 100, 116)"]{color:#b6c0cf!important}
         .root-container[data-theme="dark"] .model-help{color:#c1c8d2!important;border-color:#737e8d!important}
         .root-container[data-theme="dark"] ::selection{background:#c6d9f2;color:#111}
         input[type=range]{-webkit-appearance:none;height:3px;background:#ddd;border-radius:2px;outline:none;width:100%}
@@ -423,16 +438,17 @@ function App() {
             <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
           </div>
         </div>
-        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 29/09/2026 · <a href="./reports.html">Relatorios (cenarios fixos)</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
+        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 30/09/2026 · <a href="./reports.html">Relatorios (cenarios fixos)</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
       </header>
 
       <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
-        {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
+        {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto'],['vat',language==='en'?'VAT & cash':'IVA e caixa']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
       </nav>
-      <BreakEvenCharts s={s} barInputs={barInputs} sharedInputs={sharedInputs} project={project} component={component} language={language}/>
-      <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language}/>
-      {component !== 'wave' && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} language={language} />}
-      {component !== 'wave' && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project} /></Section>}
+      <BreakEvenCharts s={modelInputs.wave} barInputs={modelInputs.bar} sharedInputs={modelInputs.shared} project={project} component={component} language={language}/>
+      <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language} vatInputs={vatInputs} wavePricesIncludeVat={s.pricesIncludeVat} barPricesIncludeVat={barInputs.pricesIncludeVat} barRentIncludesVat={barInputs.concessionRentIncludesVat}/>
+      {component === 'vat' && <VatPanel vat={vatInputs} onVat={updateVat} onPreset={applyVatProfile} s={s} b={barInputs} onWave={u} onBar={updateBar} result={vatResult} language={language}/>}
+      {(component === 'bar'||component === 'project') && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} language={language} />}
+      {(component === 'bar'||component === 'project') && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
       <p style={{fontSize:12,color:'#666'}}>Onda sem bar · Indicadores, graficos e separadores desta vista referem-se a piscina. Consulte Conjunto para o projeto completo.</p>
       {/* ── DISCOVERY CALL BANNER ── */}
@@ -744,7 +760,7 @@ function App() {
           {/* REVENUE */}
           {tab==="revenue" && s.salesMode==="tickets" && <>
             <h2 style={{fontSize:13,fontWeight:800,textTransform:'uppercase'}}>Receitas e break-even por bilhete</h2>
-            <SimulationControls s={s} b={barInputs} shared={sharedInputs} updateWave={u} project={project}/>
+            <SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project}/>
           </>}
           {tab==="revenue" && s.salesMode!=="tickets" && <>
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de Receitas — Capacidade e Precos Liquidos</h2>
