@@ -6,15 +6,15 @@ Updated 30 Sep 2026. This guide explains how to read and test the simulator. The
 
 The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: visitors are customers of the bar operator. In the starting concession, the Lda. receives fixed rent and does not book their spending. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
 
-The simulator shows the combined project in one view; the overview table identifies the wave and bar contributions separately. All headline figures refer to the total investment. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 144 505 €, NPV of -1 371 916 € and project IRR of -6.96%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
+The simulator shows the combined project in one view; the overview table identifies the wave and bar contributions separately. All headline figures refer to the total investment. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 186 085 €, NPV of -1 137 726 € and project IRR of -3.83%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
 
 | Starting scenario | Wave (allocated share) | Bar within combined | Combined |
 | --- | --- | --- | --- |
 | Investment | 2 292 400 € | 0 € | 2 292 400 € |
 | Year 1 revenue | 778 563 € | 30 000 € | 808 563 € |
-| Year 1 EBITDA | 132 505 € | 12 000 € | 144 505 € |
-| NPV | -1 451 695 € | 73 816 € | -1 371 916 € |
-| Project IRR | -8.11% | Indisponível | -6.96% |
+| Year 1 EBITDA | 174 085 € | 12 000 € | 186 085 € |
+| NPV | -1 211 542 € | 73 816 € | -1 137 726 € |
+| Project IRR | -4.80% | Indisponível | -3.83% |
 
 In the wave column, common costs are already shared with the bar; a wave-only calculation in the engine retains all those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
 
@@ -40,7 +40,7 @@ Shared costs can be allocated between wave and bar for analysis, but this does n
 
 ## Group sessions and capacity: what does the model sell?
 
-The Lda. sells places in 45- or 60-minute group sessions. Each customer pays the price for their skill level; the duration belongs to the whole group, not to individual wave time. The starting case uses demand for nine peak sessions/day, eight people/session, 60 minutes, ten opening hours and 340 days/year: about 54.8 public participants per open day on average. Monthly seasonality reduces demand, while operating hours cap sales at the whole number of sessions that fit. At 60 minutes without an extra gap, the ceiling is ten groups/day. The editable group limit is 14 people, but Citywave and the operating team must confirm safe capacity and rotation.
+The Lda. sells places in 45- or 60-minute group sessions. Each customer pays the price for their skill level; the duration belongs to the whole group, not to individual wave time. Base wave payroll assumes five people; coverage across shifts still needs a validated roster. The starting case uses demand for nine peak sessions/day, eight people/session, 60 minutes, ten opening hours and 340 days/year: about 54.8 public participants per open day on average. Monthly seasonality reduces demand, while operating hours cap sales at the whole number of sessions that fit. At 60 minutes without an extra gap, the ceiling is ten groups/day. The editable group limit is 14 people, but Citywave and the operating team must confirm safe capacity and rotation.
 
 The starting prices are €49/€39/€39/€35 for beginner/intermediate/advanced/children, with editable discounts. The VAT checkbox at the top, in Prices and in VAT & cash chooses whether entered prices are before VAT or final customer prices; the commercial policy is still undecided. Equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it. Private sessions replace public groups; private bookings, rental, events, passes and extra coaching start at zero in the investor case. Intermediary sales incur a separate commission.
 
@@ -50,8 +50,8 @@ Each group session lasts 45 or 60 minutes in total and can include up to 14 peop
 
 | Group session | Max sessions/day | Max people/day | Public participants/year | Energy tariff | Energy/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 391 050 € | 63 064 € | 8.70% |
-| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 321 912 € | -338 820 € | 4.98% |
+| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 295 370 € | 10.73% |
+| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | -106 514 € | 7.17% |
 
 Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (12 sessions/day), €0.16/kWh tariff, power/load, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. Editing the tariff, power, load or hours recalculates energy cost in both scenarios. The session gap is editable and reduces available capacity.
 
@@ -92,6 +92,12 @@ Positive EBITDA can coexist with negative FCFE: debt principal and maintenance i
 ## Energy: get a quote for this input
 
 The starting case uses 600 kW peak power, 100% average load, ten hours/day, 340 days and an editable €0.16/kWh tariff. The formula gives 6,000 kWh/day and 326 400 €/year. Each €0.01/kWh change moves annual cost by 20 400 €, holding everything else constant. Energy is charged throughout opening hours even when few customers attend. The tariff and actual load profile are not confirmed; auxiliary pumps, the bar, contracted capacity, time-of-use rates and fees require quotes from EEM/the supplier and the final technical specification. Do not count the same charge twice.
+
+## Public site and municipal concession
+
+The public garden near the cable car is the promoter’s proposed site. According to the promoter, regional-government contacts have expressed interest, but use of the site depends on rights and terms to be formalized with Funchal City Council. The initial 5% share of wave revenue is an editable municipal-cost assumption, not a Council offer or approved obligation. Set it to 0% to test a site without revenue sharing; a fixed municipal rent is not yet modelled. Bar operator rent is separate income for the company and assumes the municipal title permits a third-party operator. Confirm the parcel, procedure, works, maintenance, term, charge, bar rights and exit terms before committing capital.
+
+The [municipal public-space regulation](https://diariodarepublica.pt/dr/detalhe/aviso/5408-2018-115145828) and [Funchal garden regulation](https://diariodarepublica.pt/dr/detalhe/regulamento/461-2018-115777483) are starting points for a site-specific legal review.
 
 ## Assumptions and limits investors should test
 

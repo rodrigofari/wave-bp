@@ -6,15 +6,15 @@ Atualizado em 30/09/2026. Este guia explica como ler e testar o simulador. Os va
 
 A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do operador do bar. Na concessão inicial, a Lda. recebe renda fixa, não contabiliza esse consumo. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
 
-O simulador apresenta o projeto conjunto numa única vista; a tabela do resumo identifica separadamente a contribuição da onda e do bar. Todos os indicadores principais referem-se ao investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 144 505 €, VAL de -1 371 916 € e TIR do projeto de -6.96%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
+O simulador apresenta o projeto conjunto numa única vista; a tabela do resumo identifica separadamente a contribuição da onda e do bar. Todos os indicadores principais referem-se ao investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 186 085 €, VAL de -1 137 726 € e TIR do projeto de -3.83%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
 
 | Indicador — cenário inicial | Onda (quota no conjunto) | Bar no conjunto | Conjunto |
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 0 € | 2 292 400 € |
 | Receita ano 1 | 778 563 € | 30 000 € | 808 563 € |
-| EBITDA ano 1 | 132 505 € | 12 000 € | 144 505 € |
-| VAL | -1 451 695 € | 73 816 € | -1 371 916 € |
-| TIR do projeto | -8.11% | Indisponível | -6.96% |
+| EBITDA ano 1 | 174 085 € | 12 000 € | 186 085 € |
+| VAL | -1 211 542 € | 73 816 € | -1 137 726 € |
+| TIR do projeto | -4.80% | Indisponível | -3.83% |
 
 Na coluna da onda, os custos comuns já estão repartidos com o bar. A simulação sem bar, calculável pelo motor, mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
 
@@ -41,7 +41,7 @@ Os custos partilhados podem ser repartidos entre onda e bar para análise, mas e
 
 ## Sessões e capacidade: o que o modelo vende?
 
-A Lda. vende lugares em sessões de grupo de 45 ou 60 minutos. Cada pessoa paga o preço do seu nível; a duração é do grupo inteiro, não o tempo individual na onda. O arranque usa 9 sessões de procura de pico por dia, 8 participantes por sessão, 60 minutos, dez horas abertas e 340 dias/ano: cerca de 54.8 participantes públicos por dia aberto em média. A sazonalidade reduz a procura em cada mês; a capacidade limita as vendas ao número inteiro de grupos que cabe no horário. Com 60 minutos e sem intervalo adicional, cabem no máximo dez grupos por dia. O limite editável é de 14 pessoas por grupo, mas a segurança e a rotação têm de ser confirmadas pela Citywave e pela equipa operacional.
+A Lda. vende lugares em sessões de grupo de 45 ou 60 minutos. Cada pessoa paga o preço do seu nível; a duração é do grupo inteiro, não o tempo individual na onda. A equipa-base da onda é de cinco pessoas no custo salarial; esta hipótese ainda precisa de uma escala de turnos validada. O arranque usa 9 sessões de procura de pico por dia, 8 participantes por sessão, 60 minutos, dez horas abertas e 340 dias/ano: cerca de 54.8 participantes públicos por dia aberto em média. A sazonalidade reduz a procura em cada mês; a capacidade limita as vendas ao número inteiro de grupos que cabe no horário. Com 60 minutos e sem intervalo adicional, cabem no máximo dez grupos por dia. O limite editável é de 14 pessoas por grupo, mas a segurança e a rotação têm de ser confirmadas pela Citywave e pela equipa operacional.
 
 Os preços por nível são 49 €/39 €/39 €/35 € para principiantes/intermédios/avançados/crianças no caso-base, com descontos editáveis. O seletor de IVA no topo, em Preços e na aba IVA escolhe se os números introduzidos são antes de IVA ou preços finais; a política comercial ainda está por decidir. Material está incluído para principiantes, intermédios e crianças; avançados podem alugá-lo. Sessões privadas substituem grupos públicos; privadas, aluguer, eventos, cartões e coaching adicional começam desligados no caso-base. Vendas intermediadas geram comissão separada.
 
@@ -51,8 +51,8 @@ Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se as
 
 | Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 391 050 € | 63 064 € | 8.70% |
-| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 321 912 € | -338 820 € | 4.98% |
+| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 295 370 € | 10.73% |
+| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | -106 514 € | 7.17% |
 
 Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (12 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.
 
@@ -93,6 +93,12 @@ Um EBITDA positivo pode coexistir com FCFE negativo: amortização da dívida e 
 ## Energia: a variável que merece um orçamento
 
 O caso inicial usa potência máxima de 600 kW, carga média de 100%, dez horas/dia, 340 dias e tarifa editável de 0,16 €/kWh. A fórmula dá 6.000 kWh/dia e 326 400 €/ano. Cada alteração de 0,01 €/kWh muda o custo anual em 20 400 €, mantendo todo o resto igual. A energia é cobrada durante o horário de operação, mesmo com poucos clientes. A tarifa e carga real não estão confirmadas; acrescentos de bombas auxiliares, bar, potência contratada, tarifas horárias e taxas devem ser obtidos da EEM/fornecedor e da especificação técnica. Não conte o mesmo encargo duas vezes.
+
+## Espaço público e concessão municipal
+
+O jardim público junto ao Teleférico é o local proposto pelo promotor. Segundo o promotor, existe interesse manifestado em contactos com o Governo Regional, mas o uso do espaço depende de título e condições a formalizar com a Câmara Municipal do Funchal. A percentagem inicial de 5% sobre a receita da onda é uma hipótese editável de custo municipal, não uma proposta ou obrigação aprovada. Pode colocar 0% para testar uma cedência sem percentagem; uma renda municipal fixa ainda não é parametrizada. A renda de exploração do bar é receita distinta da Lda. e pressupõe que o título municipal admita um operador terceiro. Confirmar parcela, procedimento, obras, manutenção, prazo, contrapartida, exploração do bar e condições de saída antes de decidir o investimento.
+
+O [regulamento municipal de ocupação do espaço](https://diariodarepublica.pt/dr/detalhe/aviso/5408-2018-115145828) e o [regulamento de jardins do Funchal](https://diariodarepublica.pt/dr/detalhe/regulamento/461-2018-115777483) são pontos de partida para a análise jurídica específica do local e da estrutura.
 
 ## Pressupostos e limites que um investidor deve testar
 
