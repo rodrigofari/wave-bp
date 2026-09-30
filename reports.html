@@ -1,36 +1,33 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatórios atuais — Citywave Funchal</title><style>body{font:16px/1.6 system-ui;margin:24px auto;padding:0 18px;max-width:1100px;color:#222}h1{line-height:1.2}article{border-top:2px solid #222;margin-top:36px;padding-top:20px}.scroll{overflow:auto}table{border-collapse:collapse;font-size:14px;width:100%}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}a{color:#075d9b}code{background:#f5f5f5}nav a{display:inline-block;margin:4px 12px 4px 0}</style></head><body><a href="./">← Voltar ao simulador</a> · <a href="./investor-guide.html">Guia do investidor / Investor guide</a><h1>Relatórios e pressupostos atuais</h1><p>Versão 29/09/2026. Valores gerados do mesmo motor financeiro da página. São cenários fixos identificados; não refletem alterações feitas na sua sessão.</p><nav><a href="#report-0">BAR_ANALYSIS</a><a href="#report-1">OPERATING_ANALYSIS</a><a href="#report-2">TICKET_BREAKEVEN</a><a href="#report-3">MODEL_CLARIFICATIONS</a><a href="#report-4">INVESTOR_GUIDE_PT</a><a href="#report-5">INVESTOR_GUIDE_EN</a></nav><article id="report-0"><h1>Onda e bar — análise atual</h1>
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatórios atuais — Citywave Funchal</title><style>body{font:16px/1.6 system-ui;margin:24px auto;padding:0 18px;max-width:1100px;color:#222}h1{line-height:1.2}article{border-top:2px solid #222;margin-top:36px;padding-top:20px}.scroll{overflow:auto}table{border-collapse:collapse;font-size:14px;width:100%}th,td{padding:9px;border-bottom:1px solid #ddd;text-align:right}th:first-child,td:first-child{text-align:left}a{color:#075d9b}code{background:#f5f5f5}nav a{display:inline-block;margin:4px 12px 4px 0}</style></head><body><a href="./">← Voltar ao simulador</a> · <a href="./investor-guide.html">Guia do investidor / Investor guide</a><h1>Relatórios e pressupostos atuais</h1><p>Versão 30/09/2026. Valores gerados do mesmo motor financeiro da página. São cenários fixos identificados; não refletem alterações feitas na sua sessão.</p><nav><a href="#report-0">BAR_ANALYSIS</a><a href="#report-1">OPERATING_ANALYSIS</a><a href="#report-2">TICKET_BREAKEVEN</a><a href="#report-3">MODEL_CLARIFICATIONS</a><a href="#report-4">IVA_ANALYSIS</a><a href="#report-5">INVESTOR_GUIDE_PT</a><a href="#report-6">INVESTOR_GUIDE_EN</a></nav><article id="report-0"><h1>Onda e bar — análise atual</h1>
 
-<p>Atualizado em 29/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 30/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Cenário inicial da página</h2>
 
-<p>O modo inicial é bilhetes: procura de 70/dia, limitada a <strong>66 vendas/dia</strong> por oito minutos de onda + um de troca em dez horas. Bar com 36 lugares, 45 visitas externas/dia de referência antes da sazonalidade de 50%, seis clientes a trabalhar/dia e três funcionários adicionais.</p>
+<p>O modo inicial é bilhetes: procura de 70/dia, limitada a <strong>66 vendas/dia</strong> por oito minutos de onda + um de troca em dez horas. O bar está em <strong>concessão ilustrativa</strong>: renda de 2 500 €/mês, custos retidos de 300 €/mês e zero obras imputadas ao proprietário. A empresa não contabiliza as vendas nem os salários do concessionário.</p>
 
 <div class="scroll"><table><tr><th>Indicador</th><th>Onda no projeto</th><th>Bar no projeto</th><th>Conjunto</th></tr>
 
-<tr><td>Investimento</td><td>2 292 400 €</td><td>159 000 €</td><td>2 451 400 €</td></tr>
-<tr><td>Receita ano 1</td><td>938 149 €</td><td>300 551 €</td><td>1 238 700 €</td></tr>
-<tr><td>EBITDA ano 1</td><td>284 112 €</td><td>70 670 €</td><td>354 782 €</td></tr>
-<tr><td>VAL</td><td>-562 604 €</td><td>274 820 €</td><td>-287 784 €</td></tr>
-<tr><td>TIR</td><td>2.74%</td><td>36.09%</td><td>5.66%</td></tr>
+<tr><td>Investimento</td><td>2 292 400 €</td><td>0 €</td><td>2 292 400 €</td></tr>
+<tr><td>Receita ano 1</td><td>938 149 €</td><td>30 000 €</td><td>968 149 €</td></tr>
+<tr><td>EBITDA ano 1</td><td>284 112 €</td><td>12 000 €</td><td>296 112 €</td></tr>
+<tr><td>VAL</td><td>-562 604 €</td><td>73 816 €</td><td>-488 788 €</td></tr>
+<tr><td>TIR</td><td>2.74%</td><td>Indisponível</td><td>3.50%</td></tr>
 </table></div>
-<p>Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 269 712 €. A melhoria real ao acrescentar o bar é 85 070 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.</p>
+<p>Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 269 712 €. A melhoria real ao acrescentar o bar é 26 400 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.</p>
 
-<div class="scroll"><table><tr><th>Origem do consumo do bar</th><th>Receita anual</th></tr>
+<div class="scroll"><table><tr><th>Origem da receita do bar</th><th>Receita anual</th></tr>
 
-<tr><td>Surfistas</td><td>80 784 €</td></tr>
-<tr><td>Acompanhantes</td><td>53 856 €</td></tr>
-<tr><td>Publico externo</td><td>141 431 €</td></tr>
-<tr><td>Clientes a trabalhar</td><td>24 480 €</td></tr>
+<tr><td>Renda da concessão</td><td>30 000 €</td></tr>
 </table></div>
-<p>Sem consumo dos surfistas/acompanhantes, mantendo os outros clientes e custos, o EBITDA do bar seria -12 133 €. É uma sensibilidade, não a previsão de um bar autónomo noutro local. Quem trabalha paga consumo por visita, não mensalidades.</p>
+<p>Como a renda é fixa, a receita do proprietário não depende diretamente do consumo dos surfistas ou visitantes. A viabilidade do concessionário e a renda negociável exigem estudo comercial próprio. O espaço para trabalhar é uma conveniência do bar, sem receitas de mensalidades no projeto.</p>
 
 <p>A localização pretendida junto ao Teleférico do Funchal é informação do promotor. O <a href="https://www.dnoticias.pt/2026/5/27/493459-teleferico-do-funchal-investe-45-milhoes/">Diário de Notícias de 27/05/2026</a> reporta cerca de 1,1 milhões de passageiros em 2025. É contexto histórico, não contagem de clientes distintos nem de peões à porta. Não somamos teleférico, hotéis e cruzeiros, pois existe sobreposição. Os canais de venda devem ser avaliados por reservas e comissões, não somados como populações independentes.</p>
 
-<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-1"><h1>Participantes, sessões e horários — análise atual</h1>
 
-<p>Atualizado em 29/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 30/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Comparação pedida: sessões de 45 e 60 minutos, até 14 pessoas</h2>
 
@@ -45,7 +42,7 @@
 
 <h2>Sensibilidade ao tamanho do grupo e procura de pico</h2>
 
-<p>Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 minutos sem intervalo adicional. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.</p>
+<p>Este quadro usa explicitamente o modo de sessões: dez horas e sessões de 60 minutos sem intervalo adicional. A procura de pico é ajustada à sazonalidade; não é o número de sessões realizadas. Bar em operação própria alternativa, com 60 visitas externas/dia uniformes a 10,50 €, além do consumo ligado à onda e de quem trabalha. Mantêm-se privadas, aluguer apenas a avançados, eventos e cartões nos valores iniciais. Clínicas desligadas.</p>
 
 <div class="scroll"><table><tr><th>Participantes públicos/sessão</th><th>Procura de pico</th><th>Sessões vendidas/dia</th><th>Participações públicas/dia</th><th>EBITDA conjunto</th><th>TIR</th><th>VAL</th></tr>
 
@@ -76,14 +73,14 @@
 
 <p>As referências operacionais <a href="https://www.city-wave.at/faqs/">Citywave Viena</a> e <a href="https://citywave-tokyo.jp/english/">Citywave Tokyo</a> mostram grupos de dimensão variável; não certificam a configuração local. O produto turístico deve ter material e acompanhamento definidos e preço líquido compatível com os custos de venda.</p>
 
-<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-2"><h1>Bilhetes e break-even — análise atual</h1>
 
-<p>Atualizado em 29/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 30/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Exemplo reproduzível na interface</h2>
 
-<p>Selecionar bilhetes; procura 70/dia; preço médio 41,807 € após descontos e antes de comissões; sete minutos de onda + um de troca; dez horas/dia e 340 dias. Capacidade de 75 bilhetes/dia, sem utilizações simultâneas. No bar: sazonalidade externa zero, restantes pressupostos iniciais. Este exemplo difere do arranque da página (oito minutos + um, capacidade 66).</p>
+<p>Selecionar bilhetes; procura 70/dia; preço médio 41,807 € após descontos e antes de comissões; sete minutos de onda + um de troca; dez horas/dia e 340 dias. Capacidade de 75 bilhetes/dia, sem utilizações simultâneas. No bar: operação própria ilustrativa, com sazonalidade externa zero; esta é uma alternativa ao arranque em concessão. O exemplo também difere do arranque da página no tempo de onda (oito minutos + um, capacidade 66).</p>
 
 <p>Não há receitas de privadas, clínicas, alugueres, eventos ou cartões neste modo. O bar continua a receber surfistas e acompanhantes; mantém também seis clientes/dia a trabalhar. Os valores da tabela são bilhetes por dia aberto em média.</p>
 
@@ -99,14 +96,14 @@
 
 <p>No limite inicial de 66 bilhetes/dia, não se podem usar metas acima de 66 como atingíveis. O simulador limita vendas e sinaliza o retorno que não cabe nessa capacidade. Alterar a permanência é alterar a experiência; não é uma poupança garantida.</p>
 
-<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
 </article><article id="report-3"><h1>Pressupostos comerciais e energia — versão atual</h1>
 
-<p>Atualizado em 29/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.</p>
+<p>Atualizado em 30/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.</p>
 
 <h2>Experiência e material</h2>
 
-<p>Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, líquidos de IVA, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.</p>
+<p>Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, interpretados por defeito como antes de IVA, pois o preço final ainda está por decidir, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.</p>
 
 <p>O custo unitário de material é editável e inicia a zero por falta de orçamento. Lavagem/reposição corrente devem ser distinguidas do investimento inicial e da manutenção capitalizada. Participantes por privada são um único input usado no material e no bar.</p>
 
@@ -120,24 +117,57 @@
 
 <p>Conjunto agrega onda e bar como uma entidade. Onda sem bar, incluindo os seus separadores Investidores, P&amp;L e Análise, refere-se apenas à piscina. Bar mostra a contribuição com custos comuns imputados. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.</p>
 
-<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
-</article><article id="report-4"><h1>Citywave Funchal — guia do investidor</h1>
+<p>A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.</p>
+</article><article id="report-4"><h1>IVA e tesouraria — análise do caso-base</h1>
 
-<p>Atualizado em 29/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.</p>
+<p>Atualizado em 30/09/2026. Gerado por <code>node analysis/generate-reports.cjs</code> a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.</p>
+
+<h2>Decisão comercial ainda em aberto</h2>
+
+<p>A entidade que compra a máquina e fatura os bilhetes será uma <strong>sociedade comercial (Lda.)</strong>. Os promotores ainda não decidiram se os preços exibidos, como 49 € para principiantes, são antes de IVA ou preços finais. O simulador inicia em <strong>antes de IVA</strong>, por compatibilidade com o modelo histórico, e permite mudar para <strong>preço final com IVA</strong> sem alterar o número introduzido. A 22%, 49 € antes de IVA são 59,78 € pagos pelo cliente; 49 € finais representam 40,16 € de receita antes de IVA. A escolha muda todos os resultados financeiros.</p>
+
+<div class="scroll"><table><tr><th>Sensibilidade sessões de grupo</th><th>49 € antes de IVA</th><th>49 € preço final</th></tr>
+
+<tr><td>Receita da onda no ano 1</td><td>818 833 €</td><td>671 174 €</td></tr>
+<tr><td>EBITDA conjunto no ano 1</td><td>182 761 €</td><td>42 485 €</td></tr>
+<tr><td>VAL conjunto</td><td>-1 147 663 €</td><td>-2 097 361 €</td></tr>
+<tr><td>TIR do projeto</td><td>-3.93%</td><td>-20.81%</td></tr>
+<tr><td>Payback</td><td>Não recupera no prazo</td><td>Não recupera no prazo</td></tr>
+</table></div>
+<h2>Hipótese fiscal da Lda.</h2>
+
+<p>O caso-base considera vendas da onda e renda de exploração do bar tributadas à taxa normal de 22% na Madeira, com direito a deduzir integralmente o IVA elegível da respetiva atividade. O IVA dedutível não é custo económico; o não dedutível acresce ao investimento ou aos custos correntes. A isenção de serviços desportivos por certas associações é apenas uma sensibilidade, <strong>não um regime optativo da Lda.</strong> A operação do bar é uma concessão ilustrativa, com 2 500 €/mês de renda antes de IVA e 300 €/mês de custos retidos. Uma mera locação de imóvel pode ter tratamento diferente: confirme o contrato.</p>
+
+<h2>Investimento e reembolso</h2>
+
+<p>O investimento Citywave de 1 750 000 € gera 385 000 € de IVA teórico à taxa de 22%. O modelo inicia com <strong>0% deste IVA pago na fatura ao fornecedor</strong>, simulando autoliquidação; é uma hipótese por confirmar pela redação do contrato e local de instalação, não um crédito automático pago pelo Estado. O restante investimento inicia com IVA faturado e dedutível. Neste caso-base, o IVA inicialmente pago em faturas é 73 480 € e o pico de défice de caixa exclusivamente de IVA no primeiro ano é 73 480 €. Esse pico <strong>não é CAPEX adicional</strong>; mostra capital temporariamente empatado. O pedido de reembolso é simulado quando o crédito excede 3 000 €, com três meses de espera editáveis. Datas de faturação, declaração, inspeção, garantias e recebimento podem diferir. O custo de financiar a espera não entra no VAL/TIR.</p>
+
+<h2>Fontes e validação necessária</h2>
+
+<p>- <a href="https://at.madeira.gov.pt/ficheiros/Oficio_circulado_25045_2024.pdf">Taxas de IVA na Madeira, ofício 25045/2024</a>.</p>
+<p>- <a href="https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/civa_rep/Pages/iva20.aspx">CIVA, artigo 20.º: direito à dedução</a>.</p>
+<p>- <a href="https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/civa_rep/Pages/iva22.aspx">CIVA, artigo 22.º: crédito e reembolso</a>.</p>
+<p>- <a href="https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/civa_rep/Pages/iva9.aspx">CIVA, artigo 9.º: isenções</a>.</p>
+<p>- <a href="https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/RITI_2021/Paginas/riti009.aspx">RITI, artigo 9.º: bens instalados ou montados</a>.</p>
+
+<p>Peça parecer escrito a um fiscalista com contrato Citywave, contrato de concessão, faturas previstas, NIFs das entidades e classificação das prestações.</p>
+</article><article id="report-5"><h1>Citywave Funchal — guia do investidor</h1>
+
+<p>Atualizado em 30/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.</p>
 
 <h2>Em 60 segundos</h2>
 
-<p>A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do bar e a receita é o consumo por visita. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.</p>
+<p>A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do operador do bar. Na concessão inicial, a Lda. recebe renda fixa, não contabiliza esse consumo. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.</p>
 
-<p>O simulador separa <strong>Onda sem bar</strong>, <strong>Bar / trabalhar</strong> e <strong>Conjunto</strong>. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 451 400 €, receita anual de 1 238 700 €, EBITDA de 354 782 €, VAL de -287 784 € e TIR do projeto de 5.66%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; <strong>não significa que o investimento recupera o capital</strong>.</p>
+<p>O simulador separa <strong>Onda sem bar</strong>, <strong>Bar / trabalhar</strong> e <strong>Conjunto</strong>. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 968 149 €, EBITDA de 296 112 €, VAL de -488 788 € e TIR do projeto de 3.50%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; <strong>não significa que o investimento recupera o capital</strong>.</p>
 
 <div class="scroll"><table><tr><th>Indicador — cenário inicial</th><th>Onda (quota no conjunto)</th><th>Bar no conjunto</th><th>Conjunto</th></tr>
 
-<tr><td>Investimento</td><td>2 292 400 €</td><td>159 000 €</td><td>2 451 400 €</td></tr>
-<tr><td>Receita ano 1</td><td>938 149 €</td><td>300 551 €</td><td>1 238 700 €</td></tr>
-<tr><td>EBITDA ano 1</td><td>284 112 €</td><td>70 670 €</td><td>354 782 €</td></tr>
-<tr><td>VAL</td><td>-562 604 €</td><td>274 820 €</td><td>-287 784 €</td></tr>
-<tr><td>TIR do projeto</td><td>2.74%</td><td>36.09%</td><td>5.66%</td></tr>
+<tr><td>Investimento</td><td>2 292 400 €</td><td>0 €</td><td>2 292 400 €</td></tr>
+<tr><td>Receita ano 1</td><td>938 149 €</td><td>30 000 €</td><td>968 149 €</td></tr>
+<tr><td>EBITDA ano 1</td><td>284 112 €</td><td>12 000 €</td><td>296 112 €</td></tr>
+<tr><td>VAL</td><td>-562 604 €</td><td>73 816 €</td><td>-488 788 €</td></tr>
+<tr><td>TIR do projeto</td><td>2.74%</td><td>Indisponível</td><td>3.50%</td></tr>
 </table></div>
 <p>Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista isolada da onda mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.</p>
 
@@ -146,9 +176,9 @@
 <p>1. Escolha <strong>Conjunto</strong> para ver a piscina e o bar juntos. Compare depois com <strong>Onda sem bar</strong> e <strong>Bar / trabalhar</strong>.</p>
 <p>2. Comece pelos controlos à esquerda: preço médio, minutos de onda, horário, dias abertos, vendas/dia, energia e investimento. Os números sublinhados são editáveis.</p>
 <p>3. Abra cada secção pelo título. Passe o cursor pelo círculo <strong>i</strong> para ver uma explicação da secção.</p>
-<p>4. Edite os inputs do bar no painel <strong>Bar / trabalhar</strong>. No cenário inicial, todos os inputs do bar são exemplos editáveis porque ainda não existem estimativas validadas para lugares, obras, equipa, consumo ou procura.</p>
-<p>5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere visitantes externos do bar e bilhetes da onda; não trate passageiros turísticos como conversões automáticas.</p>
-<p>6. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.</p>
+<p>4. Edite os inputs do bar no painel <strong>Bar / trabalhar</strong>. O arranque simula concessão, com renda e custos retidos ilustrativos; mude para operação própria para testar vendas diretas.</p>
+<p>5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere bilhetes ou sessões da onda; na alternativa de operação própria do bar, altere também visitantes externos. Passageiros turísticos não são conversões automáticas.</p>
+<p>6. No painel <strong>IVA e caixa</strong>, escolha se os preços introduzidos são antes ou depois de IVA e teste faturação Citywave e prazo de reembolso. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.</p>
 
 <p>As alterações vivem apenas na sessão do navegador e desaparecem ao recarregar. Partilhe o link do simulador para cada investidor testar os seus próprios cenários; este link não grava nem transmite os valores alterados.</p>
 
@@ -157,7 +187,7 @@
 <div class="scroll"><table><tr><th>Vista</th><th>O que inclui</th><th>Para que serve</th></tr>
 
 <tr><td>Onda sem bar</td><td>Piscina, bilhetes/sessões, pessoal e custos originais da onda</td><td>Medir o negócio da piscina isoladamente</td></tr>
-<tr><td>Bar / trabalhar</td><td>Bar e consumo por visita; recebe surfistas, acompanhantes, público externo e pessoas a trabalhar</td><td>Testar a economia do bar e das suas hipóteses</td></tr>
+<tr><td>Bar / trabalhar</td><td>Renda e custos do proprietário na concessão; vendas e consumo por visita apenas na operação própria</td><td>Testar renda ou exploração direta do bar</td></tr>
 <tr><td>Conjunto</td><td>Receitas e custos da onda e do bar; financiamento e impostos consolidados</td><td>Avaliar o projeto que precisaria de financiamento</td></tr>
 </table></div>
 <p>Os custos partilhados podem ser repartidos entre onda e bar para análise, mas essa repartição não cria poupança. A TIR e o VAL das componentes são analíticos e <strong>não devem ser somados</strong>. Para o retorno total, use o conjunto.</p>
@@ -168,7 +198,7 @@
 
 <p>Isto é diferente de uma sessão de aula no mar. Os minutos configurados são tempo de utilização da piscina por bilhete, não minutos em pé numa onda. Antes de apresentar capacidade final, a Citywave e a equipa de segurança terão de confirmar o formato de entrada, número de surfistas simultâneos, rotação, descanso, instrução, limpeza e tempo de troca. Aumentar bilhetes/dia sem validar estes limites sobrestima receita.</p>
 
-<p>O preço médio do bilhete é um input independente, já líquido de descontos e IVA. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.</p>
+<p>O preço médio do bilhete é um input independente, já após descontos; no painel IVA decide-se se o valor introduzido é antes ou depois de IVA. A política comercial ainda está por decidir. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.</p>
 
 <h2>Sessões de grupo: comparação de 45 e 60 minutos</h2>
 
@@ -183,11 +213,13 @@
 
 <h2>Como ganha dinheiro o bar</h2>
 
-<p>O simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram <strong>consumo por visita</strong>, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.</p>
+<p>O arranque simula concessão: a Lda. recebe 2 500 €/mês de renda antes de IVA e suporta 300 €/mês de custos retidos. As vendas de comidas e bebidas pertencem ao concessionário e não entram na receita da Lda. Os valores são inteiramente ilustrativos; a operação própria é editável.</p>
+
+<p>No modo de operação própria, o simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram <strong>consumo por visita</strong>, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.</p>
 
 <p>A circulação anual do teleférico (aprox. 1,1 milhões de passageiros em 2025, conforme a fonte indicada nos relatórios) e dos cruzeiros é contexto para testar canais, não procura diária à porta. Um passageiro pode não passar no local, ser contado noutro canal ou não consumir. Substitua tráfego por medições de peões, conversões, acordos com hotéis/cruzeiros/teleférico, reservas online e dados de teste. Comissões de intermediários devem ser deduzidas uma vez; o canal online e os parceiros podem ter custos diferentes.</p>
 
-<p>A procura diária externa inicial, a sazonalidade, os lugares, o consumo médio, equipa, salários, renda, obras e equipamento são hipóteses. Peça orçamentos e teste sensibilidades. Zero num custo (material, eletricidade auxiliar, comissão) quer dizer “sem valor introduzido”, não “custo nulo”.</p>
+<p>Na alternativa de operação própria, procura diária externa, sazonalidade, lugares, consumo médio, equipa, salários, renda, obras e equipamento são hipóteses. Peça orçamentos e teste sensibilidades. Zero num custo (material, eletricidade auxiliar, comissão) quer dizer “sem valor introduzido”, não “custo nulo”.</p>
 
 <h2>Como ler os números financeiros</h2>
 
@@ -221,31 +253,31 @@
 
 <p>- <strong>Procura e preços:</strong> não há estudo de mercado que valide conversão, preço, volume ou sazonalidade. O crescimento anual aumenta receita/preços, não cria novos clientes automaticamente.</p>
 <p>- <strong>Capacidade e segurança:</strong> o modo de sessões simula grupos de 45 ou 60 minutos, limitados a 14 pessoas; a capacidade segura, rotação e tempo efetivo na onda exigem confirmação operacional. O modo de bilhetes flexíveis é uma hipótese separada de utilização individual.</p>
-<p>- <strong>Bar:</strong> cenário totalmente ilustrativo, sem estimativas fornecidas pela equipa promotora. Valide lugares, consumo, permanência, horários, pessoal, salários, renda, obras, stock e comissões.</p>
+<p>- <strong>Bar:</strong> o arranque simula concessão, com renda e custos do proprietário ilustrativos; operação própria é uma alternativa editável. Valide contrato, investimento e renda negociável.</p>
 <p>- <strong>Eletricidade:</strong> tarifa e perfil de carga são hipóteses; o consumo real e o custo contratado podem alterar materialmente o break-even.</p>
-<p>- <strong>Imposto e IVA:</strong> taxa efetiva editável e simplificada; sem reporte de prejuízos, calendário de IVA ou consulta fiscal. Não é aconselhamento fiscal.</p>
+<p>- <strong>Imposto e IVA:</strong> IRC e IVA são distintos. O painel IVA modela preço final/bruto, dedutibilidade e uma ponte mensal simplificada; não inclui custo financeiro da espera pelo reembolso no VAL/TIR, nem substitui parecer fiscal.</p>
 <p>- <strong>Financiamento:</strong> percentagens e taxa/prazo de dívida são inputs, não ofertas bancárias. O sweat equity é uma ponderação ilustrativa, não acordo societário.</p>
 <p>- <strong>Horizonte e saída:</strong> igual ao prazo da concessão, sem perpetuidade; valor residual zero por defeito. A caixa intra-anual, custos de pré-abertura, ramp-up, atrasos e custos de desmantelamento não estão modelados.</p>
 <p>- <strong>Consolidação:</strong> uma entidade operacional, custos comuns repartidos analiticamente e impostos do conjunto recalculados. Não some VAL/TIR por componente.</p>
 
 <p>Use este simulador para perguntar “o que teria de ser verdade?” e identificar inputs críticos. Para decisão de investimento, substitua os valores ilustrativos por estudos, especificação/garantias Citywave, orçamentos EEM/obras, plano operacional, propostas de dívida, contratos e revisão fiscal/legal.</p>
-</article><article id="report-5"><h1>Citywave Funchal — investor guide</h1>
+</article><article id="report-6"><h1>Citywave Funchal — investor guide</h1>
 
-<p>Updated 29 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.</p>
+<p>Updated 30 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.</p>
 
 <h2>The idea in 60 seconds</h2>
 
-<p>The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: those visitors are bar customers, and revenue is their spend per visit. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.</p>
+<p>The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: visitors are customers of the bar operator. In the starting concession, the Lda. receives fixed rent and does not book their spending. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.</p>
 
-<p>The simulator separates <strong>Wave only</strong>, <strong>Bar / work</strong> and <strong>Combined</strong>. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 451 400 €, annual revenue of 1 238 700 €, EBITDA of 354 782 €, NPV of -287 784 € and project IRR of 5.66%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; <strong>it does not mean the investment pays back</strong>.</p>
+<p>The simulator separates <strong>Wave only</strong>, <strong>Bar / work</strong> and <strong>Combined</strong>. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 968 149 €, EBITDA of 296 112 €, NPV of -488 788 € and project IRR of 3.50%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; <strong>it does not mean the investment pays back</strong>.</p>
 
 <div class="scroll"><table><tr><th>Starting scenario</th><th>Wave (allocated share)</th><th>Bar within combined</th><th>Combined</th></tr>
 
-<tr><td>Investment</td><td>2 292 400 €</td><td>159 000 €</td><td>2 451 400 €</td></tr>
-<tr><td>Year 1 revenue</td><td>938 149 €</td><td>300 551 €</td><td>1 238 700 €</td></tr>
-<tr><td>Year 1 EBITDA</td><td>284 112 €</td><td>70 670 €</td><td>354 782 €</td></tr>
-<tr><td>NPV</td><td>-562 604 €</td><td>274 820 €</td><td>-287 784 €</td></tr>
-<tr><td>Project IRR</td><td>2.74%</td><td>36.09%</td><td>5.66%</td></tr>
+<tr><td>Investment</td><td>2 292 400 €</td><td>0 €</td><td>2 292 400 €</td></tr>
+<tr><td>Year 1 revenue</td><td>938 149 €</td><td>30 000 €</td><td>968 149 €</td></tr>
+<tr><td>Year 1 EBITDA</td><td>284 112 €</td><td>12 000 €</td><td>296 112 €</td></tr>
+<tr><td>NPV</td><td>-562 604 €</td><td>73 816 €</td><td>-488 788 €</td></tr>
+<tr><td>Project IRR</td><td>2.74%</td><td>Indisponível</td><td>3.50%</td></tr>
 </table></div>
 <p>In the wave column, common costs are already shared with the bar; the standalone wave view retains all of those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.</p>
 
@@ -254,8 +286,8 @@
 <p>1. Choose <strong>Combined</strong> to see the pool and bar together. Then compare with <strong>Wave only</strong> and <strong>Bar / work</strong>.</p>
 <p>2. Start with the controls on the left: average ticket price, wave minutes, opening hours, operating days, tickets/day, energy and investment. Underlined numbers are editable.</p>
 <p>3. Expand sections by clicking their title. Hover over the <strong>i</strong> icon for a plain-English explanation.</p>
-<p>4. Edit bar inputs in <strong>Bar / work</strong>. Every starting bar input is illustrative because no validated estimates have been provided for seats, fit-out, staffing, spend or demand.</p>
-<p>5. Compare EBITDA, cash flow, NPV and IRR. To test demand, edit external bar visits and wave tickets; do not treat tourist passenger totals as automatic conversions.</p>
+<p>4. Use <strong>VAT &amp; cash</strong> to choose gross or net input prices, Citywave invoicing and refund timing. Edit bar inputs in <strong>Bar / work</strong>. The starting case is a concession with illustrative monthly rent and retained owner costs; switch to owner-operation to test direct bar trading.</p>
+<p>5. Compare EBITDA, cash flow, NPV and IRR. Test wave tickets or sessions; in owner-operated bar mode, edit external bar visits too. Tourist passenger totals are not automatic conversions.</p>
 
 <p>Edits remain only in the current browser session and are lost on refresh. Share the simulator link so each investor can test their own case; the link does not save or transmit edited values.</p>
 
@@ -264,7 +296,7 @@
 <div class="scroll"><table><tr><th>View</th><th>Includes</th><th>Use it to</th></tr>
 
 <tr><td>Wave only</td><td>Pool, tickets/sessions, staff and original wave costs</td><td>Assess the pool business by itself</td></tr>
-<tr><td>Bar / work</td><td>Bar and spend per visit from surfers, companions, external visitors and people working</td><td>Test bar economics and its assumptions</td></tr>
+<tr><td>Bar / work</td><td>Owner rent and retained costs in concession mode; customer sales only in owner-operation</td><td>Test the rent or direct bar trading</td></tr>
 <tr><td>Combined</td><td>Wave and bar revenue and costs, with consolidated funding and tax</td><td>Assess the project that would need financing</td></tr>
 </table></div>
 <p>Shared costs can be allocated between wave and bar for analysis, but this does not create savings. Component IRRs and NPVs are analytical and <strong>must not be added together</strong>. Use the combined view for total project returns.</p>
@@ -275,7 +307,7 @@
 
 <p>This is different from a surf lesson in the ocean. The input is pool-use time per ticket, not time standing on a wave. Before relying on a final capacity, Citywave and the safety team must confirm entry format, simultaneous surfers, rotation, rest, instruction, cleaning and changeover. Raising daily tickets without validating these constraints overstates revenue.</p>
 
-<p>Average ticket price is an independent input, net of discounts and VAT. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.</p>
+<p>Average ticket price is an independent input after discounts; the VAT panel chooses whether the entered amount is before or after VAT. The commercial price basis remains undecided. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.</p>
 
 <h2>Group sessions: comparing 45 and 60 minutes</h2>
 
@@ -290,11 +322,13 @@
 
 <h2>How the bar makes money</h2>
 
-<p>The simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate <strong>spend per visit</strong>, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.</p>
+<p>The starting case is a concession: the Lda. receives €2,500/month in rent before VAT and retains €300/month in owner costs. Food and drink sales belong to the concessionaire and are excluded from the Lda.'s revenue. These figures are wholly illustrative; owner-operation can be selected in the simulator.</p>
+
+<p>In owner-operated bar mode, the simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate <strong>spend per visit</strong>, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.</p>
 
 <p>The cable car’s annual traffic (about 1.1 million passenger journeys in 2025, <a href="https://www.dnoticias.pt/2026/5/27/493459-teleferico-do-funchal-investe-45-milhoes/">reported by Diário de Notícias</a>) and cruise passengers provide context for testing channels, not daily footfall at the site. A passenger may never pass the bar, may be counted in another channel or may not buy anything. Replace traffic assumptions with pedestrian counts, conversion tests, hotel/cruise/cable-car partnerships, online booking data and trials. Deduct each intermediary commission once; online and partner channels may have different costs.</p>
 
-<p>Starting external visits/day, seasonality, seats, average spend, staffing, wages, rent, fit-out and equipment are assumptions. Obtain quotes and run sensitivities. A zero input for equipment, auxiliary electricity or commission means “not entered”, not “no cost”.</p>
+<p>In the owner-operated alternative, external visits/day, seasonality, seats, average spend, staffing, wages, rent, fit-out and equipment are assumptions. Obtain quotes and run sensitivities. A zero input for equipment, auxiliary electricity or commission means “not entered”, not “no cost”.</p>
 
 <h2>Financial terms in plain English</h2>
 
@@ -328,9 +362,9 @@
 
 <p>- <strong>Demand and pricing:</strong> no market study validates conversion, price, volume or seasonality. Annual growth raises price/revenue; it does not automatically add customers.</p>
 <p>- <strong>Capacity and safety:</strong> session mode models 45- or 60-minute groups capped at 14 people; safe capacity, rotation and actual wave-use time need operational confirmation. Flexible-ticket mode is a separate one-at-a-time planning assumption.</p>
-<p>- <strong>Bar:</strong> wholly illustrative scenario; the promoters have not supplied estimates. Validate seats, spend, stay, opening hours, staffing, wages, rent, fit-out, stock and commissions.</p>
+<p>- <strong>Bar:</strong> the starting case is an illustrative concession with landlord rent and costs; owner-operated trading remains an editable alternative. Validate the contract, investment and achievable rent.</p>
 <p>- <strong>Electricity:</strong> tariff and load profile are assumptions; actual consumption and contracted cost can materially change break-even.</p>
-<p>- <strong>Tax and VAT:</strong> editable, simplified effective tax; no tax-loss carry-forward, VAT timing or tax advice.</p>
+<p>- <strong>Tax and VAT:</strong> income tax and VAT differ. The VAT panel models gross/net prices, input-tax recovery and a simplified monthly cash bridge; refund financing costs are not included in NPV/IRR. Seek tax advice.</p>
 <p>- <strong>Funding:</strong> percentages and loan rate/term are inputs, not bank offers. Sweat equity is an illustrative weighting, not a shareholders’ agreement.</p>
 <p>- <strong>Term and exit:</strong> matches the concession term, with no perpetuity; residual value is zero by default. Intra-year cash, pre-opening costs, ramp-up, delays and decommissioning are not modelled.</p>
 <p>- <strong>Consolidation:</strong> one operating entity, analytical allocation of shared costs and recalculated combined tax. Do not add component NPVs or IRRs.</p>

@@ -1,10 +1,10 @@
 # Pressupostos comerciais e energia — versão atual
 
-Atualizado em 29/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Valores líquidos de IVA. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Experiência e material
 
-Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, líquidos de IVA, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.
+Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, interpretados por defeito como antes de IVA, pois o preço final ainda está por decidir, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.
 
 O custo unitário de material é editável e inicia a zero por falta de orçamento. Lavagem/reposição corrente devem ser distinguidas do investimento inicial e da manutenção capitalizada. Participantes por privada são um único input usado no material e no bar.
 
@@ -18,4 +18,4 @@ A referência não substitui uma ficha técnica final. A tarifa de 0,16 €/kWh 
 
 Conjunto agrega onda e bar como uma entidade. Onda sem bar, incluindo os seus separadores Investidores, P&L e Análise, refere-se apenas à piscina. Bar mostra a contribuição com custos comuns imputados. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.
 
-A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, tesouraria mensal, reporte fiscal de prejuízos ou calendário de IVA. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.
+A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.

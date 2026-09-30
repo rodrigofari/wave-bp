@@ -31,6 +31,10 @@ const SITES = [
 const INIT = {
   scenario:"moderado",
   salesMode:"sessions", ticketsDay:70, ticketPrice:41.807, ticketMinutes:8, turnaroundMinutes:1,
+  // Prices are net by default. Set gross when the entered number is the customer's final price.
+  pricesIncludeVat:false, vatSalesRate:22, vatTaxableSalesPct:100,
+  vatCapexAdditional:0, vatOperatingUpliftPct:0, vatSharedAccountingUpliftPct:0,
+  vatSharedMarketingUpliftPct:0, vatSharedMiscUpliftPct:0,
   distributionPct:0, commissionPct:20, equipmentPerVisit:0, energyOtherMonth:0,
   // Site
   siteId:"concrete",
@@ -161,15 +165,21 @@ function calculate(input) {
   if (!ticketMode && s.sessionsDay > maxSlotsDay) warnings.push(`Procura de pico (${s.sessionsDay} sessoes/dia) excede a capacidade (${maxSlotsDay}). Vendas limitadas a capacidade em cada mes.`);
   if (!siteFitsWave) warnings.push('A onda selecionada excede a dimensao prevista para o local.');
   if(ticketMode && s.ticketsDay>ticketCapacity) warnings.push(`Procura de ${s.ticketsDay} bilhetes/dia excede capacidade de ${ticketCapacity}. Vendas limitadas pelo tempo de utilizacao e troca.`);
-  const wtdPrice = ticketMode ? s.ticketPrice : mixValid ? (s.beginnerPct*s.beginnerPrice + s.intermediatePct*s.intermediatePrice + s.advancedPct*s.advancedPrice + s.kidsPct*s.kidsPrice) / mixTotal : 0;
+  const grossToNet = s.pricesIncludeVat ? 1-s.vatTaxableSalesPct/100+s.vatTaxableSalesPct/100/(1+s.vatSalesRate/100) : 1;
+  const netPrice = price => price*grossToNet;
+  const wtdPrice = ticketMode ? netPrice(s.ticketPrice) : mixValid ? netPrice((s.beginnerPct*s.beginnerPrice + s.intermediatePct*s.intermediatePrice + s.advancedPct*s.advancedPrice + s.kidsPct*s.kidsPrice) / mixTotal) : 0;
   const effectiveAvgPrice = wtdPrice * (ticketMode ? 1 : 1 - s.bonoPct / 100 * s.bonoDiscount / 100);
   const effKwh = s.kwhMax * s.avgPumpLoad / 100;
   const dailyKwh = effKwh * s.operatingHoursDay;
   const annKwh = dailyKwh * opDays;
-  const annEnergy = annKwh * s.electricityRate;
+  const operatingFactor=1+s.vatOperatingUpliftPct/100;
+  const annEnergy = annKwh * s.electricityRate * operatingFactor;
   const annStaff = s.staffCount * s.avgSalary * (1 + s.ssRate/100) * 14;
-  const annWater = s.waterMonth*12, annMaint = s.maintMonth*12, annMktg = s.marketingMonth*12, annAcct = s.accountingMonth*12, annMisc = s.miscMonth*12;
-  const fixedExEnergy = annStaff + annWater + annMaint + annMktg + annAcct + annMisc + s.insuranceYear + s.energyOtherMonth*12;
+  const annWater = s.waterMonth*12*operatingFactor, annMaint = s.maintMonth*12*operatingFactor;
+  const annMktg = s.marketingMonth*12*(1+s.vatSharedMarketingUpliftPct/100);
+  const annAcct = s.accountingMonth*12*(1+s.vatSharedAccountingUpliftPct/100);
+  const annMisc = s.miscMonth*12*(1+s.vatSharedMiscUpliftPct/100);
+  const fixedExEnergy = annStaff + annWater + annMaint + annMktg + annAcct + annMisc + s.insuranceYear + s.energyOtherMonth*12*operatingFactor;
   const monthly = MONTHS.map((_, i) => {
     const sessions = ticketMode ? 0 : Math.min(maxSlotsDay, s.sessionsDay * SF[i]) * days[i];
     const privateSessions = sessions * s.privatePct/100;
@@ -177,12 +187,12 @@ function calculate(input) {
     const people = ticketMode ? Math.min(s.ticketsDay,ticketCapacity)*days[i] : publicSessions * s.ridersPerSession;
     // Clinics are supplements; private bookings replace public sessions.
     // Events/cards are non-wave ancillary sales and confer no included sessions.
-    const revenue = ticketMode ? [people*effectiveAvgPrice,0,0,0,0,0] : [people*effectiveAvgPrice, people*s.clinicPct/100*s.clinicPrice,
-      privateSessions*s.privatePrice, people*(mixValid ? s.advancedPct/mixTotal : 0)*s.rentalAdvancedPct/100*s.rentalAdvancedPrice,
-      s.eventMonthly*SF[i], s.communityCards*s.communityPrice/12];
-    const rev = sum(revenue), energy = dailyKwh * days[i] * s.electricityRate;
+    const revenue = ticketMode ? [people*effectiveAvgPrice,0,0,0,0,0] : [people*effectiveAvgPrice, people*s.clinicPct/100*netPrice(s.clinicPrice),
+      privateSessions*netPrice(s.privatePrice), people*(mixValid ? s.advancedPct/mixTotal : 0)*s.rentalAdvancedPct/100*netPrice(s.rentalAdvancedPrice),
+      netPrice(s.eventMonthly)*SF[i], s.communityCards*netPrice(s.communityPrice)/12];
+    const rev = sum(revenue), energy = dailyKwh * days[i] * s.electricityRate*operatingFactor;
     const commission=rev*s.distributionPct/100*s.commissionPct/100;
-    const equipment=(people+privateSessions*s.privateGroupSize)*s.equipmentPerVisit;
+    const equipment=(people+privateSessions*s.privateGroupSize)*s.equipmentPerVisit*operatingFactor;
     const cost = energy + fixedExEnergy/12 + rev*(s.concessionRate+s.mgmtPct)/100+commission+equipment;
     return {days:days[i], sessions, privateSessions, publicSessions, people, revenue, rev, energy, commission, equipment, cost, ebitda:rev-cost};
   });
@@ -199,7 +209,7 @@ function calculate(input) {
   const costPerSess = annualSessions ? annEnergy/annualSessions : NaN;
   const citywaveTotal = s.citywaveCost*(1+s.saltwaterUplift/100);
   const baseCAPEX = citywaveTotal+s.installation+s.shipping+s.sitePrep+s.plumbing+s.electrical+s.permits;
-  const contAmt = baseCAPEX*s.contingency/100, capex = baseCAPEX+contAmt;
+  const contAmt = baseCAPEX*s.contingency/100, capex = baseCAPEX+contAmt+s.vatCapexAdditional;
   const invPct = sum(s.investors.map(i=>i.pct)), eqPct = s.joaoPct+s.rodrigoPct+invPct, fundPct = eqPct+s.bankPct;
   const fundingValid = Math.abs(fundPct-100)<1e-8 && eqPct>0;
   if (!fundingValid) warnings.push(`Financiamento ${fd(fundPct)}% e capital proprio ${fd(eqPct)}%: ajuste para 100% com capital proprio positivo. Retornos indisponiveis.`);
@@ -222,7 +232,7 @@ function calculate(input) {
   function operatingYear(yr, revenueFactor=1, electricityRate=s.electricityRate) {
     const rev = annRev * (1+s.revenueGrowth/100)**yr * revenueFactor;
     const inflation = (1+s.costGrowth/100)**yr;
-    const energy = annKwh*electricityRate*inflation;
+    const energy = annKwh*electricityRate*inflation*operatingFactor;
     const mgmt = rev*s.mgmtPct/100, concession = rev*s.concessionRate/100;
     const commission=rev*s.distributionPct/100*s.commissionPct/100;
     const equipment=sum(monthly.map(m=>m.equipment))*inflation;
@@ -284,9 +294,10 @@ function calculate(input) {
     return {y:y.y,j:cJ,r:cR,inv:ownInv.map((i,j)=>({n:i.name,c:cI[j]}))};
   });
   const revBk=[ticketMode?'Bilhetes':'Sessoes publicas','Surf Clinic (suplemento)','Onda Privada','Aluguer Equip.','Eventos sem uso da onda','Community Cards sem sessoes'].map((l,i)=>({l,v:sum(monthly.map(m=>m.revenue[i]))}));
-  const costBk=[{l:'Energia',v:annEnergy},{l:'Pessoal',v:annStaff},{l:'Manutencao',v:annMaint},{l:'Agua',v:annWater},{l:'Seguro',v:s.insuranceYear},{l:'Marketing',v:annMktg},{l:'Concessao',v:annConc},{l:'Gestao',v:annMgmt},{l:'Outros',v:annAcct+annMisc},{l:'Potencia e consumos auxiliares',v:s.energyOtherMonth*12},{l:'Comissoes de venda',v:sum(monthly.map(m=>m.commission))},{l:'Material por utilizacao',v:sum(monthly.map(m=>m.equipment))}];
+  const costBk=[{l:'Energia',v:annEnergy},{l:'Pessoal',v:annStaff},{l:'Manutencao',v:annMaint},{l:'Agua',v:annWater},{l:'Seguro',v:s.insuranceYear},{l:'Marketing',v:annMktg},{l:'Concessao',v:annConc},{l:'Gestao',v:annMgmt},{l:'Outros',v:annAcct+annMisc},{l:'Potencia e consumos auxiliares',v:s.energyOtherMonth*12*operatingFactor},{l:'Comissoes de venda',v:sum(monthly.map(m=>m.commission))},{l:'Material por utilizacao',v:sum(monthly.map(m=>m.equipment))}];
   const capexBk=[{l:`Citywave ${s.waveSize}m`,v:citywaveTotal},{l:'Instalacao',v:s.installation},{l:'Shipping',v:s.shipping},{l:'Preparacao local',v:s.sitePrep},{l:'Canalizacao',v:s.plumbing},{l:'Eletrica',v:s.electrical},{l:'Licencas e projeto',v:s.permits},{l:`Contingencia (${s.contingency}%)`,v:contAmt}];
-  const energyComp=WAVES.map(w=>{const peak=w.size===s.waveSize?s.kwhMax:w.kwh;const k=peak*s.avgPumpLoad/100*s.operatingHoursDay;return {...w,pumps:w.size===s.waveSize?s.pumpsCount:w.pumps,kwh:peak,dKwh:k,aCost:k*opDays*s.electricityRate};});
+  if(s.vatCapexAdditional)capexBk.push({l:'IVA não dedutível do investimento',v:s.vatCapexAdditional});
+  const energyComp=WAVES.map(w=>{const peak=w.size===s.waveSize?s.kwhMax:w.kwh;const k=peak*s.avgPumpLoad/100*s.operatingHoursDay;return {...w,pumps:w.size===s.waveSize?s.pumpsCount:w.pumps,kwh:peak,dKwh:k,aCost:k*opDays*s.electricityRate*operatingFactor};});
   const capTableData=[{name:'Joao Febrer',cash:joaoAmt,cashPct:s.joaoPct,ownership:ownJ,type:'Fundador+Sweat'},{name:'Rodrigo Farinha',cash:rodrigoAmt,cashPct:s.rodrigoPct,ownership:ownR,type:'Fundador+Sweat'},...ownInv.map(i=>({name:i.name,cash:i.amt,cashPct:i.pct,ownership:i.own,type:'Investidor'}))];
   const revScenarios=[.5,.75,.9,1,1.1,1.25,1.5].map(p=>{const y=operatingYear(0,p);return {p,rev:y.rev,opx:y.opex,ebitda:y.ebitda,margin:y.rev?y.ebitda/y.rev:0,net:y.fcfe,fcf:y.fcff,payback:valid?paybackOf(capex,Array.from({length:N},(_,i)=>operatingYear(i,p).fcff)):NaN};});
   const sensRevPcts=[.7,.85,1,1.15,1.3];

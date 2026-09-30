@@ -1,6 +1,6 @@
 # Convenções e correções do simulador
 
-Os motores `src/finance.js` (onda) e `src/hospitality.js` (bar/conjunto) são partilhados pelo browser, testes e relatórios. `APP_INIT` define o estado inicial da página; `INIT` mantém a referência de sessões.
+Os motores `src/finance.js` (onda), `src/hospitality.js` (bar/conjunto) e `src/vat.js` (IVA) são partilhados pelo browser, testes e relatórios. `APP_INIT` define o estado inicial da onda; `APP_BAR_INIT` inicia o bar em concessão; `INIT` mantém a referência de sessões.
 Executar os testes: `node --test tests/*.test.cjs`.
 
 ## Operação e receitas — sessões de grupo
@@ -17,8 +17,9 @@ Executar os testes: `node --test tests/*.test.cjs`.
   acessórias sem sessões incluídas; eventos exclusivos devem entrar como privadas.
 - O mix é normalizado como pesos; a interface avisa se não somar 100%. Um mix
   vazio impede retornos em sessões; não é utilizado em bilhetes. Financiamento que não feche impede retornos em ambos os modos.
-- Todos os preços e custos são líquidos de IVA. Não se presume uma taxa fiscal
-  legal: a taxa efetiva é um pressuposto editável.
+- Os valores introduzidos começam como preços antes de IVA, mas o painel IVA
+  permite tratá-los como preços finais. A receita, o EBITDA e o VAL usam os
+  valores antes de IVA e incluem IVA não dedutível como custo ou investimento.
 - As categorias, os meses e os totais derivam dos mesmos registos, sem
   arredondamentos financeiros intermédios. Arredondamentos são de apresentação.
 
@@ -98,10 +99,14 @@ alternativas apresentadas estão identificadas como taxas ilustrativas.
 
 ## Limites que continuam explícitos
 
-Sem IVA em tesouraria, variações de fundo de maneio, pré-abertura, impostos pessoais
-ou saldo de caixa mensal. Os reforços anuais não medem necessidades de financiamento
-dentro do ano. Não há validação externa de procura, preços, consumo, custos,
-capacidades físicas ou fiscalidade. Estes continuam a ser pressupostos do utilizador.
+O painel IVA mostra uma ponte mensal simplificada para o primeiro ano, separada
+da projeção anual do projeto. Inclui faturas de investimento, autoliquidação,
+IVA de vendas e custos elegíveis, crédito, pedido e recebimento de reembolso.
+O pico de IVA pago temporariamente é necessidade de tesouraria, não uma segunda
+rubrica de CAPEX. O VAL/TIR não incluem o custo de financiar essa espera.
+Continuam fora do modelo a tesouraria mensal completa, variações gerais de fundo
+de maneio, pré-abertura e impostos pessoais. Não há validação externa de procura,
+preços, consumo, custos, capacidades físicas ou enquadramento fiscal.
 
 
 ## Bar, espaço para trabalhar e consolidação

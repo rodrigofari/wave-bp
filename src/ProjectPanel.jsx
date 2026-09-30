@@ -238,16 +238,16 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
   </section>;
 }
 
-function SimulationControls({s,b,shared,updateWave,project}) {
+function SimulationControls({s,b,shared,modelInputs,updateWave,project}) {
   const ticket=s.salesMode==='tickets';
-  const thresholds=React.useMemo(()=>ticket?CitywaveHospitality.ticketBreakEven(s,b,shared):null,[s,b,shared,ticket]);
+  const thresholds=React.useMemo(()=>ticket?CitywaveHospitality.ticketBreakEven(modelInputs.wave,modelInputs.bar,modelInputs.shared):null,[modelInputs,ticket]);
   const fields=items=>items.map(([key,label,suffix,min,max,step=1])=><Row key={key} label={label} value={s[key]} onChange={v=>updateWave(key,v)} suffix={suffix} min={min} max={max} step={step}/>);
   const result=v=>v===null?'Nao atinge na capacidade atual':`${fd(v,2)} bilhetes/dia`;
   return <section aria-label="Configuracao da simulacao" style={{border:'1px solid #ddd',padding:18,marginBottom:24}}>
     <label style={{fontWeight:700}}>Modelo de venda <select aria-label="Modelo de venda" value={s.salesMode} onChange={e=>updateWave('salesMode',e.target.value)} style={{padding:8,maxWidth:'100%'}}>
       <option value="tickets">Bilhetes / entrada flexivel</option><option value="sessions">Sessoes de grupo</option>
     </select></label>
-    <p style={{fontSize:12,lineHeight:1.6}}>Precos liquidos de IVA. Material incluido exceto avancados. O bar continua separado, com consumo de surfistas e procura externa editavel. Os valores sao hipoteses; os resultados nao validam procura nem orcamentos.</p>
+    <p style={{fontSize:12,lineHeight:1.6}}>Os preços são {s.pricesIncludeVat?'finais com IVA':'antes de IVA'}; altere esta base em IVA e caixa. Material incluído exceto avançados. O bar continua separado, com consumo de surfistas e procura externa editável. Os valores são hipóteses; os resultados não validam procura nem orçamentos.</p>
     <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:24}}>
       <div>
         {ticket?fields([

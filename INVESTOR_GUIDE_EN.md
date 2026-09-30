@@ -1,20 +1,20 @@
 # Citywave Funchal — investor guide
 
-Updated 29 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
+Updated 30 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
 
 ## The idea in 60 seconds
 
-The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: those visitors are bar customers, and revenue is their spend per visit. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
+The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: visitors are customers of the bar operator. In the starting concession, the Lda. receives fixed rent and does not book their spending. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
 
-The simulator separates **Wave only**, **Bar / work** and **Combined**. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 451 400 €, annual revenue of 1 238 700 €, EBITDA of 354 782 €, NPV of -287 784 € and project IRR of 5.66%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
+The simulator separates **Wave only**, **Bar / work** and **Combined**. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 968 149 €, EBITDA of 296 112 €, NPV of -488 788 € and project IRR of 3.50%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
 
 | Starting scenario | Wave (allocated share) | Bar within combined | Combined |
 | --- | --- | --- | --- |
-| Investment | 2 292 400 € | 159 000 € | 2 451 400 € |
-| Year 1 revenue | 938 149 € | 300 551 € | 1 238 700 € |
-| Year 1 EBITDA | 284 112 € | 70 670 € | 354 782 € |
-| NPV | -562 604 € | 274 820 € | -287 784 € |
-| Project IRR | 2.74% | 36.09% | 5.66% |
+| Investment | 2 292 400 € | 0 € | 2 292 400 € |
+| Year 1 revenue | 938 149 € | 30 000 € | 968 149 € |
+| Year 1 EBITDA | 284 112 € | 12 000 € | 296 112 € |
+| NPV | -562 604 € | 73 816 € | -488 788 € |
+| Project IRR | 2.74% | Indisponível | 3.50% |
 
 In the wave column, common costs are already shared with the bar; the standalone wave view retains all of those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
 
@@ -23,8 +23,8 @@ In the wave column, common costs are already shared with the bar; the standalone
 1. Choose **Combined** to see the pool and bar together. Then compare with **Wave only** and **Bar / work**.
 2. Start with the controls on the left: average ticket price, wave minutes, opening hours, operating days, tickets/day, energy and investment. Underlined numbers are editable.
 3. Expand sections by clicking their title. Hover over the **i** icon for a plain-English explanation.
-4. Edit bar inputs in **Bar / work**. Every starting bar input is illustrative because no validated estimates have been provided for seats, fit-out, staffing, spend or demand.
-5. Compare EBITDA, cash flow, NPV and IRR. To test demand, edit external bar visits and wave tickets; do not treat tourist passenger totals as automatic conversions.
+4. Use **VAT & cash** to choose gross or net input prices, Citywave invoicing and refund timing. Edit bar inputs in **Bar / work**. The starting case is a concession with illustrative monthly rent and retained owner costs; switch to owner-operation to test direct bar trading.
+5. Compare EBITDA, cash flow, NPV and IRR. Test wave tickets or sessions; in owner-operated bar mode, edit external bar visits too. Tourist passenger totals are not automatic conversions.
 
 Edits remain only in the current browser session and are lost on refresh. Share the simulator link so each investor can test their own case; the link does not save or transmit edited values.
 
@@ -33,7 +33,7 @@ Edits remain only in the current browser session and are lost on refresh. Share 
 | View | Includes | Use it to |
 |---|---|---|
 | Wave only | Pool, tickets/sessions, staff and original wave costs | Assess the pool business by itself |
-| Bar / work | Bar and spend per visit from surfers, companions, external visitors and people working | Test bar economics and its assumptions |
+| Bar / work | Owner rent and retained costs in concession mode; customer sales only in owner-operation | Test the rent or direct bar trading |
 | Combined | Wave and bar revenue and costs, with consolidated funding and tax | Assess the project that would need financing |
 
 Shared costs can be allocated between wave and bar for analysis, but this does not create savings. Component IRRs and NPVs are analytical and **must not be added together**. Use the combined view for total project returns.
@@ -44,7 +44,7 @@ The starting mode sells flexible-entry tickets, with a fixed wave-use duration p
 
 This is different from a surf lesson in the ocean. The input is pool-use time per ticket, not time standing on a wave. Before relying on a final capacity, Citywave and the safety team must confirm entry format, simultaneous surfers, rotation, rest, instruction, cleaning and changeover. Raising daily tickets without validating these constraints overstates revenue.
 
-Average ticket price is an independent input, net of discounts and VAT. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.
+Average ticket price is an independent input after discounts; the VAT panel chooses whether the entered amount is before or after VAT. The commercial price basis remains undecided. Sales commissions are a separate cost. Ticket mode does not add private sessions, clinics, rentals, events or passes. Session mode has a customer mix: equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it optionally. Extra coaching starts switched off.
 
 ## Group sessions: comparing 45 and 60 minutes
 
@@ -59,11 +59,13 @@ Indicative engine comparison, holding the other starting assumptions constant: p
 
 ## How the bar makes money
 
-The simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate **spend per visit**, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.
+The starting case is a concession: the Lda. receives €2,500/month in rent before VAT and retains €300/month in owner costs. Food and drink sales belong to the concessionaire and are excluded from the Lda.'s revenue. These figures are wholly illustrative; owner-operation can be selected in the simulator.
+
+In owner-operated bar mode, the simulator separates four customer sources to limit double counting: surfers, companions, external visitors and people working. For each source, it estimates visits, conversion to a purchase, average spend and length of stay. People working use the same bar seats and generate **spend per visit**, not a second coworking revenue stream. Capacity is limited by monthly seat-hours and may miss peak-hour congestion.
 
 The cable car’s annual traffic (about 1.1 million passenger journeys in 2025, [reported by Diário de Notícias](https://www.dnoticias.pt/2026/5/27/493459-teleferico-do-funchal-investe-45-milhoes/)) and cruise passengers provide context for testing channels, not daily footfall at the site. A passenger may never pass the bar, may be counted in another channel or may not buy anything. Replace traffic assumptions with pedestrian counts, conversion tests, hotel/cruise/cable-car partnerships, online booking data and trials. Deduct each intermediary commission once; online and partner channels may have different costs.
 
-Starting external visits/day, seasonality, seats, average spend, staffing, wages, rent, fit-out and equipment are assumptions. Obtain quotes and run sensitivities. A zero input for equipment, auxiliary electricity or commission means “not entered”, not “no cost”.
+In the owner-operated alternative, external visits/day, seasonality, seats, average spend, staffing, wages, rent, fit-out and equipment are assumptions. Obtain quotes and run sensitivities. A zero input for equipment, auxiliary electricity or commission means “not entered”, not “no cost”.
 
 ## Financial terms in plain English
 
@@ -97,9 +99,9 @@ The starting case uses 600 kW peak power, 100% average load, ten hours/day, 340 
 
 - **Demand and pricing:** no market study validates conversion, price, volume or seasonality. Annual growth raises price/revenue; it does not automatically add customers.
 - **Capacity and safety:** session mode models 45- or 60-minute groups capped at 14 people; safe capacity, rotation and actual wave-use time need operational confirmation. Flexible-ticket mode is a separate one-at-a-time planning assumption.
-- **Bar:** wholly illustrative scenario; the promoters have not supplied estimates. Validate seats, spend, stay, opening hours, staffing, wages, rent, fit-out, stock and commissions.
+- **Bar:** the starting case is an illustrative concession with landlord rent and costs; owner-operated trading remains an editable alternative. Validate the contract, investment and achievable rent.
 - **Electricity:** tariff and load profile are assumptions; actual consumption and contracted cost can materially change break-even.
-- **Tax and VAT:** editable, simplified effective tax; no tax-loss carry-forward, VAT timing or tax advice.
+- **Tax and VAT:** income tax and VAT differ. The VAT panel models gross/net prices, input-tax recovery and a simplified monthly cash bridge; refund financing costs are not included in NPV/IRR. Seek tax advice.
 - **Funding:** percentages and loan rate/term are inputs, not bank offers. Sweat equity is an illustrative weighting, not a shareholders’ agreement.
 - **Term and exit:** matches the concession term, with no perpetuity; residual value is zero by default. Intra-year cash, pre-opening costs, ramp-up, delays and decommissioning are not modelled.
 - **Consolidation:** one operating entity, analytical allocation of shared costs and recalculated combined tax. Do not add component NPVs or IRRs.

@@ -1,20 +1,20 @@
 # Citywave Funchal — guia do investidor
 
-Atualizado em 29/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
+Atualizado em 30/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
 
 ## Em 60 segundos
 
-A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do bar e a receita é o consumo por visita. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
+A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do operador do bar. Na concessão inicial, a Lda. recebe renda fixa, não contabiliza esse consumo. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
 
-O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 451 400 €, receita anual de 1 238 700 €, EBITDA de 354 782 €, VAL de -287 784 € e TIR do projeto de 5.66%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
+O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 968 149 €, EBITDA de 296 112 €, VAL de -488 788 € e TIR do projeto de 3.50%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
 
 | Indicador — cenário inicial | Onda (quota no conjunto) | Bar no conjunto | Conjunto |
 | --- | --- | --- | --- |
-| Investimento | 2 292 400 € | 159 000 € | 2 451 400 € |
-| Receita ano 1 | 938 149 € | 300 551 € | 1 238 700 € |
-| EBITDA ano 1 | 284 112 € | 70 670 € | 354 782 € |
-| VAL | -562 604 € | 274 820 € | -287 784 € |
-| TIR do projeto | 2.74% | 36.09% | 5.66% |
+| Investimento | 2 292 400 € | 0 € | 2 292 400 € |
+| Receita ano 1 | 938 149 € | 30 000 € | 968 149 € |
+| EBITDA ano 1 | 284 112 € | 12 000 € | 296 112 € |
+| VAL | -562 604 € | 73 816 € | -488 788 € |
+| TIR do projeto | 2.74% | Indisponível | 3.50% |
 
 Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista isolada da onda mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
 
@@ -23,9 +23,9 @@ Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista iso
 1. Escolha **Conjunto** para ver a piscina e o bar juntos. Compare depois com **Onda sem bar** e **Bar / trabalhar**.
 2. Comece pelos controlos à esquerda: preço médio, minutos de onda, horário, dias abertos, vendas/dia, energia e investimento. Os números sublinhados são editáveis.
 3. Abra cada secção pelo título. Passe o cursor pelo círculo **i** para ver uma explicação da secção.
-4. Edite os inputs do bar no painel **Bar / trabalhar**. No cenário inicial, todos os inputs do bar são exemplos editáveis porque ainda não existem estimativas validadas para lugares, obras, equipa, consumo ou procura.
-5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere visitantes externos do bar e bilhetes da onda; não trate passageiros turísticos como conversões automáticas.
-6. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.
+4. Edite os inputs do bar no painel **Bar / trabalhar**. O arranque simula concessão, com renda e custos retidos ilustrativos; mude para operação própria para testar vendas diretas.
+5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere bilhetes ou sessões da onda; na alternativa de operação própria do bar, altere também visitantes externos. Passageiros turísticos não são conversões automáticas.
+6. No painel **IVA e caixa**, escolha se os preços introduzidos são antes ou depois de IVA e teste faturação Citywave e prazo de reembolso. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.
 
 As alterações vivem apenas na sessão do navegador e desaparecem ao recarregar. Partilhe o link do simulador para cada investidor testar os seus próprios cenários; este link não grava nem transmite os valores alterados.
 
@@ -34,7 +34,7 @@ As alterações vivem apenas na sessão do navegador e desaparecem ao recarregar
 | Vista | O que inclui | Para que serve |
 |---|---|---|
 | Onda sem bar | Piscina, bilhetes/sessões, pessoal e custos originais da onda | Medir o negócio da piscina isoladamente |
-| Bar / trabalhar | Bar e consumo por visita; recebe surfistas, acompanhantes, público externo e pessoas a trabalhar | Testar a economia do bar e das suas hipóteses |
+| Bar / trabalhar | Renda e custos do proprietário na concessão; vendas e consumo por visita apenas na operação própria | Testar renda ou exploração direta do bar |
 | Conjunto | Receitas e custos da onda e do bar; financiamento e impostos consolidados | Avaliar o projeto que precisaria de financiamento |
 
 Os custos partilhados podem ser repartidos entre onda e bar para análise, mas essa repartição não cria poupança. A TIR e o VAL das componentes são analíticos e **não devem ser somados**. Para o retorno total, use o conjunto.
@@ -45,7 +45,7 @@ O modo inicial vende bilhetes de entrada flexível, com uma duração de onda po
 
 Isto é diferente de uma sessão de aula no mar. Os minutos configurados são tempo de utilização da piscina por bilhete, não minutos em pé numa onda. Antes de apresentar capacidade final, a Citywave e a equipa de segurança terão de confirmar o formato de entrada, número de surfistas simultâneos, rotação, descanso, instrução, limpeza e tempo de troca. Aumentar bilhetes/dia sem validar estes limites sobrestima receita.
 
-O preço médio do bilhete é um input independente, já líquido de descontos e IVA. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.
+O preço médio do bilhete é um input independente, já após descontos; no painel IVA decide-se se o valor introduzido é antes ou depois de IVA. A política comercial ainda está por decidir. As comissões de venda são outro custo. No modo bilhetes não se somam privadas, clínicas, alugueres, eventos nem cartões. No modo de sessões existe um mix de níveis: o material está incluído para principiantes, intermédios e crianças; apenas avançados podem optar por aluguer. Coaching extra começa desligado.
 
 ## Sessões de grupo: comparação de 45 e 60 minutos
 
@@ -60,11 +60,13 @@ Comparação indicativa do motor, mantendo restantes pressupostos iniciais de pr
 
 ## Como ganha dinheiro o bar
 
-O simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram **consumo por visita**, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.
+O arranque simula concessão: a Lda. recebe 2 500 €/mês de renda antes de IVA e suporta 300 €/mês de custos retidos. As vendas de comidas e bebidas pertencem ao concessionário e não entram na receita da Lda. Os valores são inteiramente ilustrativos; a operação própria é editável.
+
+No modo de operação própria, o simulador separa quatro origens para reduzir dupla contagem: surfistas, acompanhantes, público externo e pessoas a trabalhar. Para cada origem, estima visitas, conversão em consumo, consumo médio e duração. Os visitantes a trabalhar usam os mesmos lugares do bar e geram **consumo por visita**, não uma segunda receita de cowork. O limite de capacidade é calculado por horas-lugar mensais; pode falhar picos horários.
 
 A circulação anual do teleférico (aprox. 1,1 milhões de passageiros em 2025, conforme a fonte indicada nos relatórios) e dos cruzeiros é contexto para testar canais, não procura diária à porta. Um passageiro pode não passar no local, ser contado noutro canal ou não consumir. Substitua tráfego por medições de peões, conversões, acordos com hotéis/cruzeiros/teleférico, reservas online e dados de teste. Comissões de intermediários devem ser deduzidas uma vez; o canal online e os parceiros podem ter custos diferentes.
 
-A procura diária externa inicial, a sazonalidade, os lugares, o consumo médio, equipa, salários, renda, obras e equipamento são hipóteses. Peça orçamentos e teste sensibilidades. Zero num custo (material, eletricidade auxiliar, comissão) quer dizer “sem valor introduzido”, não “custo nulo”.
+Na alternativa de operação própria, procura diária externa, sazonalidade, lugares, consumo médio, equipa, salários, renda, obras e equipamento são hipóteses. Peça orçamentos e teste sensibilidades. Zero num custo (material, eletricidade auxiliar, comissão) quer dizer “sem valor introduzido”, não “custo nulo”.
 
 ## Como ler os números financeiros
 
@@ -98,9 +100,9 @@ O caso inicial usa potência máxima de 600 kW, carga média de 100%, dez horas/
 
 - **Procura e preços:** não há estudo de mercado que valide conversão, preço, volume ou sazonalidade. O crescimento anual aumenta receita/preços, não cria novos clientes automaticamente.
 - **Capacidade e segurança:** o modo de sessões simula grupos de 45 ou 60 minutos, limitados a 14 pessoas; a capacidade segura, rotação e tempo efetivo na onda exigem confirmação operacional. O modo de bilhetes flexíveis é uma hipótese separada de utilização individual.
-- **Bar:** cenário totalmente ilustrativo, sem estimativas fornecidas pela equipa promotora. Valide lugares, consumo, permanência, horários, pessoal, salários, renda, obras, stock e comissões.
+- **Bar:** o arranque simula concessão, com renda e custos do proprietário ilustrativos; operação própria é uma alternativa editável. Valide contrato, investimento e renda negociável.
 - **Eletricidade:** tarifa e perfil de carga são hipóteses; o consumo real e o custo contratado podem alterar materialmente o break-even.
-- **Imposto e IVA:** taxa efetiva editável e simplificada; sem reporte de prejuízos, calendário de IVA ou consulta fiscal. Não é aconselhamento fiscal.
+- **Imposto e IVA:** IRC e IVA são distintos. O painel IVA modela preço final/bruto, dedutibilidade e uma ponte mensal simplificada; não inclui custo financeiro da espera pelo reembolso no VAL/TIR, nem substitui parecer fiscal.
 - **Financiamento:** percentagens e taxa/prazo de dívida são inputs, não ofertas bancárias. O sweat equity é uma ponderação ilustrativa, não acordo societário.
 - **Horizonte e saída:** igual ao prazo da concessão, sem perpetuidade; valor residual zero por defeito. A caixa intra-anual, custos de pré-abertura, ramp-up, atrasos e custos de desmantelamento não estão modelados.
 - **Consolidação:** uma entidade operacional, custos comuns repartidos analiticamente e impostos do conjunto recalculados. Não some VAL/TIR por componente.
