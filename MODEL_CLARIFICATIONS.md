@@ -1,6 +1,6 @@
 # Pressupostos comerciais e energia — versão atual
 
-Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 01/10/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Experiência e material
 
@@ -18,4 +18,4 @@ A referência não substitui uma ficha técnica final. A tarifa de 0,16 €/kWh 
 
 O resumo, receitas, custos, IVA, investidores, P&L e análise usam sempre o mesmo projeto conjunto. A tabela do resumo separa analiticamente onda e bar, com custos comuns imputados, enquanto imposto e VAL do conjunto são recalculados numa só entidade. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.
 
-A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.
+A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. O IRC inclui reporte simplificado de prejuízos, sujeito a qualificação PME e confirmação das taxas do ano aplicável. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.

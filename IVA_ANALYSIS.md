@@ -1,6 +1,6 @@
 # IVA e tesouraria — análise do caso-base
 
-Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
+Atualizado em 01/10/2026. Gerado por `node analysis/generate-reports.cjs` a partir do motor do simulador. Receitas e custos operacionais apresentados antes de IVA; o painel IVA separa dedução e tesouraria. Cenários ilustrativos, não previsões nem orçamentos.
 
 ## Decisão comercial ainda em aberto
 
@@ -10,8 +10,8 @@ A entidade que compra a máquina e fatura as sessões será uma **sociedade come
 | --- | --- | --- |
 | Receita da onda no ano 1 | 778 563 € | 638 167 € |
 | EBITDA conjunto no ano 1 | 186 085 € | 52 708 € |
-| VAL conjunto | -1 137 726 € | -2 032 798 € |
-| TIR do projeto | -3.83% | -19.18% |
+| VAL conjunto | -1 106 241 € | -2 038 187 € |
+| TIR do projeto | -3.12% | -19.18% |
 | Payback | Não recupera no prazo | Não recupera no prazo |
 
 Com nove sessões de pico por dia e oito participantes, a média após sazonalidade é 54.8 participantes públicos/dia aberto. Mesmo com preços antes de IVA, este caso-base não recupera o investimento no prazo de dez anos. A sensibilidade seguinte aumenta a procura para 12 sessões de pico, reduz cada sessão para 45 minutos e mantém oito participantes: é um teste de capacidade e vendas, não uma previsão validada.
@@ -20,9 +20,9 @@ Com nove sessões de pico por dia e oito participantes, a média após sazonalid
 | --- | --- | --- |
 | Participantes públicos/dia aberto | 73.0 | 73.0 |
 | EBITDA conjunto no ano 1 | 432 630 € | 254 795 € |
-| VAL conjunto | 295 370 € | -738 339 € |
-| TIR do projeto | 10.73% | 0.87% |
-| Payback | 6.26 anos | 9.60 anos |
+| VAL conjunto | 472 113 € | -665 917 € |
+| TIR do projeto | 12.58% | 1.96% |
+| Payback | 5.83 anos | 9.14 anos |
 
 ## Hipótese fiscal da Lda.
 

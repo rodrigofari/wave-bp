@@ -198,8 +198,8 @@ function Fold({ title, children, open = false }) {
       "Includes the machine, works and optional sales. Private bookings replace public sessions.",
     ],
     6: [
-      "Dívida, capital próprio, crescimento e valor residual alimentam os fluxos, VAL e TIR.",
-      "Debt, equity, growth and exit value feed cash flows, NPV and IRR.",
+      "Dívida, capital próprio, IRC anual, crescimento e valor residual alimentam os fluxos, VAL e TIR. A qualificação PME e a derrama ainda exigem confirmação.",
+      "Debt, equity, annual corporate tax, growth and exit value feed cash flows, NPV and IRR. SME eligibility and the surcharge still need confirmation.",
     ],
     7: [
       "A dedução reduz custos; o reembolso muda o calendário da caixa. Confirme o tratamento com contratos e faturas.",
@@ -1849,12 +1849,23 @@ function App() {
             )}
             {W(
               "taxRate",
-              t("Imposto efetivo assumido", "Assumed effective income tax"),
+              t("IRC geral Madeira", "Madeira standard corporate tax"),
               "%",
               0,
               100,
               0.1,
+              t("Referência legal 2026: 13,3%. Editável para testar outros anos ou enquadramentos.", "2026 statutory reference: 13.3%. Edit for other years or tax treatments."),
             )}
+            <label className="check-row" title={t("A taxa reduzida depende da qualificação efetiva da Lda. e das empresas associadas.", "The reduced rate depends on the company's and linked entities' actual eligibility.")}>
+              <input type="checkbox" checked={wave.smeEligible} onChange={(e) => setW("smeEligible", e.target.checked)} />
+              {t("Aplicar escalão PME/Small Mid Cap", "Apply SME/Small Mid Cap band")}
+            </label>
+            {wave.smeEligible && <>
+              {W("smeTaxRate", t("IRC no primeiro escalão", "First-band corporate tax"), "%", 0, 100, 0.1, t("Referência Madeira 2026: 10,5%.", "Madeira 2026 reference: 10.5%."))}
+              {W("smeTaxBand", t("Limite anual do escalão", "Annual band ceiling"), "€", 0, 10000000, 1000, t("Primeiros 50 000 € de matéria coletável por ano, se elegível.", "First €50,000 of annual taxable income, if eligible."))}
+            </>}
+            {W("lossOffsetPct", t("Limite de dedução de prejuízos", "Tax-loss offset limit"), "%", 0, 100, 1, t("O artigo 52.º do CIRC limita a dedução anual a 65% do lucro tributável; o remanescente transita.", "Article 52 of the Corporate Tax Code caps annual loss use at 65% of taxable profit; the balance carries forward."))}
+            {W("municipalTaxRate", t("Derrama municipal", "Municipal surcharge"), "%", 0, 1.5, 0.1, t("0% é hipótese inicial para o Funchal; confirme o ano aplicável. Incide antes da dedução de prejuízos fiscais.", "0% is the initial Funchal assumption; confirm the applicable year. Charged before carried tax losses."))}
             {W(
               "revenueGrowth",
               t("Crescimento receita/ano", "Annual revenue growth"),
@@ -2907,8 +2918,8 @@ function App() {
               </h2>
               <p className="lead">
                 {t(
-                  "Receitas e custos crescem com as taxas introduzidas. O volume físico de sessões fica constante; o imposto é anual e simplificado.",
-                  "Revenue and costs grow by the entered rates. Physical session volume is held constant; income tax is simplified and annual.",
+                  "Receitas e custos crescem com as taxas introduzidas. O volume físico de sessões fica constante. O IRC é calculado por ano para a Lda. consolidada, com escalão PME elegível e reporte de prejuízos; as taxas de 2026 mantêm-se como hipótese nos anos seguintes.",
+                  "Revenue and costs grow by the entered rates. Physical session volume stays constant. Corporate tax is calculated yearly for the consolidated company, with an eligible SME band and carried losses; 2026 rates are assumed unchanged in later years.",
                 )}
               </p>
               <div className="table-wrap">
@@ -2955,6 +2966,11 @@ function App() {
                   </tbody>
                 </table>
               </div>
+              <h3 className="sub-title">{t("Ponte do IRC da Lda.", "Company corporate tax bridge")}</h3>
+              <p className="hint">{t("O FCFF usa imposto sem dívida; a caixa e o FCFE usam imposto após juros. A derrama, se introduzida, incide sobre lucro positivo antes dos prejuízos transitados.", "FCFF uses tax before debt; cash and FCFE use tax after interest. Any municipal surcharge is charged on positive profit before carried losses.")}</p>
+              <div className="table-wrap"><table className="data-table"><thead><tr>{[
+                t("Ano", "Year"), t("Lucro após juros", "Profit after interest"), t("Prejuízos usados", "Losses used"), t("Matéria coletável", "Taxable income"), "IRC", t("Derrama", "Surcharge"), t("Imposto pago", "Tax paid"), t("Prejuízos a transitar", "Losses carried"),
+              ].map((x) => <th key={x}>{x}</th>)}</tr></thead><tbody>{c.years.map((y) => <tr key={y.y}><td>{y.y}</td>{[y.financedTax.profit, y.financedTax.lossUsed, y.financedTax.taxable, y.financedTax.irc, y.financedTax.municipalTax, y.financedTax.total, y.financedTax.lossClosing].map((x,i) => <td className="numeric" key={i}>{euro(x,lang)}</td>)}</tr>)}</tbody></table></div>
               <h3 className="sub-title">
                 {t("Fluxos descontados e VAL", "Discounted cash flows and NPV")}
               </h3>

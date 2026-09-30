@@ -1,20 +1,20 @@
 # Citywave Funchal — guia do investidor
 
-Atualizado em 30/09/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
+Atualizado em 01/10/2026. Este guia explica como ler e testar o simulador. Os valores abaixo são o cenário inicial do motor: hipóteses editáveis, não previsões, propostas de financiamento ou orçamentos.
 
 ## Em 60 segundos
 
 A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do operador do bar. Na concessão inicial, a Lda. recebe renda fixa, não contabiliza esse consumo. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
 
-O simulador apresenta o projeto conjunto numa única vista; a tabela do resumo identifica separadamente a contribuição da onda e do bar. Todos os indicadores principais referem-se ao investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 186 085 €, VAL de -1 137 726 € e TIR do projeto de -3.83%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
+O simulador apresenta o projeto conjunto numa única vista; a tabela do resumo identifica separadamente a contribuição da onda e do bar. Todos os indicadores principais referem-se ao investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 186 085 €, VAL de -1 106 241 € e TIR do projeto de -3.12%, a uma taxa de desconto de 8.48%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
 
 | Indicador — cenário inicial | Onda (quota no conjunto) | Bar no conjunto | Conjunto |
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 0 € | 2 292 400 € |
 | Receita ano 1 | 778 563 € | 30 000 € | 808 563 € |
 | EBITDA ano 1 | 174 085 € | 12 000 € | 186 085 € |
-| VAL | -1 211 542 € | 73 816 € | -1 137 726 € |
-| TIR do projeto | -4.80% | Indisponível | -3.83% |
+| VAL | -1 188 445 € | 83 861 € | -1 106 241 € |
+| TIR do projeto | -4.19% | Indisponível | -3.12% |
 
 Na coluna da onda, os custos comuns já estão repartidos com o bar. A simulação sem bar, calculável pelo motor, mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
 
@@ -51,8 +51,8 @@ Cada sessão dura 45 ou 60 minutos no total e recebe até 14 pessoas. Não se as
 
 | Sessão de grupo | Máx. sessões/dia | Máx. pessoas/dia | Participantes públicos/ano | Tarifa energia | Energia/ano | Receita da onda | EBITDA conjunto | VAL conjunto | TIR projeto |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 295 370 € | 10.73% |
-| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | -106 514 € | 7.17% |
+| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 472 113 € | 12.58% |
+| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | 29 672 € | 8.75% |
 
 Comparação indicativa do motor, mantendo restantes pressupostos iniciais de preços, procura de pico (12 sessões/dia), energia, custos, bar e financiamento. Os valores de participantes são vendas públicas anuais depois da sazonalidade; capacidade máxima é um teto, não uma previsão de procura. A energia continua calculada pelas horas de funcionamento por dia, por isso encurtar a sessão não reduz automaticamente o custo energético diário. O intervalo entre sessões pode ser editado no simulador e reduz a capacidade disponível.
 
@@ -93,6 +93,16 @@ Um EBITDA positivo pode coexistir com FCFE negativo: amortização da dívida e 
 ## Energia: a variável que merece um orçamento
 
 O caso inicial usa potência máxima de 600 kW, carga média de 100%, dez horas/dia, 340 dias e tarifa editável de 0,16 €/kWh. A fórmula dá 6.000 kWh/dia e 326 400 €/ano. Cada alteração de 0,01 €/kWh muda o custo anual em 20 400 €, mantendo todo o resto igual. A energia é cobrada durante o horário de operação, mesmo com poucos clientes. A tarifa e carga real não estão confirmadas; acrescentos de bombas auxiliares, bar, potência contratada, tarifas horárias e taxas devem ser obtidos da EEM/fornecedor e da especificação técnica. Não conte o mesmo encargo duas vezes.
+
+## IRC e prejuízos fiscais da Lda.
+
+A referência de 2026 na Madeira é 13,3% de IRC geral, ou 10,5% sobre os primeiros 50 000 € de matéria coletável por ano para PME/Small Mid Cap elegíveis, com 13,3% no excedente. A elegibilidade PME é **hipótese a confirmar** após definir capital e empresas associadas. O caso-base assume derrama municipal de 0% como hipótese editável; a taxa aplicável no Funchal para os anos futuros deve ser confirmada. O simulador permite editar cada taxa e o limite anual.
+
+Prejuízos fiscais transitam de ano para ano; em cada ano, só podem abater até 65% do lucro positivo. A derrama introduzida incide sobre lucro positivo antes deste abatimento. O IRC da onda e do bar isolados é analítico; a Lda. paga o imposto do conjunto. O FCFF usa imposto antes da dívida e o FCFE usa imposto após juros. O WACC aplica a taxa marginal geral à dívida como aproximação, pelo que um ano sem lucro pode não realizar esse benefício imediatamente.
+
+No ano 1 do caso-base, o lucro tributável consolidado antes de juros é 33 259 €, o IRC operacional é 3492 €, e o IRC após juros é 0 €. O VAL conjunto com estes pressupostos é -1 106 241 €. Trata-se de aproximação anual: não modela diferenças fiscais de depreciação, tributações autónomas, limitações de juros ou calendário de pagamentos por conta. As taxas de 2026 são mantidas como hipótese nos restantes anos.
+
+Fontes: [Orçamento Regional da Madeira para 2026, art. 19.º](https://at.madeira.gov.pt/Ficheiros/Diplomas/DLR/ORAM2026.pdf) · [CIRC, art. 52.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/CIRC_2R/Pages/irc52.aspx) · [Lista AT de derramas municipais do período de 2025](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/instrucoes_administrativas/Documents/Oficio_circulado_20288_2026.pdf).
 
 ## Espaço público e concessão municipal
 

@@ -18,6 +18,8 @@ O bar inicia em concessão: a Lda. recebe renda e suporta apenas custos retidos;
 
 Edite energia, investimento, financiamento e prazo da concessão. Os zeros em comissões, material ou consumos auxiliares significam que ainda não há orçamento introduzido. A potência de 600 kW é máxima e a carga média de 100% é hipótese conservadora, não medição. As alterações ficam apenas na sessão do navegador e não são guardadas no link partilhado. O seletor PT/EN e o modo escuro mantêm os cálculos iguais.
 
+O grupo **Financiamento** permite editar o IRC: referência Madeira 2026 de 13,3%, escalão PME elegível de 10,5% nos primeiros 50 000 € anuais, reporte de prejuízos limitado a 65% do lucro positivo e derrama municipal inicial de 0% como hipótese. A aba **P&L** apresenta a ponte fiscal ano a ano para a Lda. consolidada. A qualificação PME, a taxa municipal do ano aplicável e as diferenças entre contabilidade e fiscalidade ainda precisam de confirmação profissional; o simulador conserva as taxas de 2026 como hipótese para todos os anos da concessão.
+
 ## Validação e limites
 
 Execute `node --test tests/*.test.cjs` e `node analysis/generate-reports.cjs --check`. Os relatórios são gerados pelo mesmo motor, mas são cenários fixos; não refletem edições locais no navegador. O modelo reconcilia receitas, custos, dívida, impostos, fluxos, retornos e caixa de IVA, mas não valida procura, preços de mercado, capacidade segura, contratos, tarifa elétrica ou enquadramento fiscal. A ponte mensal de IVA cobre apenas o primeiro ano; a tesouraria operacional completa e o custo de financiar atrasos de reembolso não estão modelados.

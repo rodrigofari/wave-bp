@@ -2,7 +2,7 @@
 (function(root) {
 'use strict';
 const F = typeof module !== 'undefined' && module.exports ? require('./finance.js') : root.CitywaveFinance;
-const {INIT, SF, calculate, allocateDays, debtSchedule, npv, irr, paybackOf} = F;
+const {INIT, SF, calculate, incomeTax, allocateDays, debtSchedule, npv, irr, paybackOf} = F;
 const sum = values => values.reduce((a,b)=>a+b,0);
 const BAR_INIT = {
   operatingMode:'own',
@@ -30,19 +30,21 @@ const SHARED_INIT = {
   barSharePct:25, extraMonth:0,
 };
 
-// Same conventions as the wave model: annual tax, no loss carry-forward,
-// annuity debt, maintenance capex, dividends capped by accumulated earnings.
+// Annual IRC is recomputed for each analytical component and for the
+// consolidated Lda.; each projection carries its own fiscal-loss balance.
 function valueComponent({operatingYears, capex, workingCapital=0, exitValue=0, s, wacc, valid=true}) {
   const investment = capex + workingCapital;
   const bankAmt = investment*s.bankPct/100;
   const eqPct = s.joaoPct+s.rodrigoPct+sum(s.investors.map(i=>i.pct));
   const eqAmt = investment*eqPct/100;
   const debt = debtSchedule(bankAmt,s.loanRate,s.loanYears,operatingYears.length);
-  const taxRate = s.taxRate/100;
-  let cash=0, earnings=0;
+  let cash=0, earnings=0, projectLoss=0, financedLoss=0;
   const years = operatingYears.map((op,i)=>{
     const d=debt.annual[i], ebit=op.ebitda-op.dep;
-    const tax=Math.max(0,ebit*taxRate), equityTax=Math.max(0,(ebit-d.interest)*taxRate);
+    const projectTax=incomeTax(ebit,projectLoss,s);
+    const financedTax=incomeTax(ebit-d.interest,financedLoss,s);
+    projectLoss=projectTax.lossClosing; financedLoss=financedTax.lossClosing;
+    const tax=projectTax.total, equityTax=financedTax.total;
     const netIncome=ebit-d.interest-equityTax;
     const fcff=op.ebitda-tax-op.maintCapex;
     const fcfe=op.ebitda-equityTax-op.maintCapex-d.debt;
@@ -50,7 +52,7 @@ function valueComponent({operatingYears, capex, workingCapital=0, exitValue=0, s
     const divs=Math.min(Math.max(0,fcfe)*s.distPct/100,Math.max(0,earnings));
     const capitalCall=Math.max(0,-(cash+fcfe-divs));
     cash+=fcfe-divs+capitalCall;earnings-=divs;
-    return {...op,y:i+1,...d,ebit,tax,equityTax,netIncome,fcff,fcfe,divs,capitalCall,cash,retainedEarnings:earnings};
+    return {...op,y:i+1,...d,ebit,tax,equityTax,projectTax,financedTax,netIncome,fcff,fcfe,divs,capitalCall,cash,retainedEarnings:earnings};
   });
   const last=years.at(-1), first=years[0];
   // Initial inventory is tied-up working capital, recovered at exit at book value.

@@ -1,9 +1,29 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {INIT,calculate,irr,npv,debtSchedule,allocateDays,paybackOf} = require('../src/finance.js');
+const {INIT,calculate,incomeTax,irr,npv,debtSchedule,allocateDays,paybackOf} = require('../src/finance.js');
 const sum = a => a.reduce((x,y)=>x+y,0);
 const near = (actual,expected,tolerance=1e-6) => assert.ok(Math.abs(actual-expected)<=tolerance,`${actual} != ${expected}`);
 const run = changes => calculate({...INIT,...changes});
+
+test('2026 Madeira SME band is annual, and municipal tax uses profit before carried losses',()=>{
+ const s={...INIT,municipalTaxRate:1.5};
+ const first=incomeTax(100000,0,s);
+ near(first.irc,50000*.105+50000*.133);near(first.municipalTax,1500);
+ const loss=incomeTax(-80000,0,s);near(loss.total,0);near(loss.lossClosing,80000);
+ const recovered=incomeTax(100000,loss.lossClosing,s);
+ near(recovered.lossUsed,65000);near(recovered.taxable,35000);
+ near(recovered.irc,35000*.105);near(recovered.municipalTax,1500);near(recovered.lossClosing,15000);
+ const noSme=incomeTax(100000,0,{...s,smeEligible:false});near(noSme.irc,13300);
+});
+test('tax settings flow through the annual projection and debt benefit only when usable',()=>{
+ const base=run({sessionsDay:7,revenueGrowth:10,concessionYears:10});
+ const later=base.proj.find(y=>y.financedTax.lossUsed>0);
+ assert.ok(later,'Losses from weak opening years must carry into a profitable year');
+ near(later.financedTax.taxable,Math.max(0,later.financedTax.profit)-later.financedTax.lossUsed);
+ const changed=run({ridersPerSession:10,municipalTaxRate:1.5});
+ near(changed.first.financedTax.municipalTax,Math.max(0,changed.first.ebit-changed.first.interest)*.015);
+ assert.ok(changed.npvProject<run({ridersPerSession:10}).npvProject);
+});
 
 test('CAPEX, salaries and annuity match independent arithmetic',()=>{
  const c=run({}); near(c.capex,2292400);near(c.annStaff,103950);near(c.mp,8707.49738588114);
