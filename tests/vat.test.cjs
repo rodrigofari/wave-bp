@@ -3,7 +3,28 @@ const assert=require('node:assert/strict');
 const F=require('../src/finance.js');
 const H=require('../src/hospitality.js');
 const V=require('../src/vat.js');
+const S=require('../src/scenarios.js');
 const close=(actual,expected,tolerance=1e-6)=>assert.ok(Math.abs(actual-expected)<=tolerance,`${actual} != ${expected}`);
+
+test('published starting case and realistic preset use the same group-session VAT economics',()=>{
+  const preset=S.build('realistic');
+  assert.equal(F.APP_INIT.salesMode,'sessions');
+  assert.equal(F.APP_INIT.sessionMinutes,60);
+  assert.equal(F.APP_INIT.ridersPerSession,8);
+  assert.equal(F.APP_INIT.sessionsDay,9);
+  assert.equal(F.APP_INIT.privatePct,0);
+  assert.equal(F.APP_INIT.eventMonthly,0);
+  assert.equal(F.APP_INIT.communityCards,0);
+  assert.equal(F.APP_INIT.rentalAdvancedPct,0);
+  const initial=V.calculate(F.APP_INIT,H.APP_BAR_INIT,H.SHARED_INIT,V.VAT_INIT);
+  const realistic=V.calculate(preset.wave,preset.bar,preset.shared,V.VAT_INIT);
+  close(initial.project.combined.annRev,realistic.project.combined.annRev);
+  close(initial.project.combined.npvProject,realistic.project.combined.npvProject);
+  close(initial.project.wave.maxSlotsDay,10);
+  assert.ok(initial.project.wave.avgPeopleDay<8*9);
+  assert.ok(initial.project.wave.avgPeopleDay>50&&initial.project.wave.avgPeopleDay<60);
+  assert.ok(initial.project.wave.revBk.slice(1).every(line=>line.v===0));
+});
 
 test('trading company: reverse-charged Citywave VAT does not create a supplier cash advance',()=>{
   const bar=H.APP_BAR_INIT,r=V.calculate(F.APP_INIT,bar,H.SHARED_INIT,V.VAT_INIT);
@@ -46,6 +67,17 @@ test('€49 beginner session can be modelled as a net quote or a final customer 
   close(gross.waveGrossPrice,49);
   close(gross.project.wave.annRev,net.project.wave.annRev/1.22);
   assert.ok(gross.project.combined.npvProject<net.project.combined.npvProject);
+});
+
+test('session break-even chart uses VAT-adjusted prices and responds to 45/60-minute capacity',()=>{
+  const input={...F.APP_INIT,pricesIncludeVat:true,sessionsDay:12};
+  const at45=V.calculate({...input,sessionMinutes:45},H.APP_BAR_INIT,H.SHARED_INIT,V.VAT_INIT);
+  const at60=V.calculate({...input,sessionMinutes:60},H.APP_BAR_INIT,H.SHARED_INIT,V.VAT_INIT);
+  const chartPoint=H.calculateProject({...at45.inputs.wave,sessionsDay:input.sessionsDay},at45.inputs.bar,at45.inputs.shared);
+  close(chartPoint.combined.ebitda,at45.project.combined.ebitda);
+  close(chartPoint.combined.npvProject,at45.project.combined.npvProject);
+  close(at45.project.wave.annEnergy,at60.project.wave.annEnergy);
+  assert.ok(at45.project.wave.annRev>at60.project.wave.annRev);
 });
 
 test('wages carry no input VAT and invoice credit is neither refunded nor offset twice',()=>{

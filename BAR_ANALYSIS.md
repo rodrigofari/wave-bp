@@ -4,17 +4,17 @@ Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a part
 
 ## Cenário inicial da página
 
-O modo inicial é bilhetes: procura de 70/dia, limitada a **66 vendas/dia** por oito minutos de onda + um de troca em dez horas. O bar está em **concessão ilustrativa**: renda de 2 500 €/mês, custos retidos de 300 €/mês e zero obras imputadas ao proprietário. A empresa não contabiliza as vendas nem os salários do concessionário.
+O modo inicial é **sessões de grupo de 60 minutos**, com 9 sessões de procura de pico por dia e 8 participantes por sessão, sujeito à sazonalidade. Isto representa cerca de 54.8 participantes públicos por dia aberto em média. O teto editável é de 14 participantes por sessão; a capacidade segura exige validação operacional. O bar está em **concessão ilustrativa**: renda de 2 500 €/mês, custos retidos de 300 €/mês e zero obras imputadas ao proprietário. A empresa não contabiliza as vendas nem os salários do concessionário.
 
 | Indicador | Onda no projeto | Bar no projeto | Conjunto |
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 0 € | 2 292 400 € |
-| Receita ano 1 | 938 149 € | 30 000 € | 968 149 € |
-| EBITDA ano 1 | 284 112 € | 12 000 € | 296 112 € |
-| VAL | -562 604 € | 73 816 € | -488 788 € |
-| TIR | 2.74% | Indisponível | 3.50% |
+| Receita ano 1 | 778 563 € | 30 000 € | 808 563 € |
+| EBITDA ano 1 | 132 505 € | 12 000 € | 144 505 € |
+| VAL | -1 451 695 € | 73 816 € | -1 371 916 € |
+| TIR | -8.11% | Indisponível | -6.96% |
 
-Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 269 712 €. A melhoria real ao acrescentar o bar é 26 400 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
+Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 118 105 €. A melhoria real ao acrescentar o bar é 26 400 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
 
 | Origem da receita do bar | Receita anual |
 | --- | --- |

@@ -4,7 +4,7 @@ Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a part
 
 ## Experiência e material
 
-Clínicas significam coaching especializado adicional e estão desativadas por defeito. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, interpretados por defeito como antes de IVA, pois o preço final ainda está por decidir, com descontos configuráveis. Preço médio de bilhetes flexíveis é um input independente já após descontos.
+Clínicas significam coaching especializado adicional e estão desativadas por defeito. Privadas, aluguer avançado, eventos e cartões também começam a zero no caso-base apresentado a investidores. O acompanhamento incluído na experiência não pode ser vendido novamente como suplemento. Material incluído em principiantes, intermédios e crianças; apenas avançados têm aluguer opcional. Preços de sessões: 49 €/39 €/39 €/35 €, interpretados por defeito como antes de IVA, pois o preço final ainda está por decidir, com descontos configuráveis. Cada sessão é cobrada por participante segundo o seu nível; descontos e vendas intermediadas são modelados separadamente.
 
 O custo unitário de material é editável e inicia a zero por falta de orçamento. Lavagem/reposição corrente devem ser distinguidas do investimento inicial e da manutenção capitalizada. Participantes por privada são um único input usado no material e no bar.
 

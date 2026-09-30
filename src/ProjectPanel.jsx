@@ -234,30 +234,19 @@ function ProjectPanel({mode,project,s,b,shared,updateWave,updateBar,updateShared
       </div>
     </div>
     <ComponentTable headings={['Ano','Receita','EBITDA','Imposto apos juros','FCFE','Dividendos','Reforcos','Divida final']} rows={data.years.map(y=>[y.y,money(y.rev),money(y.ebitda),money(y.equityTax),money(y.fcfe),money(y.divs),money(y.capitalCall),money(y.balance)])} />
-    <p style={{fontSize:11,color:'#666',lineHeight:1.7}}>Horizonte de {wave.N} anos, valor residual editavel, sem perpetuidade. O stock inicial e recuperado ao valor contabilistico no fim; nao e depreciado e nao cresce. Precos liquidos de IVA, sem calendario de IVA, pre-abertura ou tesouraria intranual. Imposto simplificado sem reporte de prejuizos. Equipa do bar adicional; pessoal partilhado deve ser repartido manualmente para evitar duplicacoes. Eventos e pacotes da onda devem excluir consumo ja contabilizado no bar. O modelo nao presume mais vendas da onda por existir um bar.</p>
+    <p style={{fontSize:11,color:'#666',lineHeight:1.7}}>Horizonte de {wave.N} anos, valor residual editável, sem perpetuidade. No modo de operação própria, o stock inicial é recuperado no fim. Receitas antes de IVA e calendário simplificado no painel IVA e caixa; pré-abertura e tesouraria completa não estão modeladas. IRC simplificado sem reporte de prejuízos. A equipa do concessionário do bar fica fora das contas da Lda.; na alternativa de operação própria, evite duplicar pessoal e consumos. O modelo não presume mais vendas da onda por existir um bar.</p>
   </section>;
 }
 
-function SimulationControls({s,b,shared,modelInputs,updateWave,project}) {
-  const ticket=s.salesMode==='tickets';
-  const thresholds=React.useMemo(()=>ticket?CitywaveHospitality.ticketBreakEven(modelInputs.wave,modelInputs.bar,modelInputs.shared):null,[modelInputs,ticket]);
+function SimulationControls({s,updateWave,project}) {
   const fields=items=>items.map(([key,label,suffix,min,max,step=1])=><Row key={key} label={label} value={s[key]} onChange={v=>updateWave(key,v)} suffix={suffix} min={min} max={max} step={step}/>);
-  const result=v=>v===null?'Nao atinge na capacidade atual':`${fd(v,2)} bilhetes/dia`;
   return <section aria-label="Configuracao da simulacao" style={{border:'1px solid #ddd',padding:18,marginBottom:24}}>
-    <label style={{fontWeight:700}}>Modelo de venda <select aria-label="Modelo de venda" value={s.salesMode} onChange={e=>updateWave('salesMode',e.target.value)} style={{padding:8,maxWidth:'100%'}}>
-      <option value="tickets">Bilhetes / entrada flexivel</option><option value="sessions">Sessoes de grupo</option>
-    </select></label>
-    <p style={{fontSize:12,lineHeight:1.6}}>Os preços são {s.pricesIncludeVat?'finais com IVA':'antes de IVA'}; altere esta base em IVA e caixa. Material incluído exceto avançados. O bar continua separado, com consumo de surfistas e procura externa editável. Os valores são hipóteses; os resultados não validam procura nem orçamentos.</p>
+    <p style={{fontSize:12,lineHeight:1.6}}>A onda vende sessões de grupo de 45 ou 60 minutos, com até 14 participantes por sessão. Cada participante paga o preço do seu nível. Os preços introduzidos são {s.pricesIncludeVat?'finais com IVA':'antes de IVA'}; altere esta base em IVA e caixa. Material incluído exceto avançados. Os valores são hipóteses editáveis, não procura ou orçamentos validados.</p>
     <div className="twocol-charts" style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:24}}>
       <div>
-        {ticket?fields([
-          ['ticketsDay','Procura de bilhetes por dia aberto','',0,500,.1],
-          ['ticketPrice','Receita media por bilhete apos descontos','€',0,200,.01],
-          ['ticketMinutes','Minutos efetivos de onda por bilhete','min',1,60,.5],
-          ['turnaroundMinutes','Troca / intervalo por bilhete','min',0,20,.5],
-        ]):<p style={{fontSize:12}}>Configure duracao, grupos e precos por nivel em Onda sem bar → Receitas. A procura de pico e ajustada pela sazonalidade e limitada aos horarios disponiveis.</p>}
+        <p style={{fontSize:12}}>Configure duração, dimensão do grupo, procura de sessões e preços por nível em Onda sem bar → Receitas. A procura de pico é ajustada pela sazonalidade e limitada ao horário disponível.</p>
         {fields([['operatingHoursDay','Horas de funcionamento da onda','h',1,24],['opDays','Dias de funcionamento da onda','',0,365]])}
-        {ticket&&<p style={{fontSize:12,lineHeight:1.6}}>Capacidade: <strong>{project.wave.ticketCapacity} bilhetes/dia</strong>, uma utilizacao de cada vez, incluindo trocas. Volume uniforme por dia aberto, sem rampa nem sazonalidade. Neste modo nao se somam privadas, clinicas, alugueres, eventos ou cartoes. Vendas efetivas: <strong>{fd(project.wave.avgPeopleDay,1)}/dia</strong>. Esta capacidade e uma hipotese operacional, nao uma especificacao de seguranca.</p>}
+        <p style={{fontSize:12,lineHeight:1.6}}>Capacidade: <strong>{project.wave.maxSlotsDay} sessões/dia</strong> ou <strong>{project.wave.maxRidersDay} participantes/dia</strong> com o grupo escolhido. A simulação estima <strong>{fd(project.wave.avgPeopleDay,1)} participantes públicos/dia</strong> em média após sazonalidade. A capacidade segura ainda requer validação operacional.</p>
       </div>
       <div>
         {fields([
@@ -272,15 +261,6 @@ function SimulationControls({s,b,shared,modelInputs,updateWave,project}) {
         <p style={{fontSize:11,color:'#666',lineHeight:1.6}}>Comissoes aplicadas uma vez como custo, sem reduzir novamente o preco. Material: lavagem/desgaste/reposicao corrente media, excluindo investimento ja contabilizado. Nao repetir custos existentes. Encargos eletricos adicionais nao estao incluidos no €/kWh salvo se introduzir uma media integral; nesse caso mantenha a linha adicional a zero. Valores zero nao constituem orcamentos validados.</p>
       </div>
     </div>
-    {ticket&&thresholds.valid&&<>
-      <h3>Break-even do conjunto</h3>
-      <ComponentTable headings={['Limiar','Bilhetes vendidos por dia aberto']} rows={[
-        ['Operacao: EBITDA zero',result(thresholds.operating)],
-        ['Caixa ano 1: apos imposto, divida e manutencao',result(thresholds.cash)],
-        [`Investimento: VAL zero a ${pct(project.wave.wacc)} em ${project.wave.N} anos`,result(thresholds.investment)],
-      ]}/>
-      <p style={{fontSize:11,lineHeight:1.6}}>Inclui o bar e os custos comuns. Se a meta excede a capacidade, nao e apresentado um retorno atingivel. Caixa positiva nao equivale a dividendos nem recuperacao do investimento. Todos os limiares mantem os restantes pressupostos atuais.</p>
-    </>}
-    {ticket&&!thresholds.valid&&<p role="alert">{thresholds.reason}</p>}
+    <p style={{fontSize:11,lineHeight:1.6}}>Os três gráficos de break-even no topo usam a procura de sessões de grupo e mantêm os restantes pressupostos atuais, incluindo o IVA e o bar.</p>
   </section>;
 }

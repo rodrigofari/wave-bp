@@ -47,7 +47,7 @@
       },
       wave: {
         salesMode:'sessions', sessionMinutes:60, sessionGapMinutes:0, ridersPerSession:8,
-        sessionsDay:7, opDays:340, staffCount:7,
+        sessionsDay:9, opDays:340, staffCount:7,
       },
       bar: {
         operatingMode:'concession', opDays:340, concessionRentMonth:2500,
@@ -56,7 +56,7 @@
         companionConversion:60, workDaily:6,
       },
       assumptions: [
-        {pt:'Onda',en:'Wave',ptValue:'7 sessões de pico/dia · 8 pessoas/grupo · 60 min · 340 dias/ano',enValue:'7 peak sessions/day · 8 people/group · 60 min · 340 days/year'},
+        {pt:'Onda',en:'Wave',ptValue:'9 sessões de pico/dia · 8 pessoas/grupo · 60 min · 340 dias/ano',enValue:'9 peak sessions/day · 8 people/group · 60 min · 340 days/year'},
         {pt:'Equipa da onda',en:'Wave team',ptValue:'7 pessoas (pressuposto de folha salarial)',enValue:'7 people (payroll assumption)'},
         {pt:'Preço',en:'Price',ptValue:'Tabela atual por nível; descontos 20% × 15%',enValue:'Current skill-level prices; discounts 20% × 15%'},
         {pt:'Bar em concessão',en:'Bar concession',ptValue:'Renda 2.500€/mês · custos retidos pelo proprietário 300€/mês · CAPEX do proprietário 0€',enValue:'€2,500/month rent · €300/month retained owner costs · €0 owner-funded CAPEX'},

@@ -188,22 +188,19 @@ function BreakEvenChart({title,points,valueKey,currentInput,capacity,language}) 
 }
 
 function BreakEvenCharts({s,barInputs,sharedInputs,project,component,language}) {
-  const capacity=s.salesMode==='tickets'?project.wave.ticketCapacity:project.wave.maxSlotsDay;
-  const maxInput=Math.max(1,s.salesMode==='tickets'?capacity:capacity/Math.min(...SF),s.salesMode==='sessions'?s.sessionsDay:0);
+  const capacity=project.wave.maxSlotsDay;
+  const maxInput=Math.max(1,capacity/Math.min(...SF),s.sessionsDay);
   const points=useMemo(()=>{
     const steps=41;
     return Array.from({length:steps},(_,i)=>{
       const input=maxInput*i/(steps-1);
-      const overrides=s.salesMode==='tickets'?{ticketsDay:input}:{sessionsDay:input};
-      const p=CitywaveHospitality.calculateProject({...s,...overrides},barInputs,sharedInputs);
+      const p=CitywaveHospitality.calculateProject({...s,sessionsDay:input},barInputs,sharedInputs);
       const result=component==='wave'?p.wave:component==='bar'?p.bar:p.combined;
       return {input,volume:p.wave.avgPeopleDay,ebitda:result.ebitda,fcfe:result.first.fcfe,npv:result.npvProject};
     });
   },[s,barInputs,sharedInputs,component,maxInput]);
-  const currentInput=s.salesMode==='tickets'?s.ticketsDay:s.sessionsDay;
-  const modeLabel=s.salesMode==='tickets'
-    ?(language==='en'?'ticket demand per open day':'procura de bilhetes por dia aberto')
-    :(language==='en'?'peak group sessions/day with seasonality':'sessoes de pico/dia com sazonalidade');
+  const currentInput=s.sessionsDay;
+  const modeLabel=language==='en'?'peak group sessions/day with seasonality':'sessões de grupo de pico/dia com sazonalidade';
   const currentVolume=project.wave.avgPeopleDay;
   const currentPoint=points.reduce((best,p)=>!best||Math.abs(p.input-currentInput)<Math.abs(best.input-currentInput)?p:best,null);
   const maxPoint=points.at(-1);
@@ -278,7 +275,7 @@ function App() {
   useEffect(()=>{CitywaveI18n.setLanguage(language);},[language]);
   useEffect(()=>{localStorage.setItem('citywave-theme',theme);document.body.style.backgroundColor=theme==='dark'?'#101319':'#fff';},[theme]);
   const [s, setS] = useState(CitywaveFinance.APP_INIT);
-  const [scenarioId,setScenarioId] = useState(null);
+  const [scenarioId,setScenarioId] = useState('realistic');
   const [tab, setTab] = useState("overview");
   const [component, setComponent] = useState("wave");
   const [barInputs, setBarInputs] = useState(CitywaveHospitality.APP_BAR_INIT);
@@ -324,7 +321,7 @@ function App() {
   const vatResult=useMemo(()=>CitywaveVAT.calculate(s,barInputs,sharedInputs,vatInputs),[s,barInputs,sharedInputs,vatInputs]);
   const project=vatResult.project;
   const modelInputs=vatResult.inputs;
-  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveVAT.calculate({...s,salesMode:"sessions",sessionMinutes:minutes,ridersPerSession:14},barInputs,sharedInputs,vatInputs).project})), [s,barInputs,sharedInputs,vatInputs]);
+  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveVAT.calculate({...s,sessionMinutes:minutes},barInputs,sharedInputs,vatInputs).project})), [s,barInputs,sharedInputs,vatInputs]);
   const comparison45=sessionComparison[0].project, comparison60=sessionComparison[1].project;
   const calc = project.wave;
   const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
@@ -373,6 +370,7 @@ function App() {
         .root-container[data-theme="dark"] .scenario-card{background:#191f29!important;border-color:#343c49!important}
         .root-container[data-theme="dark"] .scenario-card h3,.root-container[data-theme="dark"] .scenario-card strong{color:#eef2f8!important}
         .root-container[data-theme="dark"] .scenario-metrics{border-color:#343c49!important}
+        .root-container[data-theme="dark"] .session-summary{border-color:#343c49!important;background:#141922!important}
         .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(255, 255, 255)"],
         .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(216, 222, 231)"]{background:#191f29!important;color:#e5e9ef!important}
         .root-container[data-theme="dark"] .vat-panel p,
@@ -444,11 +442,16 @@ function App() {
       <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
         {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto'],['vat',language==='en'?'VAT & cash':'IVA e caixa']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
       </nav>
+      <div className="session-summary" style={{display:'flex',gap:12,flexWrap:'wrap',padding:'9px 12px',border:'1px solid #d8dee7',fontSize:11,lineHeight:1.5,marginBottom:12}}>
+        <strong>{language==='en'?'Group-session model':'Modelo por sessões de grupo'}</strong>
+        <span>{s.sessionMinutes} min · {s.ridersPerSession} {language==='en'?'people/session':'pessoas/sessão'} · {fd(calc.avgPeopleDay,1)} {language==='en'?'public participants/open day on average':'participantes públicos/dia aberto em média'}</span>
+        <span>{language==='en'?'Entered prices:':'Preços introduzidos:'} {s.pricesIncludeVat?(language==='en'?'final, VAT included':'finais, com IVA'):(language==='en'?'before VAT':'antes de IVA')}</span>
+      </div>
       <BreakEvenCharts s={modelInputs.wave} barInputs={modelInputs.bar} sharedInputs={modelInputs.shared} project={project} component={component} language={language}/>
       <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language} vatInputs={vatInputs} wavePricesIncludeVat={s.pricesIncludeVat} barPricesIncludeVat={barInputs.pricesIncludeVat} barRentIncludesVat={barInputs.concessionRentIncludesVat}/>
       {component === 'vat' && <VatPanel vat={vatInputs} onVat={updateVat} onPreset={applyVatProfile} s={s} b={barInputs} onWave={u} onBar={updateBar} result={vatResult} language={language}/>}
       {(component === 'bar'||component === 'project') && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} language={language} />}
-      {(component === 'bar'||component === 'project') && <Section title="Configurar bilhetes, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project} /></Section>}
+      {(component === 'bar'||component === 'project') && <Section title="Configurar sessões, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project} /></Section>}
       {component === 'wave' && <>
       <p style={{fontSize:12,color:'#666'}}>Onda sem bar · Indicadores, graficos e separadores desta vista referem-se a piscina. Consulte Conjunto para o projeto completo.</p>
       {/* ── DISCOVERY CALL BANNER ── */}
@@ -499,22 +502,6 @@ function App() {
         {/* ═══ LEFT ═══ */}
         <aside style={{ borderRight:"1px solid #eee", paddingRight:20 }}>
 
-          <div style={{marginBottom:16,paddingBottom:12,borderBottom:"1px solid #ddd"}}>
-            <label style={{fontSize:11,fontWeight:700}}>MODELO DE VENDA
-              <select aria-label="Modelo de venda" value={s.salesMode} onChange={e=>u('salesMode',e.target.value)} style={{display:'block',width:'100%',padding:8,marginTop:6,border:'1px solid #ddd',background:'#fff'}}>
-                <option value="tickets">Bilhetes / entrada flexivel</option><option value="sessions">Sessoes de grupo</option>
-              </select>
-            </label>
-          </div>
-          {s.salesMode==="tickets" && <Section title="Bilhetes e capacidade" number="1">
-            <Row label="Bilhetes procurados/dia" value={s.ticketsDay} onChange={v=>u('ticketsDay',v)} suffix="" min={0} max={500} step={.1}/>
-            <Row label="Preco medio liquido" value={s.ticketPrice} onChange={v=>u('ticketPrice',v)} min={0} max={200} step={.01}/>
-            <Row label="Minutos de onda/bilhete" value={s.ticketMinutes} onChange={v=>u('ticketMinutes',v)} suffix="min" min={1} max={60} step={.5}/>
-            <Row label="Tempo de troca" value={s.turnaroundMinutes} onChange={v=>u('turnaroundMinutes',v)} suffix="min" min={0} max={20} step={.5}/>
-            <Row label="Capacidade diaria" value={calc.ticketCapacity} suffix=" bilhetes"/>
-            <Row label="Vendas efetivas/dia" value={calc.avgPeopleDay} suffix="" step={.1}/>
-            <p style={{fontSize:10,color:'#777',lineHeight:1.5}}>Uma utilizacao de cada vez. Sem receitas extra neste modo. Em Receitas, edite comissoes, material e veja o break-even do conjunto.</p>
-          </Section>}
           {/* SITE & CONFIG */}
           <Section title="Local e Configuracao" number="0">
             <div style={{ fontSize:10, color:"#999", marginBottom:8 }}>Selecione o cenario do local (Jardins do Teleferico)</div>
@@ -580,14 +567,19 @@ function App() {
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:11, lineHeight:1.8 }}>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Consumo/dia</span><strong>{fmt(Math.round(calc.dailyKwh))} kWh</strong></div>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/dia</span><strong>{fmt(Math.round(calc.dailyKwh*s.electricityRate))}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>{calc.ticketMode?"Energia/bilhete":"Custo/sessao"}</span><strong>{fd(calc.ticketMode?calc.energyCostPerPerson:calc.costPerSess,2)}€</strong></div>
+              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/sessão</span><strong>{fd(calc.costPerSess,2)}€</strong></div>
               <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/ano</span><strong>{fmt(Math.round(calc.annEnergy))}€</strong></div>
             </div>
           </Section>
 
           {/* REVENUE */}
-          {s.salesMode!=="tickets" && <Section title="Receitas" number="2">
-            <div style={{ fontSize:10, color:"#999", marginBottom:6 }}>Precos liquidos de IVA · Venda limitada pela capacidade</div>
+          <Section title="Receitas" number="2">
+            <label style={{display:'block',fontSize:11,fontWeight:700,marginBottom:8}}>Como interpretar os preços das sessões
+              <select value={s.pricesIncludeVat?'gross':'net'} onChange={e=>u('pricesIncludeVat',e.target.value==='gross')} style={{display:'block',padding:7,marginTop:5,width:'100%'}}>
+                <option value="net">Antes de IVA</option><option value="gross">Preço final pago pelo cliente, com IVA</option>
+              </select>
+            </label>
+            <div style={{fontSize:11,lineHeight:1.5,background:'#f5f5f5',padding:'8px 10px',marginBottom:10}}>Exemplo principiante: {fd(s.beginnerPrice,2)} € introduzidos → {fd(vatResult.waveNetPrice,2)} € de receita antes de IVA → {fd(vatResult.waveGrossPrice,2)} € pagos pelo cliente. A base comercial ainda está por decidir.</div>
               <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={45} max={60} step={15} />
             <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
             <Row label="Pessoas por sessão" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={14} info="Limite máximo por grupo: 14 pessoas" />
@@ -603,7 +595,7 @@ function App() {
             <Row label="Avancado" value={s.advancedPrice} onChange={v=>u("advancedPrice",v)} suffix="€" min={15} max={100} info={`${s.advancedPct}%`} />
             <Row label="Criancas" value={s.kidsPrice} onChange={v=>u("kidsPrice",v)} suffix="€" min={10} max={80} info={`${s.kidsPct}%`} />
             <Row label="Eventos sem onda/mes" value={s.eventMonthly} onChange={v=>u("eventMonthly",v)} suffix="€" min={0} max={20000} step={500} />
-          </Section>}
+          </Section>
 
           <Section title="Custos de venda e material" open={false}>
             <Row label="Receita intermediada" value={s.distributionPct} onChange={v=>u('distributionPct',v)} suffix="%" max={100}/>
@@ -758,15 +750,11 @@ function App() {
           </>}
 
           {/* REVENUE */}
-          {tab==="revenue" && s.salesMode==="tickets" && <>
-            <h2 style={{fontSize:13,fontWeight:800,textTransform:'uppercase'}}>Receitas e break-even por bilhete</h2>
-            <SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project}/>
-          </>}
-          {tab==="revenue" && s.salesMode!=="tickets" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de Receitas — Capacidade e Precos Liquidos</h2>
+          {tab==="revenue" && <>
+            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de receitas — capacidade e preços por sessão</h2>
             <div style={{ background:"#f8f8f8", borderRadius:4, padding:14, marginBottom:16, fontSize:11, lineHeight:1.6, color:"#444" }}>
               <p style={{margin:"0 0 6px"}}><strong style={{color:"#000"}}>Cada pessoa paga por sessao</strong>, com preco diferenciado por nivel. Principiantes incluem prancha, fato e instrutor.</p>
-              <p style={{margin:0}}>Precos liquidos de IVA. Privadas substituem sessoes publicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. A sessao total dura 45 ou 60 minutos e aceita ate 14 pessoas; o tempo individual na onda varia com o nivel e nao e usado como duracao do bilhete.</p>
+              <p style={{margin:0}}>Preços {s.pricesIncludeVat?'finais com IVA':'antes de IVA'}. Privadas substituem sessões públicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. A sessao total dura 45 ou 60 minutos e aceita ate 14 pessoas; o tempo individual na onda varia com o nivel e não é usado como duração individual.</p>
             </div>
 
             <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>1. Configuracao das Sessoes</h2>
@@ -790,8 +778,8 @@ function App() {
             </div>
 
             <section aria-label="Comparacao de sessoes de 45 e 60 minutos" style={{border:"1px solid #ddd",padding:14,margin:"0 0 22px"}}>
-              <h2 style={{fontSize:13,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px"}}>Comparacao: 45 vs 60 minutos · grupo de 14</h2>
-              <p style={{fontSize:11,color:"#666",lineHeight:1.55,marginTop:0}}>Todos os inputs atuais alimentam esta comparação, incluindo tarifa €/kWh, potência/carga, horário, procura, preços, custos do bar e financiamento. Edita um valor e os dois cenários e a diferença são recalculados. A energia anual é igual nos dois formatos enquanto se mantiverem as mesmas horas de operação.</p>
+              <h2 style={{fontSize:13,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px"}}>Comparação: 45 vs 60 minutos · grupo de {s.ridersPerSession}</h2>
+              <p style={{fontSize:11,color:"#666",lineHeight:1.55,marginTop:0}}>Todos os inputs atuais alimentam esta comparação, incluindo IVA, tarifa €/kWh, potência/carga, horário, procura, preços, custos do bar e financiamento. A energia anual é igual nos dois formatos se as horas de operação forem iguais. Se a procura couber tanto em 45 como em 60 minutos, os resultados financeiros também serão iguais; aumente a procura de pico para testar a capacidade adicional.</p>
               <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:900}}>
                 <thead><tr style={{borderBottom:"2px solid #111",textAlign:"right"}}><th style={{textAlign:"left",padding:8}}>Duração</th><th style={{padding:8}}>Máx. sessões/dia</th><th style={{padding:8}}>Máx. pessoas/dia</th><th style={{padding:8}}>Participantes públicos/ano</th><th style={{padding:8}}>Tarifa energia</th><th style={{padding:8}}>Energia/ano</th><th style={{padding:8}}>Receita onda</th><th style={{padding:8}}>EBITDA conjunto</th><th style={{padding:8}}>VAL conjunto</th><th style={{padding:8}}>TIR projeto</th></tr></thead>
                 <tbody>{sessionComparison.map(({minutes,project:scenario})=><tr key={minutes} style={{borderBottom:"1px solid #eee",textAlign:"right"}}><td style={{textAlign:"left",padding:8,fontWeight:700}}>{minutes} min</td><td style={{padding:8}}>{scenario.wave.maxSlotsDay}</td><td style={{padding:8}}>{scenario.wave.maxRidersDay}</td><td style={{padding:8}}>{fmt(scenario.wave.monthly.reduce((total,m)=>total+m.people,0))}</td><td style={{padding:8}}>{fd(s.electricityRate,2)}€/kWh</td><td style={{padding:8}}>{fmt(scenario.wave.annEnergy)}€</td><td style={{padding:8}}>{fmt(scenario.wave.annRev)}€</td><td style={{padding:8}}>{fmt(scenario.combined.ebitda)}€</td><td style={{padding:8}}>{fmt(scenario.combined.npvProject)}€</td><td style={{padding:8}}>{pct(scenario.combined.projectIRR)}</td></tr>)}
