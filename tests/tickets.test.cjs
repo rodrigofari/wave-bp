@@ -34,7 +34,8 @@ test('ticket break-even reproduces independently computed operating threshold',(
   const p=H.calculateProject({...wave,ticketsDay:result[key]},bar,H.SHARED_INIT);near(metric(p),0,.001);
  }
  const p=H.calculateProject(wave,bar,H.SHARED_INIT);
- near(p.combined.ebitda,500147.72);near(p.combined.first.fcfe,273505.99671976257);
+ near(p.combined.ebitda,500147.72);
+ near(p.combined.first.fcfe,p.combined.first.ebitda-p.combined.first.financedTax.total-p.combined.first.maintCapex-p.combined.first.debt);
 });
 test('break-even flags impossible capacity, invalid funding and zero operating days',()=>{
  const feasible=H.ticketBreakEven({...wave,ticketMinutes:8,turnaroundMinutes:1},bar,H.SHARED_INIT);

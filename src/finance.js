@@ -78,7 +78,9 @@ const INIT = {
   investors:[{id:1,name:"Investidor A",pct:20},{id:2,name:"Investidor B",pct:15}],
   distPct:70, mgmtPct:0,
   // CAPM / WACC / FCF assumptions
-  taxRate:22.5,            // editable effective tax assumption, not a statutory rate
+  taxRate:13.3,            // 2026 Madeira general IRC rate; held constant in projections
+  smeEligible:true, smeTaxRate:10.5, smeTaxBand:50000,
+  lossOffsetPct:65, municipalTaxRate:0, // 2026 municipal rate unconfirmed; editable
   depreciationYears:15,    // equipamento + infra (vida util fiscal)
   maintCapexPct:2,         // % do CAPEX/ano (manutencao capitalizada)
   exitValue:0,             // net after-tax asset disposal proceeds at concession end
@@ -144,6 +146,23 @@ function allocateDays(total) {
   const order = raw.map((n, i) => ({i, fraction:n - Math.floor(n)})).sort((a,b) => b.fraction - a.fraction || a.i - b.i);
   for (let i = 0; i < total - sum(raw.map(Math.floor)); i++) result[order[i].i]++;
   return result;
+}
+// Annual cash-tax approximation for the operating Lda. The first €50k SME
+// band is annual, not a one-off allowance. Losses survive into later years but
+// may offset at most 65% of each positive year's taxable profit. Municipal
+// derrama, if entered, is charged on profit before carried losses.
+function incomeTax(profit, priorLosses, settings) {
+  const positive=Math.max(0,profit), brought=Math.max(0,priorLosses);
+  const limit=Math.max(0,Math.min(100,settings.lossOffsetPct))/100;
+  const lossUsed=Math.min(brought,positive*limit);
+  const taxable=positive-lossUsed;
+  const lossClosing=brought-lossUsed+Math.max(0,-profit);
+  const general=Math.max(0,settings.taxRate)/100;
+  const small=Math.max(0,settings.smeTaxRate)/100;
+  const band=settings.smeEligible?Math.min(taxable,Math.max(0,settings.smeTaxBand)):0;
+  const irc=band*small+(taxable-band)*general;
+  const municipalTax=positive*Math.max(0,settings.municipalTaxRate)/100;
+  return {profit,lossOpening:brought,lossUsed,lossClosing,taxable,irc,municipalTax,total:irc+municipalTax};
 }
 function calculate(input) {
   const s = {...INIT, ...input};
@@ -223,14 +242,16 @@ function calculate(input) {
   const ownR = ownBase ? (s.rodrigoPct+s.sweatPct/2)/ownBase*100 : 0;
   const ownInv = invAmts.map(i=>({...i,own:ownBase ? i.pct/ownBase*100 : 0}));
   const debt = debtSchedule(bankAmt,s.loanRate,s.loanYears,N), mp = debt.payment;
-  const tax = s.taxRate/100, dRatio = s.bankPct/(fundPct||1), eRatio = 1-dRatio;
+  // WACC uses the long-run marginal rate as an approximation; annual cash tax
+  // below uses the SME band, carried losses and any municipal derrama.
+  const tax = Math.min(1,(s.taxRate+s.municipalTaxRate)/100), dRatio = s.bankPct/(fundPct||1), eRatio = 1-dRatio;
   const DE = eRatio>0 ? dRatio/eRatio : 0;
   const leveredBeta = s.unleveredBeta*(1+(1-tax)*DE);
   const costOfEquity = (s.rfRate+leveredBeta*s.marketPremium)/100;
   const costOfDebtAT = s.loanRate/100*(1-tax), wacc = eRatio*costOfEquity+dRatio*costOfDebtAT;
   const depreciation = capex/s.depreciationYears, maintCapex = capex*s.maintCapexPct/100;
   // Single operating-year calculation feeds projections and both sensitivities.
-  function operatingYear(yr, revenueFactor=1, electricityRate=s.electricityRate) {
+  function operatingYear(yr, revenueFactor=1, electricityRate=s.electricityRate, taxState) {
     const rev = annRev * (1+s.revenueGrowth/100)**yr * revenueFactor;
     const inflation = (1+s.costGrowth/100)**yr;
     const energy = annKwh*electricityRate*inflation*operatingFactor;
@@ -240,17 +261,23 @@ function calculate(input) {
     const ox = (fixedExEnergy*inflation)+energy+mgmt+concession+commission+equipment;
     const eb = rev-ox;
     const dep = (yr<s.depreciationYears ? depreciation : 0) + Math.min(yr,s.depreciationYears)*maintCapex/s.depreciationYears;
-    const ebit = eb-dep, unleveredTax = Math.max(0,ebit*tax);
+    const ebit = eb-dep;
     const debtY = debt.annual[yr];
-    const equityTax = Math.max(0,(ebit-debtY.interest)*tax);
+    const projectTax=incomeTax(ebit,taxState?.projectLoss??0,s);
+    const financedTax=incomeTax(ebit-debtY.interest,taxState?.financedLoss??0,s);
+    if(taxState){taxState.projectLoss=projectTax.lossClosing;taxState.financedLoss=financedTax.lossClosing;}
+    const unleveredTax=projectTax.total, equityTax=financedTax.total;
     const netIncome = ebit-debtY.interest-equityTax;
     const fcff = eb-unleveredTax-maintCapex;
     const fcfe = eb-equityTax-maintCapex-debtY.debt;
-    return {y:yr+1,rev,opex:ox,energy,mgmt,concession,commission,equipment,ebitda:eb,dep,ebit,tax:unleveredTax,nopat:ebit-unleveredTax,maintCapex,fcff,equityTax,netIncome,fcfe,net:fcfe,...debtY};
+    return {y:yr+1,rev,opex:ox,energy,mgmt,concession,commission,equipment,ebitda:eb,dep,ebit,tax:unleveredTax,projectTax,financedTax,nopat:ebit-unleveredTax,maintCapex,fcff,equityTax,netIncome,fcfe,net:fcfe,...debtY};
+  }
+  function projectedYears(revenueFactor=1,electricityRate=s.electricityRate){
+    const taxState={projectLoss:0,financedLoss:0};
+    return Array.from({length:N},(_,yr)=>operatingYear(yr,revenueFactor,electricityRate,taxState));
   }
   let cash = 0, earnings = 0;
-  const fcfYears = Array.from({length:N},(_,yr)=>{
-    const y = operatingYear(yr);
+  const fcfYears = projectedYears().map(y=>{
     earnings += y.netIncome;
     const divs = Math.min(Math.max(0,y.fcfe)*s.distPct/100,Math.max(0,earnings));
     const capitalCall = Math.max(0,-(cash+y.fcfe-divs));
@@ -300,7 +327,7 @@ function calculate(input) {
   if(s.vatCapexAdditional)capexBk.push({l:'IVA não dedutível do investimento',v:s.vatCapexAdditional});
   const energyComp=WAVES.map(w=>{const peak=w.size===s.waveSize?s.kwhMax:w.kwh;const k=peak*s.avgPumpLoad/100*s.operatingHoursDay;return {...w,pumps:w.size===s.waveSize?s.pumpsCount:w.pumps,kwh:peak,dKwh:k,aCost:k*opDays*s.electricityRate*operatingFactor};});
   const capTableData=[{name:'Joao Febrer',cash:joaoAmt,cashPct:s.joaoPct,ownership:ownJ,type:'Fundador+Sweat'},{name:'Rodrigo Farinha',cash:rodrigoAmt,cashPct:s.rodrigoPct,ownership:ownR,type:'Fundador+Sweat'},...ownInv.map(i=>({name:i.name,cash:i.amt,cashPct:i.pct,ownership:i.own,type:'Investidor'}))];
-  const revScenarios=[.5,.75,.9,1,1.1,1.25,1.5].map(p=>{const y=operatingYear(0,p);return {p,rev:y.rev,opx:y.opex,ebitda:y.ebitda,margin:y.rev?y.ebitda/y.rev:0,net:y.fcfe,fcf:y.fcff,payback:valid?paybackOf(capex,Array.from({length:N},(_,i)=>operatingYear(i,p).fcff)):NaN};});
+  const revScenarios=[.5,.75,.9,1,1.1,1.25,1.5].map(p=>{const y=operatingYear(0,p);return {p,rev:y.rev,opx:y.opex,ebitda:y.ebitda,margin:y.rev?y.ebitda/y.rev:0,net:y.fcfe,fcf:y.fcff,payback:valid?paybackOf(capex,projectedYears(p).map(z=>z.fcff)):NaN};});
   const sensRevPcts=[.7,.85,1,1.15,1.3];
   const sensElec=[...new Set([.10,.13,s.electricityRate,.18,.22])].sort((a,b)=>a-b);
   const sensMatrix=sensElec.map(er=>sensRevPcts.map(p=>operatingYear(0,p,er).ebitda));
@@ -322,7 +349,7 @@ function calculate(input) {
 // helpers for historical analysis but are not exposed in the simulator.
 const APP_INIT={...INIT,salesMode:"sessions",sessionsDay:9,ridersPerSession:8,
   privatePct:0,rentalAdvancedPct:0,eventMonthly:0,communityCards:0};
-const api = {APP_INIT,MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,npv,irr,debtSchedule,allocateDays,paybackOf};
+const api = {APP_INIT,MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,incomeTax,npv,irr,debtSchedule,allocateDays,paybackOf};
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.CitywaveFinance = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -72,7 +72,8 @@ test('operational consolidation is additive and monthly totals agree',()=>{
 test('consolidated taxes are recalculated, not summed across analytical units',()=>{
  const p=run({}, {}, {sessionsDay:8});
  assert.ok(p.waveAllocated.first.ebit<0);assert.ok(p.bar.first.ebit>0);
- near(p.combined.first.tax,Math.max(0,p.combined.first.ebit*F.INIT.taxRate/100));
+ const taxable=Math.max(0,p.combined.first.ebit);
+ near(p.combined.first.tax,Math.min(taxable,50000)*.105+Math.max(0,taxable-50000)*.133);
  assert.ok(p.combined.first.tax<p.waveAllocated.first.tax+p.bar.first.tax);
  near(p.taxReconciliation,p.waveAllocated.first.tax+p.bar.first.tax-p.combined.first.tax);
 });

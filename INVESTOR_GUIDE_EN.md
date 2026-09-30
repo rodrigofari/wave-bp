@@ -1,20 +1,20 @@
 # Citywave Funchal — investor guide
 
-Updated 30 Sep 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
+Updated 1 Oct 2026. This guide explains how to read and test the simulator. The figures below are the engine’s starting scenario: editable assumptions, not forecasts, financing offers or supplier quotes.
 
 ## The idea in 60 seconds
 
 The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: visitors are customers of the bar operator. In the starting concession, the Lda. receives fixed rent and does not book their spending. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
 
-The simulator shows the combined project in one view; the overview table identifies the wave and bar contributions separately. All headline figures refer to the total investment. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 186 085 €, NPV of -1 137 726 € and project IRR of -3.83%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
+The simulator shows the combined project in one view; the overview table identifies the wave and bar contributions separately. All headline figures refer to the total investment. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 186 085 €, NPV of -1 106 241 € and project IRR of -3.12%, against a discount rate of 8.48%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
 
 | Starting scenario | Wave (allocated share) | Bar within combined | Combined |
 | --- | --- | --- | --- |
 | Investment | 2 292 400 € | 0 € | 2 292 400 € |
 | Year 1 revenue | 778 563 € | 30 000 € | 808 563 € |
 | Year 1 EBITDA | 174 085 € | 12 000 € | 186 085 € |
-| NPV | -1 211 542 € | 73 816 € | -1 137 726 € |
-| Project IRR | -4.80% | Indisponível | -3.83% |
+| NPV | -1 188 445 € | 83 861 € | -1 106 241 € |
+| Project IRR | -4.19% | Indisponível | -3.12% |
 
 In the wave column, common costs are already shared with the bar; a wave-only calculation in the engine retains all those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
 
@@ -50,8 +50,8 @@ Each group session lasts 45 or 60 minutes in total and can include up to 14 peop
 
 | Group session | Max sessions/day | Max people/day | Public participants/year | Energy tariff | Energy/year | Wave revenue | Combined EBITDA | Combined NPV | Project IRR |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 295 370 € | 10.73% |
-| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | -106 514 € | 7.17% |
+| 45 min | 13 | 104 | 24 830 | 0.16 €/kWh | 326 400 € | 1 038 085 € | 432 630 € | 472 113 € | 12.58% |
+| 60 min | 10 | 80 | 23 090 | 0.16 €/kWh | 326 400 € | 965 307 € | 363 492 € | 29 672 € | 8.75% |
 
 Indicative engine comparison, holding the other starting assumptions constant: prices, peak demand (12 sessions/day), €0.16/kWh tariff, power/load, costs, bar and funding. Participants are annual public sales after seasonality; maximum capacity is a ceiling, not a demand forecast. Energy remains based on daily operating hours, so a shorter session does not automatically lower daily electricity cost. Editing the tariff, power, load or hours recalculates energy cost in both scenarios. The session gap is editable and reduces available capacity.
 
@@ -92,6 +92,16 @@ Positive EBITDA can coexist with negative FCFE: debt principal and maintenance i
 ## Energy: get a quote for this input
 
 The starting case uses 600 kW peak power, 100% average load, ten hours/day, 340 days and an editable €0.16/kWh tariff. The formula gives 6,000 kWh/day and 326 400 €/year. Each €0.01/kWh change moves annual cost by 20 400 €, holding everything else constant. Energy is charged throughout opening hours even when few customers attend. The tariff and actual load profile are not confirmed; auxiliary pumps, the bar, contracted capacity, time-of-use rates and fees require quotes from EEM/the supplier and the final technical specification. Do not count the same charge twice.
+
+## Company tax and carried losses
+
+The Madeira 2026 reference is 13.3% standard corporate tax, or 10.5% on the first €50,000 of annual taxable income for eligible SMEs/Small Mid Caps, with 13.3% above that. SME eligibility is **an assumption to confirm** once shareholding and linked companies are known. The starting municipal surcharge is an editable 0% assumption; confirm Funchal's applicable rate for future years. Every rate and the band can be edited.
+
+Tax losses carry forward; only 65% of a positive year's profit can be offset in that year. Any municipal surcharge is charged on positive profit before that offset. Standalone wave and bar taxes are analytical; the company pays consolidated tax. FCFF uses tax before financing and FCFE uses tax after interest. WACC uses the general marginal rate for its debt-tax approximation, which may not be realized immediately in a loss year.
+
+In the starting case, year-one consolidated profit before interest is 33 259 €, operating corporate tax is 3492 €, and tax after interest is 0 €. Combined NPV is -1 106 241 €. This annual approximation excludes tax/accounting depreciation differences, autonomous taxes, interest-deduction limits and payment-on-account timing. The 2026 rates are held constant as an assumption for later years.
+
+Sources: [Orçamento Regional da Madeira para 2026, art. 19.º](https://at.madeira.gov.pt/Ficheiros/Diplomas/DLR/ORAM2026.pdf) · [CIRC, art. 52.º](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/codigos_tributarios/CIRC_2R/Pages/irc52.aspx) · [Lista AT de derramas municipais do período de 2025](https://info.portaldasfinancas.gov.pt/pt/informacao_fiscal/legislacao/instrucoes_administrativas/Documents/Oficio_circulado_20288_2026.pdf).
 
 ## Public site and municipal concession
 

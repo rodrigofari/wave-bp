@@ -48,14 +48,29 @@ por ano. A prestação cessa no vencimento; o saldo efetivo é deduzido na saíd
 A taxa zero continua a amortizar capital.
 
 - EBIT = EBITDA − depreciação.
-- Imposto operacional = máximo(0, EBIT × taxa).
-- Imposto do acionista/empresa alavancada = máximo(0, (EBIT − juros) × taxa).
+- O motor usa o EBIT como aproximação ao lucro tributável antes da dívida; para a
+  caixa da Lda. deduz os juros efetivamente pagos. Cada perspetiva transporta
+  separadamente os seus prejuízos fiscais de um ano para o seguinte.
+- Em cada ano, os prejuízos anteriores só abatem até 65% do lucro positivo.
+  A matéria coletável restante paga 10,5% sobre os primeiros 50 000 € se a Lda.
+  for PME/Small Mid Cap elegível, e 13,3% sobre o excedente; sem elegibilidade,
+  aplica-se 13,3% a toda a matéria coletável. São referências Madeira 2026,
+  editáveis e mantidas como hipótese ao longo da concessão.
+- A derrama municipal, se definida, incide sobre o lucro positivo antes da
+  dedução dos prejuízos transitados. O valor inicial de 0% é hipótese a confirmar
+  para o ano aplicável ao Funchal.
+- O imposto operacional e o imposto após juros são recalculados anualmente
+  para onda, bar e conjunto; o conjunto é a única base fiscal da Lda. prevista.
 - FCFF = EBITDA − imposto operacional − investimento de manutenção.
 - FCFE = EBITDA − imposto após juros − investimento de manutenção − juros − capital pago.
 
-Os impostos são simplificados: sem reporte fiscal de prejuízos ou limites à
-dedução de juros. A diferença entre impostos operacionais e impostos após juros
-representa o benefício fiscal efetivamente utilizável neste modelo.
+O reporte fiscal de prejuízos entra nos fluxos, mas continuam por modelar
+correções entre depreciação contabilística e fiscal, tributações autónomas,
+derrama estadual/regional quando aplicável, benefícios fiscais, pagamentos por
+conta e limites à dedução de juros. O cálculo de caixa assume imposto liquidado
+no próprio ano; o calendário fiscal real pode diferir. O WACC usa a taxa marginal
+geral como aproximação ao benefício da dívida, que pode não ser realizável num
+ano com prejuízos.
 
 Dividendos = menor entre a percentagem configurada do FCFE positivo e resultados
 acumulados positivos disponíveis antes da distribuição. É um limite económico e
