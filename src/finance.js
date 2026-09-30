@@ -316,7 +316,11 @@ function calculate(input) {
     projectCashflows,equityCashflows,equityMultiple,equityExit,revScenarios,sensRevPcts,sensElec,sensMatrix,benchmarks,benchmarkRows,
     projectAnnReturn:projectIRR,equityAnnReturn:equityIRR,first,last};
 }
-const APP_INIT={...INIT,salesMode:"tickets",ridersPerSession:14};
+// Investor-facing starting case: one group-session sales model, with the
+// realistic scenario's volume and team. Ticket calculations remain legacy
+// helpers for historical analysis but are not exposed in the simulator.
+const APP_INIT={...INIT,salesMode:"sessions",sessionsDay:9,ridersPerSession:8,
+  privatePct:0,rentalAdvancedPct:0,eventMonthly:0,communityCards:0};
 const api = {APP_INIT,MONTHS,SF,fmt,fmtK,fd,pct,WAVES,SITES,INIT,calculate,npv,irr,debtSchedule,allocateDays,paybackOf};
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.CitywaveFinance = api;

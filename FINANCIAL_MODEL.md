@@ -13,10 +13,10 @@ Executar os testes: `node --test tests/*.test.cjs`.
   A interface avisa quando limita vendas. A sazonalidade não encurta o horário.
 - Privadas substituem sessões públicas. Participantes públicos = sessões públicas
   × pessoas por grupo; os extras por pessoa incidem apenas nesses participantes.
-- O preço de clinic é um suplemento ao bilhete. Eventos e cartões são receitas
+- O preço de clinic é um suplemento ao lugar na sessão. Eventos e cartões são receitas
   acessórias sem sessões incluídas; eventos exclusivos devem entrar como privadas.
 - O mix é normalizado como pesos; a interface avisa se não somar 100%. Um mix
-  vazio impede retornos em sessões; não é utilizado em bilhetes. Financiamento que não feche impede retornos em ambos os modos.
+  vazio impede retornos. Financiamento que não feche também impede retornos.
 - Os valores introduzidos começam como preços antes de IVA, mas o painel IVA
   permite tratá-los como preços finais. A receita, o EBITDA e o VAL usam os
   valores antes de IVA e incluem IVA não dedutível como custo ou investimento.
@@ -173,14 +173,15 @@ consumo médio simulados, sem presumir que essa procura possa ser captada.
 
 ## Clarificação comercial de 22/09/2026
 
-Material incluído nos bilhetes, exceto avançados: aluguer opcional aplica-se apenas
+Material incluído nos lugares de sessões, exceto avançados: aluguer opcional aplica-se apenas
 à proporção de avançados. Coaching extra (`clinicPct`) desativado por defeito.
 O preço elétrico é hipótese não validada pela EEM; há um campo mensal adicional para potência e consumos auxiliares, mas não uma fatura EEM por períodos horários. Ver `MODEL_CLARIFICATIONS.md` para limitações
 e impacto nos cenários anteriores.
 
-## Simulação interativa de bilhetes (23/09/2026)
+## Cálculo histórico de bilhetes flexíveis — fora da interface atual
 
-`salesMode=tickets` usa procura uniforme por dia aberto e preço médio líquido
+O motor conserva `salesMode=tickets` para reproduzir análises e testes antigos;
+**não é o modelo comercial apresentado aos investidores**. Esse cálculo usa procura uniforme por dia aberto e preço médio líquido
 após descontos; não aplica sazonalidade de sessões nem receitas acessórias.
 Vendas/dia = mínimo(procura, piso(horas × 60 / (minutos + troca))). Não presume
 utilizações simultâneas. Capacidade por minutos é um pressuposto editável.

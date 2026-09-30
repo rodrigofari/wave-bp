@@ -4,15 +4,25 @@ Atualizado em 30/09/2026. Gerado por `node analysis/generate-reports.cjs` a part
 
 ## Decisão comercial ainda em aberto
 
-A entidade que compra a máquina e fatura os bilhetes será uma **sociedade comercial (Lda.)**. Os promotores ainda não decidiram se os preços exibidos, como 49 € para principiantes, são antes de IVA ou preços finais. O simulador inicia em **antes de IVA**, por compatibilidade com o modelo histórico, e permite mudar para **preço final com IVA** sem alterar o número introduzido. A 22%, 49 € antes de IVA são 59,78 € pagos pelo cliente; 49 € finais representam 40,16 € de receita antes de IVA. A escolha muda todos os resultados financeiros.
+A entidade que compra a máquina e fatura as sessões será uma **sociedade comercial (Lda.)**. Os promotores ainda não decidiram se os preços exibidos, como 49 € para principiantes, são antes de IVA ou preços finais. O simulador inicia em **antes de IVA**, por compatibilidade com o modelo histórico, e permite mudar para **preço final com IVA** sem alterar o número introduzido. A 22%, 49 € antes de IVA são 59,78 € pagos pelo cliente; 49 € finais representam 40,16 € de receita antes de IVA. A escolha aplica-se a todos os preços por nível e muda todos os resultados financeiros.
 
 | Sensibilidade sessões de grupo | 49 € antes de IVA | 49 € preço final |
 | --- | --- | --- |
-| Receita da onda no ano 1 | 818 833 € | 671 174 € |
-| EBITDA conjunto no ano 1 | 182 761 € | 42 485 € |
-| VAL conjunto | -1 147 663 € | -2 097 361 € |
-| TIR do projeto | -3.93% | -20.81% |
+| Receita da onda no ano 1 | 778 563 € | 638 167 € |
+| EBITDA conjunto no ano 1 | 144 505 € | 11 128 € |
+| VAL conjunto | -1 371 916 € | -2 332 548 € |
+| TIR do projeto | -6.96% | -30.30% |
 | Payback | Não recupera no prazo | Não recupera no prazo |
+
+Com nove sessões de pico por dia e oito participantes, a média após sazonalidade é 54.8 participantes públicos/dia aberto. Mesmo com preços antes de IVA, este caso-base não recupera o investimento no prazo de dez anos. A sensibilidade seguinte aumenta a procura para 12 sessões de pico, reduz cada sessão para 45 minutos e mantém oito participantes: é um teste de capacidade e vendas, não uma previsão validada.
+
+| 12 sessões de pico/dia · 45 min | Preços antes de IVA | Preços finais |
+| --- | --- | --- |
+| Participantes públicos/dia aberto | 73.0 | 73.0 |
+| EBITDA conjunto no ano 1 | 391 050 € | 213 215 € |
+| VAL conjunto | 63 064 € | -970 645 € |
+| TIR do projeto | 8.70% | -1.75% |
+| Payback | 6.81 anos | Não recupera no prazo |
 
 ## Hipótese fiscal da Lda.
 

@@ -10,8 +10,8 @@ function VatPanel({vat,onVat,onPreset,s,b,onWave,onBar,result,language='pt'}) {
   ];
   const field=(key,label,suffix='%',max=100,step=1,info)=>
     <Row key={key} label={label} value={vat[key]} onChange={x=>onVat(key,x)} suffix={suffix} min={0} max={max} step={step} info={info}/>;
-  const openingQuote=s.salesMode==='tickets'?s.ticketPrice:s.beginnerPrice;
-  const priceLabel=s.salesMode==='tickets'?(en?'Average ticket':'Bilhete médio'):(en?'Beginner session':'Sessão principiante');
+  const openingQuote=s.beginnerPrice;
+  const priceLabel=en?'Beginner session':'Sessão principiante';
   const chart=result.months,lowest=Math.min(0,...chart.map(m=>m.cumulativeCash)),highest=Math.max(0,...chart.map(m=>m.cumulativeCash));
   const span=Math.max(1,highest-lowest);
   return <section className="vat-panel" aria-label={en?'VAT and cash flow':'IVA e tesouraria'}>

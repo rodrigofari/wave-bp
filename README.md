@@ -1,93 +1,27 @@
-# Citywave Funchal — simulador onda + bar
+# Citywave Funchal — simulador de sessões de grupo
 
-Simulador de cenários; valores ilustrativos não são previsões nem orçamentos.
+O projeto combina uma piscina de ondas Citywave com um bar em concessão ilustrativa. O simulador é um exercício de planeamento editável para investidores; não é uma previsão de procura nem um orçamento aprovado.
 
 ## Abrir e simular
 
-Na pasta do repositório, executar `python3 -m http.server 8766` e abrir
-http://localhost:8766. A página usa React/Babel via CDN, pelo que necessita de internet.
+Na pasta do repositório, executar `python3 -m http.server 8766` e abrir http://localhost:8766. A página usa React/Babel via CDN e requer internet.
 
-1. A página abre no painel **Onda sem bar**, com indicadores, gráficos e parâmetros à esquerda. Escolher **Bilhetes / entrada flexível** ou **Sessões de grupo** nessa coluna.
-2. Os gráficos de break-even permanecem no topo em todas as vistas e recalculam EBITDA, FCFE do ano 1 e VAL quando se alteram inputs. A curva varia bilhetes/dia ou sessões de pico/dia com sazonalidade; o marcador âmbar mostra o cenário atual. O separador **Receitas** também inclui a tabela de break-even do conjunto em modo bilhetes. Em bilhetes, definir procura diária, receita
-   líquida média, minutos de onda e intervalo por bilhete. O tempo limita as vendas.
-3. Introduzir comissões, material e encargos elétricos adicionais quando conhecidos.
-   Zero significa que ainda não foi incluído um custo, não que não exista.
-4. Comparar **Conjunto**, **Onda sem bar** e **Bar / trabalhar**. O arranque usa uma
-   concessão ilustrativa do bar; na vista do bar, é possível testar operação própria.
-5. Em **Onda sem bar**, editar CAPEX, pessoal e estrutura de capital. No modo de
-   sessões, a aba **Receitas** permite definir preços por nível e grupos.
+A onda vende **lugares em sessões de grupo** de 45 ou 60 minutos. Cada participante paga o preço do seu nível; o tempo de sessão é do grupo, e não tempo individual na onda. O cenário inicial é o **realista de referência**: nove sessões de procura de pico por dia, oito participantes por sessão, 60 minutos, 340 dias/ano e bar em concessão. Após sazonalidade, são cerca de 55 participantes públicos por dia aberto em média. O horário limita o número de sessões vendidas. O teto editável é 14 participantes por grupo, ainda sujeito a validação operacional e de segurança. Privadas, clínicas, aluguer, eventos e cartões começam a zero para que a receita-base da onda venha apenas dos lugares vendidos; continuam editáveis.
 
-No topo, os três cenários para investidores (pessimista, referência e otimista)
-aplicam conjuntos completos de inputs e mostram resultados do mesmo motor. Os
-cenários usam concessão do bar: a empresa recebe renda fixa; vendas, stock e equipa
-do operador ficam fora. As rendas e os custos do proprietário são hipóteses
-editáveis, não ofertas nem referências de mercado. A equipa da onda varia entre
-6, 7 e 9 pessoas para análise; estes números de folha salarial não são uma escala
-de turnos validada.
+No painel **Onda sem bar → Receitas**, altere duração, intervalo, participantes por grupo, procura de pico, preços por nível e mix. Os três cenários no topo aplicam conjuntos completos de pressupostos pessimistas, realistas ou otimistas. Os gráficos de break-even variam a procura de sessões e mostram EBITDA, FCFE do ano 1 e VAL. São limiares do modelo, não reservas garantidas.
 
-O modo inicial é bilhetes. Os valores iniciais de oito minutos + um minuto de troca,
-com dez horas de abertura, permitem 66 bilhetes/dia. A procura inicial de 70 é
-limitada a 66; o aviso não pode ser interpretado como venda de 70 bilhetes.
-O tempo de utilização é uma hipótese operacional, não capacidade certificada.
+No painel **IVA e caixa**, escolha se os preços introduzidos são **antes de IVA** ou **preços finais com IVA**. A política comercial ainda está por decidir; o arranque mantém os valores antes de IVA. À taxa normal de 22% na Madeira, uma sessão de principiante de 49 € antes de IVA custa 59,78 € ao cliente; se 49 € for o preço final, a receita antes de IVA é 40,16 €. O painel também permite testar IVA dedutível, faturação/autoliquidação da máquina, pedido de reembolso e caixa empatada no primeiro ano. O custo financeiro da espera pelo reembolso não entra no VAL/TIR.
 
-O painel **IVA e caixa** deixa escolher se cada preço introduzido é antes de IVA
-ou preço final com IVA. Como essa política comercial ainda não foi decidida, o
-arranque preserva a convenção histórica de valores antes de IVA. O preço médio
-dos bilhetes já inclui descontos; comissões são custos separados sobre a receita
-intermediada. Não descontar duas vezes. O painel mostra dedução do IVA, IVA
-autoliquidado, reembolso ilustrativo e pico de caixa temporariamente empatada.
-Em sessões, material incluído exceto avançados; coaching adicional está desativado.
-Em bilhetes, privadas, coaching, alugueres, eventos e cartões não geram receita extra.
+Compare **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. O bar inicia em concessão: a Lda. recebe renda e suporta apenas custos retidos; vendas, salários e stock do operador ficam fora das suas contas. Também é possível testar exploração direta. O espaço para trabalhar não vende lugares nem mensalidades. A renda de 2 500 €/mês e os custos retidos de 300 €/mês são hipóteses, não propostas.
 
-Os três break-even do conjunto são diferentes: operação (EBITDA zero), caixa do
-primeiro ano (imposto, dívida e manutenção incluídos) e investimento (VAL zero).
-Quando a capacidade não chega, o simulador apresenta **Não atinge na capacidade atual**.
-No modo de sessões, os dias seguem sazonalidade e os valores fracionários são médias
-esperadas, não uma agenda diária reservável. As alterações ficam na sessão da página;
-recarregar repõe os valores iniciais. O botão **Escuro** alterna e memoriza o tema local.
+Edite energia, investimento, financiamento e prazo da concessão. Os zeros em comissões, material ou consumos auxiliares significam que ainda não há orçamento introduzido. A potência de 600 kW é máxima e a carga média de 100% é hipótese conservadora, não medição. As alterações ficam apenas na sessão do navegador e não são guardadas no link partilhado. O seletor PT/EN e o modo escuro mantêm os cálculos iguais.
 
 ## Validação e limites
 
-`node --test tests/*.test.cjs`
+Execute `node --test tests/*.test.cjs` e `node analysis/generate-reports.cjs --check`. Os relatórios são gerados pelo mesmo motor, mas são cenários fixos; não refletem edições locais no navegador. O modelo reconcilia receitas, custos, dívida, impostos, fluxos, retornos e caixa de IVA, mas não valida procura, preços de mercado, capacidade segura, contratos, tarifa elétrica ou enquadramento fiscal. A ponte mensal de IVA cobre apenas o primeiro ano; a tesouraria operacional completa e o custo de financiar atrasos de reembolso não estão modelados.
 
-`node analysis/generate-reports.cjs --check` verifica que todos os relatórios
-publicados correspondem ao motor atual. Para regenerar, executar sem `--check`.
-
-Os testes verificam reconciliações, limites de capacidade, custos, dívida, impostos,
-caixa, dividendos, TIR, VAL e raízes do break-even. Não comprovam procura, preços de
-mercado, orçamento EEM, especificação final da máquina ou conformidade fiscal.
-O IRC é simplificado, sem reporte de prejuízos. A ponte mensal de IVA cobre apenas
-o primeiro ano, assume liquidação no próprio mês e não inclui o custo financeiro
-da espera pelo reembolso no VAL/TIR. Não há tesouraria mensal completa, rampa de
-abertura nem financiamento automático de défices intranuais.
-O prazo do empréstimo pode exceder a concessão: o saldo é liquidado na saída.
-
-Os custos de material por participação são uma média; nas privadas, a estimativa
-usa o input único de participantes por privada, também usado no bar. Não duplicar reposição corrente
-com investimento de manutenção. O material inicial deve constar do orçamento CAPEX.
-Custos fixos adicionais da eletricidade entram todos os meses, mesmo com zero dias.
-
-As contas consolidadas assumem uma entidade operacional. As contas por componente
-são analíticas e incluem rateio de custos. As TIR não se somam. A taxa de desconto
-é comum para comparabilidade; não mede separadamente o risco do bar.
-No modo de concessão, só a renda fixa e os custos/CAPEX retidos pelo proprietário
-entram nas contas do projeto; os encargos do concessionário não são imputados.
-
-[Convenções financeiras](FINANCIAL_MODEL.md) · [Clarificações](MODEL_CLARIFICATIONS.md)
-
-[Guia do investidor em português](INVESTOR_GUIDE_PT.md) · [Investor guide in English](INVESTOR_GUIDE_EN.md) · [Guia bilingue online](investor-guide.html)
-
-O simulador tem seletor PT/EN. Em cada secção, o ícone **i** mostra uma explicação ao passar o cursor ou ao receber foco. O idioma inglês cobre os controlos e componentes do modelo; as fórmulas e valores não mudam. Os inputs alterados ficam apenas no navegador de cada investidor e não são guardados no link partilhado.
-
-Os relatórios `BAR_ANALYSIS.md`, `OPERATING_ANALYSIS.md`, `TICKET_BREAKEVEN.md`,
-`MODEL_CLARIFICATIONS.md` e `IVA_ANALYSIS.md` são gerados automaticamente, tal como
-`reports.html`, acessível na página através de **Relatórios e pressupostos atuais**.
-Cada relatório identifica o cenário e distingue-o do estado inicial da interface.
-Os scripts em `analysis/` permitem reproduzir os exercícios.
+[Guia do investidor em português](INVESTOR_GUIDE_PT.md) · [Investor guide in English](INVESTOR_GUIDE_EN.md) · [Análise do IVA](IVA_ANALYSIS.md) · [Convenções financeiras](FINANCIAL_MODEL.md) · [Relatórios online](reports.html)
 
 ## Publicação
 
-A branch de publicação é `claude/setup-citywave-simulator-CnaHi`. O workflow
-executa testes e verifica os relatórios antes de publicar apenas `index.html`,
-`reports.html` e `src/` no GitHub Pages. A branch de trabalho não publica
-automaticamente. Após publicar, confirmar o commit no workflow e a versão servida.
+A branch de publicação é `claude/setup-citywave-simulator-CnaHi`. O workflow testa o motor e os relatórios antes de publicar `index.html`, `reports.html`, `investor-guide.html` e `src/` no GitHub Pages.

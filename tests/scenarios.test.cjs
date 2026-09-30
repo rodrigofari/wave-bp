@@ -41,7 +41,7 @@ test('applying an investor scenario gives fresh independent editable inputs',()=
   const first=S.build('realistic');
   first.wave.sessionsDay=99;first.bar.externalDaily=999;
   const second=S.build('realistic');
-  assert.equal(second.wave.sessionsDay,7);
+  assert.equal(second.wave.sessionsDay,9);
   assert.equal(second.bar.externalDaily,45);
   assert.throws(()=>S.build('unknown'),/Unknown scenario/);
 });
