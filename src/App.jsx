@@ -1,1294 +1,3165 @@
-const { useState, useMemo, useCallback, useRef, useEffect } = React;
-
-/* ═══════════════════════════════════════════════════════════
-   CITYWAVE FUNCHAL — FINANCIAL SIMULATOR v5
-   Updated with Discovery Call data (12 May 2026, Citywave Munich)
-   B&W Editorial Design · All Values Editable
-   ═══════════════════════════════════════════════════════════ */
-
-const { MONTHS, SF, fmt, fmtK, fd, pct, WAVES, SITES, INIT, calculate } = CitywaveFinance;
-
-/* ── Inline Editable Number ── */
-function Editable({value, onChange, prefix="", suffix="", color="#000", size=14, bold=true, min=0, max=999999999, step=1}) {
-  const [editing, setEditing] = useState(false);
-  const [tmp, setTmp] = useState(String(value));
-  const ref = useRef(null);
-
-  useEffect(() => { if(editing && ref.current) { ref.current.select(); } }, [editing]);
-
+const { useState, useMemo, useEffect, useCallback } = React;
+const F = CitywaveFinance,
+  H = CitywaveHospitality,
+  V = CitywaveVAT,
+  S = CitywaveScenarios;
+const euro = (n, lang = "pt") =>
+  Number.isFinite(n)
+    ? new Intl.NumberFormat(lang === "en" ? "en-GB" : "pt-PT", {
+        maximumFractionDigits: 0,
+      }).format(n) + " €"
+    : "—";
+const euro2 = (n, lang = "pt") =>
+  Number.isFinite(n)
+    ? new Intl.NumberFormat(lang === "en" ? "en-GB" : "pt-PT", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(n) + " €"
+    : "—";
+const decimal = (n, d = 1, lang = "pt") =>
+  Number.isFinite(n)
+    ? new Intl.NumberFormat(lang === "en" ? "en-GB" : "pt-PT", {
+        minimumFractionDigits: d,
+        maximumFractionDigits: d,
+      }).format(n)
+    : "—";
+const percentage = (n) =>
+  Number.isFinite(n) ? decimal(n * 100, 1) + "%" : "—";
+const signedClass = (n) => (n < 0 ? "negative" : n > 0 ? "positive" : "");
+const sum = (a) => a.reduce((total, n) => total + n, 0);
+const monthLabel = (index, lang) =>
+  lang === "en"
+    ? [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ][index]
+    : F.MONTHS[index];
+function detailLabel(label, lang) {
+  if (lang !== "en") return label;
+  const words = {
+    "Sessoes publicas": "Public sessions",
+    "Surf Clinic (suplemento)": "Additional coaching",
+    "Onda Privada": "Private wave",
+    "Aluguer Equip.": "Equipment rental",
+    "Eventos sem uso da onda": "Events without wave use",
+    "Community Cards sem sessoes": "Community cards without sessions",
+    Energia: "Energy",
+    Pessoal: "Staff",
+    Manutencao: "Maintenance",
+    Agua: "Water",
+    Seguro: "Insurance",
+    Concessao: "Concession fee",
+    Gestao: "Management",
+    Outros: "Other",
+    "Potencia e consumos auxiliares": "Capacity and auxiliary energy",
+    "Comissoes de venda": "Sales commissions",
+    "Material por utilizacao": "Equipment per visit",
+    Instalacao: "Installation",
+    Shipping: "Shipping",
+    "Preparacao local": "Site preparation",
+    Canalizacao: "Plumbing",
+    Eletrica: "Electrical works",
+    "Licencas e projeto": "Permits and design",
+    "IVA não dedutível do investimento": "Non-recoverable investment VAT",
+  };
+  return words[label] || label.replace(/^Contingencia /, "Contingency ");
+}
+function warningLabel(label, lang) {
+  if (lang !== "en") return label;
+  if (label.startsWith("O cenario exige reforcos de capital"))
+    return "This case requires additional equity; capital calls enter shareholder IRR and equity multiple.";
+  if (label.startsWith("Mix de clientes soma"))
+    return label
+      .replace("Mix de clientes soma", "Customer mix totals")
+      .replace("pesos normalizados para 100%", "weights normalized to 100%");
+  if (label.startsWith("Mix de clientes vazio"))
+    return "Customer mix is empty; enter at least one segment. Return metrics are unavailable.";
+  if (label.startsWith("Procura de pico"))
+    return label
+      .replace("Procura de pico", "Peak demand")
+      .replace("sessoes/dia", "sessions/day")
+      .replace("excede a capacidade", "exceeds capacity")
+      .replace(
+        "Vendas limitadas a capacidade em cada mes",
+        "Sales are capped at monthly capacity",
+      );
+  if (label.startsWith("A onda selecionada"))
+    return "The selected wave exceeds the space allowed at this site.";
+  if (label.startsWith("Financiamento"))
+    return label
+      .replace("Financiamento", "Funding")
+      .replace("capital proprio", "equity")
+      .replace(
+        "ajuste para 100% com capital proprio positivo. Retornos indisponiveis",
+        "set total funding to 100% with positive equity. Returns are unavailable",
+      );
+  if (label.startsWith("Os lugares para trabalhar"))
+    return "Work-friendly seats are part of total bar seats; the calculation caps them at total capacity.";
+  if (label.startsWith("A procura excede as horas-lugar"))
+    return "Demand exceeds available seat-hours or visitors cannot complete their stay before closing. Only served visits earn revenue.";
+  if (label.startsWith("Custos variaveis iguais"))
+    return "Variable costs equal or exceed revenue; there is no operating break-even at these prices and margins.";
+  return detailLabel(label, lang);
+}
+function Field({
+  label,
+  value,
+  onChange,
+  unit = "",
+  min = 0,
+  max = 100000000,
+  step = 1,
+  help,
+}) {
+  const [draft, setDraft] = useState(String(value)),
+    [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) setDraft(String(value));
+  }, [value, editing]);
+  const parsed = (raw) => Number(raw.replace(",", "."));
   const commit = () => {
-    let v = parseFloat(tmp.replace(/[^\d.,\-]/g,"").replace(",","."));
-    if(isNaN(v)) v = value;
-    v = Math.max(min, Math.min(max, v));
-    if(step < 1) v = Math.round(v / step) * step;
-    else v = Math.round(v / step) * step;
-    onChange(v);
+    const n = parsed(draft);
+    const next =
+      draft.trim() !== "" && Number.isFinite(n)
+        ? Math.min(max, Math.max(min, n))
+        : value;
+    onChange(next);
+    setDraft(String(next));
     setEditing(false);
   };
-
-  if(editing) return (
-    <input ref={ref} value={tmp}
-      onChange={e=>setTmp(e.target.value)}
-      onBlur={commit}
-      onKeyDown={e=>{if(e.key==="Enter")commit();if(e.key==="Escape"){setEditing(false);}}}
-      style={{
-        fontFamily:"'IBM Plex Mono',monospace", fontSize:size, fontWeight:bold?700:400,
-        color, background:"transparent", border:"none", borderBottom:"2px solid #000",
-        outline:"none", width: Math.max(50, String(value).length * (size*0.65) + 20),
-        padding:"0 2px", textAlign:"right"
-      }}
-    />
-  );
-
   return (
-    <span onClick={()=>{setTmp(String(value));setEditing(true);}} style={{
-      fontFamily:"'IBM Plex Mono',monospace", fontSize:size, fontWeight:bold?700:400, color,
-      cursor:"pointer", borderBottom:"1px dashed rgba(0,0,0,0.2)", paddingBottom:1,
-      transition:"border-color 0.2s"
-    }} title="Clicar para editar">
-      {prefix}{step<1?fd(value,2):fmt(value)}{suffix && <span style={{marginLeft:suffix==="€"||suffix==="%"?0:3}}>{suffix}</span>}
-    </span>
-  );
-}
-
-/* ── Row Component ── */
-function Row({label, value, onChange, suffix="€", info, indent=false, highlight=false, total=false, step=1, min=0, max=999999999, prefix=""}) {
-  return (
-    <div style={{
-      display:"flex", justifyContent:"space-between", alignItems:"baseline",
-      padding: total ? "10px 0 6px" : "6px 0",
-      borderTop: total ? "2px solid #000" : "none",
-      paddingLeft: indent ? 20 : 0,
-      background: highlight ? "rgba(0,0,0,0.02)" : "transparent",
-    }}>
-      <div style={{ flex:1 }}>
-        <span style={{ fontSize: total ? 13 : 12, fontWeight: total ? 800 : 500,
-          color: total ? "#000" : "#333", letterSpacing: total ? 0.5 : 0,
-          textTransform: total ? "uppercase" : "none",
-          fontFamily:"'Instrument Sans',sans-serif"
-        }}>{label}</span>
-        {info && <div style={{ fontSize:9.5, color:"#999", marginTop:1, fontFamily:"'Instrument Sans',sans-serif" }}>{info}</div>}
-      </div>
-      <div>
-        {onChange ? (
-          <Editable value={value} onChange={onChange} suffix={suffix} size={total?16:13} bold={total} min={min} max={max} step={step} prefix={prefix} />
-        ) : (
-          <span style={{
-            fontFamily:"'IBM Plex Mono',monospace", fontSize:total?16:13,
-            fontWeight:total?800:600, color: value < 0 ? "#c00" : "#000"
-          }}>{prefix}{step<1?fd(value,2):fmt(value)}{suffix && <span style={{marginLeft:suffix==="€"||suffix==="%"?0:3}}>{suffix}</span>}</span>
-        )}
+    <div className="field">
+      <label title={help || label}>
+        {label}
+        {help && <small>{help}</small>}
+      </label>
+      <div className="input-wrap">
+        <input
+          aria-label={label}
+          type="text"
+          inputMode="decimal"
+          value={draft}
+          onFocus={() => setEditing(true)}
+          onChange={(e) => {
+            const raw = e.target.value;
+            setDraft(raw);
+            const n = parsed(raw);
+            if (raw.trim() !== "" && Number.isFinite(n) && n >= min && n <= max)
+              onChange(n);
+          }}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") {
+              setDraft(String(value));
+              e.currentTarget.blur();
+            }
+          }}
+        />
+        {unit && <span className="unit">{unit}</span>}
       </div>
     </div>
   );
 }
-
-/* ── Section ── */
-function Section({title, children, number, open=true}) {
-  const [isOpen, setIsOpen] = useState(open);
-  const sectionHelp = CitywaveI18n.sectionHelp(title);
+function Fold({ title, children, open = false }) {
+  const hints = {
+    0: [
+      "Defina a localização, o prazo da concessão e os dias de abertura.",
+      "Set the site, concession term and opening days.",
+    ],
+    1: [
+      "A duração e o horário limitam as sessões vendáveis; a sazonalidade reduz a procura média.",
+      "Duration and opening hours cap saleable sessions; seasonality reduces average demand.",
+    ],
+    2: [
+      "Introduza preços e mix por nível. Marcar IVA incluído transforma cada preço no valor final pago pelo cliente.",
+      "Enter price and mix by level. VAT included treats each entered price as the final amount paid by the customer.",
+    ],
+    3: [
+      "Na concessão, só renda e custos do proprietário entram na Lda. Na operação própria entram vendas e custos do bar.",
+      "In concession mode, only rent and owner costs enter the company. In direct operation, bar sales and costs enter.",
+    ],
+    4: [
+      "Energia é potência × carga média × horas × dias × tarifa, mesmo com sessões vazias.",
+      "Energy is power × average load × hours × days × tariff, including empty sessions.",
+    ],
+    5: [
+      "Inclui a compra da máquina, obras e receitas opcionais. Privadas substituem sessões públicas.",
+      "Includes the machine, works and optional sales. Private bookings replace public sessions.",
+    ],
+    6: [
+      "Dívida, capital próprio, crescimento e valor residual alimentam os fluxos, VAL e TIR.",
+      "Debt, equity, growth and exit value feed cash flows, NPV and IRR.",
+    ],
+    7: [
+      "A dedução reduz custos; o reembolso muda o calendário da caixa. Confirme o tratamento com contratos e faturas.",
+      "Recovery reduces costs; refunds change cash timing. Confirm treatment against contracts and invoices.",
+    ],
+  };
+  const number = Number(title.match(/^\d+/)?.[0]),
+    en = /Site|Sessions|prices|Bar &|Energy|Investment|Funding|VAT/.test(title);
+  const help = hints[number]?.[en ? 1 : 0] || title;
   return (
-    <div style={{ marginBottom:2 }}>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-      <button onClick={()=>setIsOpen(!isOpen)} style={{
-        display:"flex", alignItems:"center", gap:10, width:"100%", padding:"14px 0",
-        background:"transparent", border:"none", borderBottom:"1px solid #e0e0e0", cursor:"pointer",
-        textAlign:"left"
-      }}>
-        {number && <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:10, fontWeight:700,
-          color:"#fff", background:"#000", borderRadius:99, width:22, height:22,
-          display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0
-        }}>{number}</span>}
-        <span style={{ fontFamily:"'Instrument Sans',sans-serif", fontSize:14, fontWeight:700,
-          letterSpacing:0.3, textTransform:"uppercase", color:"#000", flex:1
-        }}>{title}</span>
-        <span style={{ fontSize:16, color:"#999", transition:"transform 0.2s",
-          transform:isOpen?"rotate(0)":"rotate(-90deg)"
-        }}>▾</span>
-      </button>
-      {sectionHelp && <span className="model-help" tabIndex={0} title={sectionHelp} aria-label={CitywaveI18n.helpLabel()} role="img">i</span>}
-      </div>
-      {isOpen && <div style={{ padding:"8px 0 16px" }}>{children}</div>}
+    <details className="fold" open={open}>
+      <summary>
+        {title}
+        <span
+          className="fold-help"
+          role="img"
+          aria-label={help}
+          title={help}
+          onClick={(e) => e.stopPropagation()}
+        >
+          i
+        </span>
+      </summary>
+      <div className="fold-body">{children}</div>
+    </details>
+  );
+}
+function Metric({ label, value, note, negative = false }) {
+  return (
+    <div className="metric">
+      <div className="eyebrow">{label}</div>
+      <div className={`value mono ${negative ? "negative" : ""}`}>{value}</div>
+      <small>{note}</small>
     </div>
   );
 }
-
-/* ── Bar ── */
-function Bar({label,value,maxVal,dark=false}) {
-  const w = maxVal > 0 ? Math.min((value/maxVal)*100,100) : 0;
+function ValueBar({ label, value, max, lang = "pt" }) {
   return (
-    <div style={{ marginBottom:6 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, marginBottom:2 }}>
-        <span style={{ color:"#666", fontFamily:"'Instrument Sans',sans-serif" }}>{label}</span>
-        <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontWeight:600, color:"#000" }}>{fmt(Math.round(value))}€</span>
+    <div className="bar-row">
+      <div className="bar-row-top">
+        <span>{detailLabel(label, lang)}</span>
+        <strong className="mono">{euro(value, lang)}</strong>
       </div>
-      <div style={{ height:4, borderRadius:2, background:"#eee" }}>
-        <div style={{ height:4, borderRadius:2, background:dark?"#000":"#999", width:`${w}%`, transition:"width 0.4s ease" }} />
+      <div className="bar-track">
+        <div
+          className="bar-fill"
+          style={{
+            width: `${Math.max(0, Math.min(100, max ? (value / max) * 100 : 0))}%`,
+          }}
+        />
       </div>
     </div>
   );
 }
-
-function crossingAtZero(points,key) {
-  const finite=points.filter(p=>Number.isFinite(p[key]));
-  if(!finite.length)return null;
-  if(finite[0][key]>=0)return 0;
-  for(let i=1;i<finite.length;i++){
-    const a=finite[i-1],b=finite[i];
-    if(a[key]<=0&&b[key]>=0){
-      const span=b[key]-a[key];
-      return span===0?b.volume:a.volume+(b.volume-a.volume)*(-a[key]/span);
+function MonthlyChart({ data, lang }) {
+  const mx = Math.max(1, ...data.map((m) => m.rev), ...data.map((m) => m.opex));
+  return (
+    <div className="chart">
+      <h2 className="section-title">
+        {lang === "en"
+          ? "Revenue and costs by month"
+          : "Receita e custos por mês"}
+      </h2>
+      <div className="monthly-chart">
+        {data.map((m, i) => (
+          <div className="month-group" key={i}>
+            <div className="month-bars">
+              <div
+                className="month-bar"
+                title={`${monthLabel(i, lang)} · ${lang === "en" ? "Revenue" : "Receita"} ${euro(m.rev, lang)}`}
+                style={{ height: `${(m.rev / mx) * 125}px` }}
+              />
+              <div
+                className="month-bar cost"
+                title={`${monthLabel(i, lang)} · ${lang === "en" ? "Costs" : "Custos"} ${euro(m.opex, lang)}`}
+                style={{ height: `${(m.opex / mx) * 125}px` }}
+              />
+            </div>
+            <div className="month-label">{monthLabel(i, lang)}</div>
+          </div>
+        ))}
+      </div>
+      <div className="chart-legend">
+        <span>
+          <i className="legend-swatch" />
+          {lang === "en" ? "Revenue" : "Receita"}
+        </span>
+        <span>
+          <i className="legend-swatch cost" />
+          {lang === "en" ? "Costs" : "Custos"}
+        </span>
+      </div>
+    </div>
+  );
+}
+function BreakChart({ title, points, keyName, current, lang }) {
+  const values = points.map((p) => p[keyName]);
+  const min = Math.min(0, ...values),
+    max = Math.max(0, ...values),
+    span = Math.max(1, max - min),
+    width = 360,
+    height = 150;
+  const x = (i) => 28 + (i * (width - 38)) / Math.max(1, points.length - 1),
+    y = (v) => 9 + ((max - v) / span) * (height - 30);
+  const path = points
+    .map(
+      (p, i) =>
+        (i ? "L" : "M") + x(i).toFixed(1) + "," + y(p[keyName]).toFixed(1),
+    )
+    .join(" ");
+  let threshold = null;
+  for (let i = 1; i < points.length; i++)
+    if (points[i - 1][keyName] < 0 && points[i][keyName] >= 0) {
+      const a = points[i - 1],
+        b = points[i];
+      threshold =
+        a.volume +
+        ((b.volume - a.volume) * -a[keyName]) / (b[keyName] - a[keyName]);
+      break;
     }
-  }
-  return null;
+  if (points[0]?.[keyName] >= 0) threshold = 0;
+  const nearest = points.reduce(
+    (best, p, i) =>
+      !best ||
+      Math.abs(p.input - current) < Math.abs(best.point.input - current)
+        ? { point: p, index: i }
+        : best,
+    null,
+  );
+  return (
+    <div className="mini-chart">
+      <h3>{title}</h3>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title}>
+        <line
+          x1="28"
+          x2={width - 10}
+          y1={y(0)}
+          y2={y(0)}
+          stroke="#8b96a2"
+          strokeDasharray="4 4"
+        />
+        <path d={path} fill="none" stroke="#4f91c2" strokeWidth="2.5" />
+        {nearest && (
+          <circle
+            cx={x(nearest.index)}
+            cy={y(nearest.point[keyName])}
+            r="4"
+            fill="#db9242"
+          />
+        )}
+        <text x="4" y={y(0) - 3} fill="#8b96a2" fontSize="9">
+          0
+        </text>
+        <text x="28" y="146" fill="#8b96a2" fontSize="9">
+          0
+        </text>
+        <text
+          x={width - 18}
+          y="146"
+          textAnchor="end"
+          fill="#8b96a2"
+          fontSize="9"
+        >
+          {decimal(points.at(-1)?.volume || 0, 0, lang)}
+        </text>
+      </svg>
+      <p>
+        {lang === "en" ? "Current" : "Atual"}:{" "}
+        <strong className={signedClass(nearest?.point[keyName])}>
+          {euro(nearest?.point[keyName], lang)}
+        </strong>{" "}
+        · {lang === "en" ? "Zero at" : "Zero em"}:{" "}
+        <strong>
+          {threshold === null
+            ? lang === "en"
+              ? "beyond capacity"
+              : "fora da capacidade"
+            : decimal(threshold, 1, lang) +
+              " " +
+              (lang === "en" ? "people/day" : "pessoas/dia")}
+        </strong>
+      </p>
+    </div>
+  );
 }
-
-function BreakEvenChart({title,points,valueKey,currentInput,capacity,language}) {
-  const width=560,height=220,left=48,right=12,top=16,bottom=36;
-  const valid=points.filter(p=>Number.isFinite(p[valueKey])&&Number.isFinite(p.volume));
-  const threshold=crossingAtZero(valid,valueKey);
-  const minX=Math.min(0,...valid.map(p=>p.volume));
-  const maxX=Math.max(1,...valid.map(p=>p.volume));
-  const rawValues=valid.map(p=>p[valueKey]);
-  const minY=Math.min(0,...rawValues),maxY=Math.max(0,...rawValues);
-  const pad=Math.max(1,(maxY-minY)*.08);
-  const yMin=minY===maxY?minY-1:minY-pad,yMax=minY===maxY?maxY+1:maxY+pad;
-  const xPos=x=>left+(x-minX)/(maxX-minX)*(width-left-right);
-  const yPos=y=>top+(yMax-y)/(yMax-yMin)*(height-top-bottom);
-  const path=valid.map((p,i)=>`${i?'L':'M'}${xPos(p.volume).toFixed(2)},${yPos(p[valueKey]).toFixed(2)}`).join(' ');
-  const current=valid.reduce((best,p)=>!best||Math.abs(p.input-currentInput)<Math.abs(best.input-currentInput)?p:best,null);
-  const thresholdText=threshold===null
-    ?(language==='en'?'Not reached within current capacity':'Nao atingido dentro da capacidade atual')
-    :threshold===0
-      ?(language==='en'?'Already positive at zero wave customers':'Ja positivo sem clientes da onda')
-      :`${fd(threshold,1)} ${language==='en'?'customers/day':'clientes/dia'}`;
-  const unavailable=valid.length<2;
-  return <article className="break-even-card" style={{background:'#fff',border:'1px solid #e2e5e9',borderRadius:8,padding:14,minWidth:0}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
-      <strong style={{fontSize:12,letterSpacing:.3}}>{title}</strong>
-      <span style={{fontSize:10,color:'#687386',fontFamily:"'IBM Plex Mono',monospace"}}>{fmtK(Math.round(current?.[valueKey]||0))}€</span>
-    </div>
-    <svg role="img" aria-label={`${title} ${language==='en'?'by average daily wave customers':'por clientes medios diarios da onda'}`} viewBox={`0 0 ${width} ${height}`} style={{display:'block',width:'100%',height:'auto',marginTop:6,overflow:'visible'}}>
-      <line x1={left} x2={width-right} y1={yPos(0)} y2={yPos(0)} stroke="#7d8795" strokeDasharray="5 4" strokeWidth="1.5" />
-      <line x1={left} x2={left} y1={top} y2={height-bottom} stroke="#a3aab4" strokeWidth="1" />
-      <line x1={left} x2={width-right} y1={height-bottom} y2={height-bottom} stroke="#a3aab4" strokeWidth="1" />
-      {path&&<path d={path} fill="none" stroke="#2878d0" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />}
-      {current&&<g><circle cx={xPos(current.volume)} cy={yPos(current[valueKey])} r="6" fill="#e39424" stroke="#fff" strokeWidth="2"><title>{language==='en'?'Current simulation':'Simulacao atual'}: {fd(current.volume,1)} {language==='en'?'customers/day':'clientes/dia'}, {fmt(Math.round(current[valueKey]))}€</title></circle></g>}
-      <text x={left-7} y={yPos(0)+4} textAnchor="end" fontSize="10" fill="#758091">0€</text>
-      <text x={left} y={height-9} textAnchor="middle" fontSize="10" fill="#758091">{fd(minX,0)}</text>
-      <text x={width-right} y={height-9} textAnchor="end" fontSize="10" fill="#758091">{fd(maxX,0)}</text>
-      <text x={(left+width-right)/2} y={height-1} textAnchor="middle" fontSize="9" fill="#758091">{language==='en'?'Average wave customers / open day':'Clientes medios da onda / dia aberto'}</text>
-      {unavailable&&<text x={width/2} y={height/2} textAnchor="middle" fontSize="13" fill="#758091">{language==='en'?'Unavailable — review inputs':'Indisponivel — reveja os pressupostos'}</text>}
-    </svg>
-    <div className="threshold-readout" style={{borderTop:'1px solid #e5e7eb',paddingTop:8,fontSize:10,color:'#566170'}}>
-      <span>{language==='en'?'Break-even level':'Limiar de break-even'}: </span><strong style={{color:'#1f2937'}}>{thresholdText}</strong>
-    </div>
-    <div style={{fontSize:9,color:'#7b8491',marginTop:4}}>{language==='en'?'Dashed line = zero · Amber dot = current simulation':'Linha tracejada = zero · Ponto âmbar = simulacao atual'}{` · ${language==='en'?'Max average capacity':'Capacidade max. media'} ${fd(capacity,0)}/day`}</div>
-  </article>;
-}
-
-function BreakEvenCharts({s,barInputs,sharedInputs,project,component,language}) {
-  const capacity=project.wave.maxSlotsDay;
-  const maxInput=Math.max(1,capacity/Math.min(...SF),s.sessionsDay);
-  const points=useMemo(()=>{
-    const steps=41;
-    return Array.from({length:steps},(_,i)=>{
-      const input=maxInput*i/(steps-1);
-      const p=CitywaveHospitality.calculateProject({...s,sessionsDay:input},barInputs,sharedInputs);
-      const result=component==='wave'?p.wave:component==='bar'?p.bar:p.combined;
-      return {input,volume:p.wave.avgPeopleDay,ebitda:result.ebitda,fcfe:result.first.fcfe,npv:result.npvProject};
-    });
-  },[s,barInputs,sharedInputs,component,maxInput]);
-  const currentInput=s.sessionsDay;
-  const modeLabel=language==='en'?'peak group sessions/day with seasonality':'sessões de grupo de pico/dia com sazonalidade';
-  const currentVolume=project.wave.avgPeopleDay;
-  const currentPoint=points.reduce((best,p)=>!best||Math.abs(p.input-currentInput)<Math.abs(best.input-currentInput)?p:best,null);
-  const maxPoint=points.at(-1);
-  return <section className="break-even-dashboard" aria-label={language==='en'?'Live break-even charts':'Graficos dinamicos de break-even'} style={{margin:'16px 0 22px',padding:16,border:'1px solid #d8dee7',borderRadius:10,background:'#f7f9fc'}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:12,flexWrap:'wrap',marginBottom:5}}>
-      <h2 style={{fontSize:15,margin:'0 0 4px',fontWeight:800}}>{language==='en'?'Live break-even charts':'Graficos dinamicos de break-even'}</h2>
-      <span style={{fontSize:10,color:'#657184'}}>{language==='en'?'Current volume':'Volume atual'}: {fd(currentVolume,1)} {language==='en'?'wave customers/open day':'clientes da onda/dia aberto'}</span>
-    </div>
-    <p style={{fontSize:10,color:'#657184',lineHeight:1.5,margin:'0 0 12px'}}>{language==='en'?'Varying':'Variacao de'} {modeLabel}; {language==='en'?'all other current inputs are held constant. Session demand is seasonalized; decimals are annual expected averages, not a bookable timetable. Bar estimates and zero-cost inputs remain assumptions.':'mantem os restantes pressupostos. A procura de sessoes recebe sazonalidade; valores fracionarios sao medias esperadas, nao uma agenda reservavel. Bar e custos sem valor continuam a ser hipoteses.'}</p>
-    <div className="breakeven-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10}}>
-      <BreakEvenChart title={language==='en'?'Annual EBITDA':'EBITDA anual'} points={points} valueKey="ebitda" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
-      <BreakEvenChart title={language==='en'?'Year 1 FCFE':'FCFE ano 1'} points={points} valueKey="fcfe" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
-      <BreakEvenChart title={language==='en'?'Project NPV':'VAL do projeto'} points={points} valueKey="npv" currentInput={currentInput} capacity={maxPoint?.volume||0} language={language}/>
-    </div>
-    <div style={{fontSize:9,color:'#7b8491',marginTop:8}}>{language==='en'?'Input swept':'Input variado'}: {modeLabel} · {language==='en'?'Displayed break-even is in average wave customers per open day.':'O limiar mostrado usa a media de clientes da onda por dia aberto.'}</div>
-  </section>;
-}
-
-function ScenarioPresets({activeId,onApply,language,vatInputs,wavePricesIncludeVat,barPricesIncludeVat,barRentIncludesVat}) {
-  const scenarios = CitywaveScenarios.all();
-  const projected = useMemo(()=>scenarios.map(scenario=>({
-    ...scenario,
-    project:CitywaveVAT.calculate(
-      {...scenario.inputs.wave,pricesIncludeVat:wavePricesIncludeVat},
-      {...scenario.inputs.bar,pricesIncludeVat:barPricesIncludeVat,concessionRentIncludesVat:barRentIncludesVat},
-      scenario.inputs.shared,vatInputs).project,
-  })),[vatInputs,wavePricesIncludeVat,barPricesIncludeVat,barRentIncludesVat]);
-  const english=language==='en';
-  return <section className="scenario-dashboard" aria-label={english?'Investor planning scenarios':'Cenarios de planeamento para investidores'} style={{margin:'16px 0 22px',padding:16,border:'1px solid #d8dee7',borderRadius:10,background:'#f7f9fc'}}>
-    <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:10,flexWrap:'wrap'}}>
-      <h2 style={{fontSize:17,margin:'0 0 5px',fontWeight:800}}>{english?'Three investor scenarios':'Três cenários para investidores'}</h2>
-      <span style={{fontSize:10,color:'#657184'}}>{english?'Illustrative · editable · not forecasts':'Ilustrativos · editáveis · não são previsões'}</span>
-    </div>
-    <p style={{fontSize:11,color:'#657184',lineHeight:1.55,margin:'0 0 12px'}}>{english
-      ?'Each card shows the exact assumptions and combined result calculated by the same model below. Sessions/day is peak demand; monthly seasonality and duration-based capacity are applied. All three scenarios treat the bar as a concession: only fixed rent less owner-retained costs is project revenue; the operator’s sales and payroll are excluded. Applying a case resets wave, bar and shared inputs; every input remains editable. Passenger totals are context, not customers.'
-      :'Cada cartão mostra os pressupostos exatos e o resultado conjunto calculado pelo mesmo modelo abaixo. Sessões/dia indica procura de pico; aplicam-se sazonalidade mensal e o limite de capacidade pela duração. Os três cenários tratam o bar como concessão: para o projeto conta apenas a renda fixa menos os custos retidos pelo proprietário; as vendas e a equipa do operador ficam excluídas. Aplicar um cenário repõe os pressupostos da onda, bar e custos partilhados; tudo continua editável. Passageiros são contexto, não clientes.'}</p>
-    <div className="scenario-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:10}}>
-      {projected.map(({id,title,positioning,explanation,assumptions,caution,project})=>{
-        const active=activeId===id;
-        return <article key={id} className="scenario-card" style={{minWidth:0,padding:14,border:active?'2px solid #2878d0':'1px solid #d8dee7',borderRadius:8,background:'#fff',display:'flex',flexDirection:'column'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8}}>
-            <h3 style={{fontSize:15,margin:0}}>{title[english?'en':'pt']}</h3>
-            {active&&<span style={{fontSize:9,fontWeight:800,color:'#2878d0',textTransform:'uppercase'}}>{english?'Applied':'Aplicado'}</span>}
-          </div>
-          <strong style={{fontSize:11,marginTop:4}}>{positioning[english?'en':'pt']}</strong>
-          <p style={{fontSize:10,lineHeight:1.5,color:'#596474',margin:'6px 0 9px'}}>{explanation[english?'en':'pt']}</p>
-          <div style={{borderTop:'1px solid #e5e8ed',paddingTop:6,flex:1}}>
-            {assumptions.map(item=><div key={item.pt} style={{fontSize:9.5,lineHeight:1.45,margin:'4px 0'}}><strong>{item[english?'en':'pt']}:</strong> {item[english?'enValue':'ptValue']}</div>)}
-          </div>
-          <div className="scenario-metrics" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,margin:'9px 0',padding:'8px 0',borderTop:'1px solid #e5e8ed',borderBottom:'1px solid #e5e8ed'}}>
-            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Year 1 combined EBITDA':'EBITDA conjunto ano 1'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13}}>{fmtK(project.combined.ebitda)}€</strong></div>
-            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Combined project NPV':'VAL do projeto conjunto'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:13}}>{fmtK(project.combined.npvProject)}€</strong></div>
-            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Initial total investment':'Investimento total inicial'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>{fmtK(project.combined.investment)}€</strong></div>
-            <div><div style={{fontSize:8,color:'#697586',textTransform:'uppercase'}}>{english?'Combined project IRR':'TIR do projeto conjunto'}</div><strong style={{fontFamily:"'IBM Plex Mono',monospace",fontSize:12}}>{pct(project.combined.projectIRR)}</strong></div>
-          </div>
-          <p style={{fontSize:9,lineHeight:1.4,color:'#748092',margin:'0 0 9px'}}>{caution[english?'en':'pt']}</p>
-          <button type="button" onClick={()=>onApply(id)} aria-pressed={active} style={{width:'100%',padding:'9px 10px',border:'1px solid #1b2736',borderRadius:4,background:active?'#2878d0':'#17202b',color:'#fff',fontWeight:700,fontSize:11,cursor:'pointer'}}>{english?'Simulate this scenario':'Simular este cenário'}</button>
-        </article>;
-      })}
-    </div>
-    <p style={{fontSize:9,color:'#657184',lineHeight:1.5,margin:'10px 0 0'}}>{english
-      ?'Common assumptions: 10 m wave/site, financing and tax inputs from the current reference. Wave payroll headcount varies by case and is not a validated shift roster. Monthly concession rent (€1,500 / €2,500 / €3,500) is a placeholder, not a market estimate or offer; the model assumes zero landlord fit-out contribution unless entered. Confirm the concession terms, staff rota, site, energy tariff and supplier quotes.'
-      :'Pressupostos comuns: onda de 10 m/local, financiamento e imposto da referência atual. A equipa varia por cenário e não é uma escala de turnos validada. As rendas mensais (1.500€ / 2.500€ / 3.500€) são hipóteses, não avaliações de mercado nem propostas; assume-se CAPEX do senhorio igual a zero até ser introduzido. Falta validar contrato, turnos, local, tarifa energética e propostas de fornecedores.'}</p>
-    <p style={{fontSize:9,color:'#657184',lineHeight:1.5}}>{english?'The cards use the current VAT assumptions and price basis; applying a scenario keeps your gross/net choice.':'Os cartões usam os pressupostos atuais de IVA e a base dos preços; aplicar um cenário preserva a escolha de preço final/antes de IVA.'}</p>
-  </section>;
-}
-
-/* ═══════════════════════════════════ */
 function App() {
-  const [language,setLanguage] = useState(()=>new URLSearchParams(location.search).get("lang")==="en"?"en":"pt");
-  const [theme,setTheme] = useState(()=>localStorage.getItem('citywave-theme')==='dark'?'dark':'light');
-  useEffect(()=>{CitywaveI18n.setLanguage(language);},[language]);
-  useEffect(()=>{localStorage.setItem('citywave-theme',theme);document.body.style.backgroundColor=theme==='dark'?'#101319':'#fff';},[theme]);
-  const [s, setS] = useState(CitywaveFinance.APP_INIT);
-  const [scenarioId,setScenarioId] = useState('realistic');
-  const [tab, setTab] = useState("overview");
-  const [component, setComponent] = useState("wave");
-  const [barInputs, setBarInputs] = useState(CitywaveHospitality.APP_BAR_INIT);
-  const [sharedInputs, setSharedInputs] = useState(CitywaveHospitality.SHARED_INIT);
-  const [vatInputs,setVatInputs] = useState(CitywaveVAT.VAT_INIT);
-  const updateVat = useCallback((k,v)=>setVatInputs(p=>({...p,[k]:v,profile:'custom'})),[]);
-  const applyVatProfile = useCallback(id=>setVatInputs(p=>({...p,...CitywaveVAT.PROFILES[id]})),[]);
-  const updateBar = useCallback((k,v)=>{setScenarioId(null);setBarInputs(p=>({...p,[k]:v}));},[]);
-  const updateShared = useCallback((k,v)=>{setScenarioId(null);setSharedInputs(p=>({...p,[k]:v}));},[]);
-  const u = useCallback((k,v) => {setScenarioId(null);setS(p=>({...p,[k]:v}));}, []);
-  const uInv = useCallback((id,f,v)=>{setScenarioId(null);setS(p=>({...p,investors:p.investors.map(i=>i.id===id?{...i,[f]:v}:i)}));},[]);
-  const addInv = useCallback(()=>{setScenarioId(null);setS(p=>({...p,investors:[...p.investors,{id:Date.now(),name:`Investidor ${String.fromCharCode(65+p.investors.length)}`,pct:5}]}));},[]);
-  const rmInv = useCallback((id)=>{setScenarioId(null);setS(p=>({...p,investors:p.investors.filter(i=>i.id!==id)}));},[]);
-
-  const applyScenario = useCallback((id)=>{
-    const preset=CitywaveScenarios.build(id);
-    setS(p=>({...preset.wave,pricesIncludeVat:p.pricesIncludeVat}));
-    setBarInputs(p=>({...preset.bar,pricesIncludeVat:p.pricesIncludeVat,concessionRentIncludesVat:p.concessionRentIncludesVat}));
-    setSharedInputs(preset.shared);setScenarioId(id);
-  },[]);
-
-  // Site scenario selector — applies preset
-  const selectSite = useCallback((siteId) => {
-    const site = SITES.find(x=>x.id===siteId);
-    if(!site) return;
-    setScenarioId(null);
-    setS(p => {
-      const newWaveSize = (site.id !== "custom" && p.waveSize > site.maxWave) ? site.maxWave : p.waveSize;
-      const newWave = WAVES.find(w=>w.size===newWaveSize);
-      const sizeChanged = newWaveSize !== p.waveSize;
+  const [lang, setLang] = useState(() =>
+    new URLSearchParams(location.search).get("lang") === "en" ? "en" : "pt",
+  );
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("citywave-theme") === "dark" ? "dark" : "light",
+  );
+  const [wave, setWave] = useState(F.APP_INIT),
+    [bar, setBar] = useState(H.APP_BAR_INIT),
+    [shared, setShared] = useState(H.SHARED_INIT),
+    [vat, setVat] = useState(V.VAT_INIT);
+  const [tab, setTab] = useState("overview"),
+    [scenario, setScenario] = useState("realistic");
+  const t = (pt, en) => (lang === "en" ? en : pt);
+  useEffect(() => {
+    localStorage.setItem("citywave-theme", theme);
+    document.body.style.background = theme === "dark" ? "#11161d" : "#f3f5f7";
+  }, [theme]);
+  useEffect(() => {
+    CitywaveI18n.setLanguage(lang);
+    document.documentElement.lang = lang;
+  }, [lang]);
+  const setW = useCallback((key, value) => {
+    setScenario(null);
+    setWave((p) => ({ ...p, [key]: value }));
+  }, []);
+  const setB = useCallback((key, value) => {
+    setScenario(null);
+    setBar((p) => ({ ...p, [key]: value }));
+  }, []);
+  const setSh = useCallback((key, value) => {
+    setScenario(null);
+    setShared((p) => ({ ...p, [key]: value }));
+  }, []);
+  const setV = useCallback(
+    (key, value) => setVat((p) => ({ ...p, [key]: value, profile: "custom" })),
+    [],
+  );
+  const applyVatProfile = (id) =>
+    setVat((current) => ({ ...current, ...V.PROFILES[id] }));
+  const applyScenario = (id) => {
+    const p = S.build(id);
+    setWave((w) => ({ ...p.wave, pricesIncludeVat: w.pricesIncludeVat }));
+    setBar((b) => ({
+      ...p.bar,
+      pricesIncludeVat: b.pricesIncludeVat,
+      concessionRentIncludesVat: b.concessionRentIncludesVat,
+    }));
+    setShared(p.shared);
+    setScenario(id);
+  };
+  const setSite = (id) => {
+    const site = F.SITES.find((x) => x.id === id);
+    if (!site) return;
+    setScenario(null);
+    setWave((w) => {
+      const size =
+        site.id !== "custom" && w.waveSize > site.maxWave
+          ? site.maxWave
+          : w.waveSize;
+      const spec = F.WAVES.find((x) => x.size === size);
       return {
-        ...p,
-        siteId,
-        waveSize: newWaveSize,
-        citywaveCost: newWave?.basePrice || p.citywaveCost,
-        kwhMax: sizeChanged ? (newWave?.kwh || p.kwhMax) : p.kwhMax,
-        pumpsCount: sizeChanged ? (newWave?.pumps || p.pumpsCount) : p.pumpsCount,
-        sitePrep: site.id === "custom" ? p.sitePrep : site.sitePrep,
+        ...w,
+        siteId: id,
+        waveSize: size,
+        citywaveCost: spec.basePrice,
+        kwhMax: size === w.waveSize ? w.kwhMax : spec.kwh,
+        pumpsCount: spec.pumps,
+        sitePrep: site.id === "custom" ? w.sitePrep : site.sitePrep,
       };
     });
-  }, []);
-
-  const vatResult=useMemo(()=>CitywaveVAT.calculate(s,barInputs,sharedInputs,vatInputs),[s,barInputs,sharedInputs,vatInputs]);
-  const project=vatResult.project;
-  const modelInputs=vatResult.inputs;
-  const sessionComparison = useMemo(() => [45,60].map(minutes => ({minutes, project:CitywaveVAT.calculate({...s,sessionMinutes:minutes},barInputs,sharedInputs,vatInputs).project})), [s,barInputs,sharedInputs,vatInputs]);
-  const comparison45=sessionComparison[0].project, comparison60=sessionComparison[1].project;
-  const calc = project.wave;
-  const displayed = component === 'wave' ? calc : component === 'bar' ? project.bar : project.combined;
-
-
-  const fundAlert = Math.abs(calc.fundPct-100)>0.000001;
-  const tabs=[{id:"overview",l:"Resumo"},{id:"revenue",l:"Receitas"},{id:"energy",l:"Energia"},{id:"investors",l:"Investidores"},{id:"projection",l:"P&L"},{id:"analise",l:"Analise"}];
-
+  };
+  const vatResult = useMemo(
+    () => V.calculate(wave, bar, shared, vat),
+    [wave, bar, shared, vat],
+  );
+  const p = vatResult.project,
+    w = p.wave,
+    b = p.bar,
+    c = p.combined;
+  const presetResults = useMemo(
+    () =>
+      S.all().map((def) => ({
+        def,
+        result: V.calculate(
+          { ...def.inputs.wave, pricesIncludeVat: wave.pricesIncludeVat },
+          {
+            ...def.inputs.bar,
+            pricesIncludeVat: bar.pricesIncludeVat,
+            concessionRentIncludesVat: bar.concessionRentIncludesVat,
+          },
+          def.inputs.shared,
+          vat,
+        ).project.combined,
+      })),
+    [
+      wave.pricesIncludeVat,
+      bar.pricesIncludeVat,
+      bar.concessionRentIncludesVat,
+      vat,
+    ],
+  );
+  const sessionResults = useMemo(
+    () =>
+      [45, 60].map((minutes) => ({
+        minutes,
+        result: V.calculate(
+          { ...wave, sessionMinutes: minutes },
+          bar,
+          shared,
+          vat,
+        ).project,
+      })),
+    [wave, bar, shared, vat],
+  );
+  const breakPoints = useMemo(() => {
+    const limit = Math.max(
+      w.maxSlotsDay / Math.min(...F.SF),
+      wave.sessionsDay,
+      1,
+    );
+    const inputs = [
+      ...new Set([
+        ...Array.from({ length: 49 }, (_, i) => (limit * i) / 48),
+        wave.sessionsDay,
+      ]),
+    ].sort((a, z) => a - z);
+    return inputs.map((input) => {
+      const x = V.calculate(
+        { ...wave, sessionsDay: input },
+        bar,
+        shared,
+        vat,
+      ).project;
+      return {
+        input,
+        volume: x.wave.avgPeopleDay,
+        ebitda: x.combined.ebitda,
+        fcfe: x.combined.first.fcfe,
+        npv: x.combined.npvProject,
+      };
+    });
+  }, [wave, bar, shared, vat, w.maxSlotsDay]);
+  const annualParticipants = sum(w.monthly.map((m) => m.people));
+  const taxableFactor = (gross, rate, pct) =>
+    gross ? 1 - pct / 100 + pct / 100 / (1 + rate / 100) : 1;
+  const priceNet =
+    wave.beginnerPrice *
+    taxableFactor(wave.pricesIncludeVat, vat.waveSalesRate, vat.waveTaxablePct);
+  const priceFinal = wave.pricesIncludeVat
+    ? wave.beginnerPrice
+    : wave.beginnerPrice *
+      (1 + ((vat.waveTaxablePct / 100) * vat.waveSalesRate) / 100);
+  const rentNet =
+    bar.concessionRentMonth *
+    taxableFactor(
+      bar.concessionRentIncludesVat,
+      vat.barSalesRate,
+      vat.barTaxablePct,
+    );
+  const changeInv = (id, key, value) => {
+    setScenario(null);
+    setWave((x) => ({
+      ...x,
+      investors: x.investors.map((i) =>
+        i.id === id ? { ...i, [key]: value } : i,
+      ),
+    }));
+  };
+  const W = (
+    key,
+    label,
+    unit = "",
+    min = 0,
+    max = 100000000,
+    step = 1,
+    help,
+  ) => (
+    <Field
+      key={key}
+      label={label}
+      value={wave[key]}
+      onChange={(v) => setW(key, v)}
+      unit={unit}
+      min={min}
+      max={max}
+      step={step}
+      help={help}
+    />
+  );
+  const B = (
+    key,
+    label,
+    unit = "",
+    min = 0,
+    max = 100000000,
+    step = 1,
+    help,
+  ) => (
+    <Field
+      key={key}
+      label={label}
+      value={bar[key]}
+      onChange={(v) => setB(key, v)}
+      unit={unit}
+      min={min}
+      max={max}
+      step={step}
+      help={help}
+    />
+  );
+  const Sh = (key, label, unit = "", min = 0, max = 100, step = 1) => (
+    <Field
+      key={key}
+      label={label}
+      value={shared[key]}
+      onChange={(v) => setSh(key, v)}
+      unit={unit}
+      min={min}
+      max={max}
+      step={step}
+    />
+  );
+  const Vat = (key, label, unit = "%", min = 0, max = 100, step = 1) => (
+    <Field
+      key={key}
+      label={label}
+      value={vat[key]}
+      onChange={(v) => setV(key, v)}
+      unit={unit}
+      min={min}
+      max={max}
+      step={step}
+    />
+  );
+  const revenueRows = [
+    ...w.revBk
+      .filter((x) => Math.abs(x.v) > 1e-9)
+      .map((x) => ({ label: x.l, value: x.v })),
+    {
+      label:
+        bar.operatingMode === "concession"
+          ? t("Renda da concessão", "Bar concession rent")
+          : t("Vendas do bar", "Bar sales"),
+      value: b.annRev,
+    },
+  ];
+  const costRows = [
+    ...w.costBk
+      .filter((x) => Math.abs(x.v) > 1e-9)
+      .map((x) => ({ label: x.l, value: x.v })),
+    {
+      label: t("Custos diretos do proprietário/bar", "Owner/bar direct costs"),
+      value:
+        bar.operatingMode === "concession"
+          ? b.fixedDirect
+          : b.opex - b.sharedYear1,
+    },
+  ];
+  const priceNames = [
+    [
+      t("Principiante", "Beginner"),
+      "beginnerPrice",
+      "beginnerPct",
+      t("Material e instrutor incluídos", "Equipment and coach included"),
+    ],
+    [
+      t("Intermédio", "Intermediate"),
+      "intermediatePrice",
+      "intermediatePct",
+      t(
+        "Material e acompanhamento incluídos",
+        "Equipment and supervision included",
+      ),
+    ],
+    [
+      t("Avançado", "Advanced"),
+      "advancedPrice",
+      "advancedPct",
+      t("Material próprio; aluguer opcional", "Own equipment; optional rental"),
+    ],
+    [
+      t("Crianças", "Children"),
+      "kidsPrice",
+      "kidsPct",
+      t("Material e instrutor incluídos", "Equipment and coach included"),
+    ],
+  ];
+  const projectPV = sum(c.years.map((y) => y.fcff / (1 + c.wacc) ** y.y));
+  const warningList = [
+    ...p.warnings.filter((x) => !x.startsWith("Bar em concessão:")),
+  ];
+  const tabs = [
+    ["overview", t("Resumo", "Overview")],
+    ["revenue", t("Receitas", "Revenue")],
+    ["costs", t("Custos e CAPEX", "Costs & CAPEX")],
+    ["vat", t("IVA e caixa", "VAT & cash")],
+    ["investors", t("Investidores", "Investors")],
+    ["projection", t("P&L", "P&L")],
+    ["analysis", t("Análise", "Analysis")],
+  ];
   return (
-    <div className="root-container" data-theme={theme} style={{ background:theme==='dark'?'#101319':'#fff', color:theme==='dark'?'#e5e9ef':'#000', fontFamily:"'Instrument Sans','Helvetica Neue',sans-serif", minHeight:"100vh", maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
-      <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-      <style>{`
-        .root-container[data-theme="dark"]{background:#101319!important;color:#e5e9ef!important;color-scheme:dark}
-        .root-container[data-theme="dark"] [style*="background: rgb(255, 255, 255)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(248, 248, 248)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(247, 247, 245)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(245, 245, 243)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(245, 245, 245)"]{background:#171c24!important;color:#e5e9ef!important}
-        .root-container[data-theme="dark"] [style*="background: rgb(255, 249, 235)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(255, 248, 232)"],
-        .root-container[data-theme="dark"] [style*="background: rgb(255, 250, 240)"]{background:#30291b!important;color:#f5e9c9!important}
-        .root-container[data-theme="dark"] [style*="color: rgb(0, 0, 0)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(17, 17, 17)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(51, 51, 51)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(68, 68, 68)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(85, 85, 85)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(102, 102, 102)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(119, 119, 119)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(136, 136, 136)"],
-        .root-container[data-theme="dark"] [style*="color: rgb(153, 153, 153)"]{color:#c1c8d2!important}
-        .root-container[data-theme="dark"] button:not([disabled]){border-color:#46505f!important}
-        .root-container[data-theme="dark"] button[style*="background: rgb(255, 255, 255)"]{background:#1d232d!important;color:#e5e9ef!important}
-        .root-container[data-theme="dark"] button[style*="background: rgb(17, 17, 17)"],
-        .root-container[data-theme="dark"] button[style*="background: rgb(0, 0, 0)"]{background:#d8e2f1!important;color:#11151b!important}
-        .root-container[data-theme="dark"] input,.root-container[data-theme="dark"] select{background:#141922!important;color:#e5e9ef!important;border-color:#46505f!important}
-        .root-container[data-theme="dark"] header{border-color:#536071!important}
-        .root-container[data-theme="dark"] table,.root-container[data-theme="dark"] th,.root-container[data-theme="dark"] td,.root-container[data-theme="dark"] tr{border-color:#343c49!important}
-        .root-container[data-theme="dark"] .break-even-dashboard{background:#141922!important;border-color:#343c49!important}
-        .root-container[data-theme="dark"] .break-even-card{background:#191f29!important;border-color:#343c49!important}
-        .root-container[data-theme="dark"] .break-even-dashboard p,.root-container[data-theme="dark"] .break-even-dashboard span,.root-container[data-theme="dark"] .break-even-dashboard div{color:#b6c0cf!important}
-        .root-container[data-theme="dark"] .break-even-card strong{color:#eef2f8!important}
-        .root-container[data-theme="dark"] .break-even-card svg text{fill:#aeb8c6!important}
-        .root-container[data-theme="dark"] .threshold-readout{border-color:#343c49!important}
-        .root-container[data-theme="dark"] .scenario-dashboard{background:#141922!important;border-color:#343c49!important}
-        .root-container[data-theme="dark"] .scenario-dashboard p,.root-container[data-theme="dark"] .scenario-dashboard span{color:#b6c0cf!important}
-        .root-container[data-theme="dark"] .scenario-card{background:#191f29!important;border-color:#343c49!important}
-        .root-container[data-theme="dark"] .scenario-card h3,.root-container[data-theme="dark"] .scenario-card strong{color:#eef2f8!important}
-        .root-container[data-theme="dark"] .scenario-metrics{border-color:#343c49!important}
-        .root-container[data-theme="dark"] .session-summary{border-color:#343c49!important;background:#141922!important}
-        .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(255, 255, 255)"],
-        .root-container[data-theme="dark"] .vat-panel [style*="background: rgb(216, 222, 231)"]{background:#191f29!important;color:#e5e9ef!important}
-        .root-container[data-theme="dark"] .vat-panel p,
-        .root-container[data-theme="dark"] .vat-panel div[style*="color: rgb(89, 100, 116)"]{color:#b6c0cf!important}
-        .root-container[data-theme="dark"] .model-help{color:#c1c8d2!important;border-color:#737e8d!important}
-        .root-container[data-theme="dark"] ::selection{background:#c6d9f2;color:#111}
-        input[type=range]{-webkit-appearance:none;height:3px;background:#ddd;border-radius:2px;outline:none;width:100%}
-        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
-        input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#000;cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px #000}
-        ::selection{background:#000;color:#fff}
-        *{box-sizing:border-box}
-        table{max-width:100%}
-
-        @media(max-width:900px){
-          .grid-main{grid-template-columns:1fr !important;gap:16px !important}
-          .grid-main aside{border-right:none !important;padding-right:0 !important;border-bottom:1px solid #eee;padding-bottom:16px}
-          .breakeven-grid{grid-template-columns:1fr 1fr !important}
-          .scenario-grid{grid-template-columns:1fr 1fr !important}
-        }
-
-        @media(max-width:700px){
-          .root-container{padding:14px 12px !important;max-width:100% !important}
-          h1{font-size:22px !important}
-          .kpi-grid{grid-template-columns:repeat(2,1fr) !important}
-          .tabs-bar{overflow-x:auto;scrollbar-width:none}
-          .tabs-bar::-webkit-scrollbar{display:none}
-          .tabs-bar button{flex-shrink:0;padding:7px 12px !important;font-size:10px !important}
-          .analise-grid-2{grid-template-columns:1fr !important}
-          .analise-grid-3{grid-template-columns:1fr 1fr !important}
-          .analise-risk-grid{grid-template-columns:1fr 1fr !important}
-          .twocol-charts{grid-template-columns:1fr !important}
-          .breakeven-grid{grid-template-columns:1fr !important}
-          .scenario-grid{grid-template-columns:1fr !important}
-          table{font-size:10px !important}
-          .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
-          .header-row{flex-direction:column;align-items:flex-start !important}
-        }
-
-        @media(max-width:480px){
-          .kpi-grid{grid-template-columns:1fr 1fr !important}
-          .wave-grid{grid-template-columns:repeat(3,1fr) !important}
-          .analise-risk-grid{grid-template-columns:1fr !important}
-        }
-        .model-help{display:inline-flex;align-items:center;justify-content:center;flex:0 0 19px;width:19px;height:19px;border:1px solid #999;border-radius:50%;font:700 12px Georgia,serif;color:#666;cursor:help;outline-offset:3px}
-        .model-help:hover,.model-help:focus{color:#000;border-color:#000}
-      `}</style>
-
-      {/* ── HEADER ── */}
-      <header style={{ borderBottom:"3px solid #000", paddingBottom:16, marginBottom:16 }}>
-        <div className="header-row" style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-end", flexWrap:"wrap", gap:8 }}>
-          <div>
-            <div style={{ fontSize:10, letterSpacing:4, textTransform:"uppercase", color:"#999", fontWeight:600 }}>Surf Clube da Madeira</div>
-            <h1 style={{ margin:"4px 0 0", fontSize:28, fontWeight:800, letterSpacing:-0.5, lineHeight:1 }}>Citywave Funchal · Onda + Bar</h1>
-            <div style={{ fontSize:11, color:"#666", marginTop:4 }}>Onda {s.waveSize}m · Dados da reuniao Citywave de 12 Mai 2026 · Bar: cenario ilustrativo, nao validado</div>
-          </div>
-          <div style={{ textAlign:"right" }}>
-            <div aria-label="Language" style={{marginBottom:8,display:"flex",justifyContent:"flex-end",gap:4}}>
-              <button onClick={()=>{CitywaveI18n.setLanguage("pt");setLanguage("pt");}} aria-pressed={language==="pt"} style={{padding:"4px 7px",border:"1px solid #bbb",background:language==="pt"?"#111":"#fff",color:language==="pt"?"#fff":"#111",cursor:"pointer"}}>PT</button>
-              <button onClick={()=>{CitywaveI18n.setLanguage("en");setLanguage("en");}} aria-pressed={language==="en"} style={{padding:"4px 7px",border:"1px solid #bbb",borderLeft:0,background:language==="en"?"#111":"#fff",color:language==="en"?"#fff":"#111",cursor:"pointer"}}>EN</button>
-              <button onClick={()=>setTheme(t=>t==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?(language==='en'?'Switch to light mode':'Mudar para modo claro'):(language==='en'?'Switch to dark mode':'Mudar para modo escuro')} style={{padding:'4px 8px',border:'1px solid #bbb',background:theme==='dark'?'#111':'#fff',color:theme==='dark'?'#fff':'#111',cursor:'pointer'}}>{theme==='dark'?'☀':'◐'} {theme==='dark'?(language==='en'?'Light':'Claro'):(language==='en'?'Dark':'Escuro')}</button>
-            </div>
-            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800, lineHeight:1 }}>{fmtK(displayed.annRev)}€</div>
-            <div style={{ fontSize:10, color:"#666" }}>Receita anual — {component === "wave" ? "onda sem bar" : component === "bar" ? "bar" : "conjunto"}</div>
-          </div>
-        </div>
-        <div style={{fontSize:10,color:"#777",marginTop:8}}>Modelo revisto em 30/09/2026 · <a href="./reports.html">Relatorios (cenarios fixos)</a> · <a href="./investor-guide.html">Guia do investidor</a></div>
-      </header>
-
-      <nav aria-label="Componentes do projeto" style={{display:'flex',gap:4,marginBottom:12,flexWrap:'wrap'}}>
-        {[['wave','Onda sem bar'],['bar','Bar / trabalhar'],['project','Conjunto'],['vat',language==='en'?'VAT & cash':'IVA e caixa']].map(([id,label])=><button key={id} aria-pressed={component===id} onClick={()=>setComponent(id)} style={{padding:'7px 12px',border:'1px solid #ddd',background:component===id?'#111':'#fff',color:component===id?'#fff':'#111',fontWeight:700,cursor:'pointer'}}>{label}</button>)}
-      </nav>
-      <div className="session-summary" style={{display:'flex',gap:12,flexWrap:'wrap',padding:'9px 12px',border:'1px solid #d8dee7',fontSize:11,lineHeight:1.5,marginBottom:12}}>
-        <strong>{language==='en'?'Group-session model':'Modelo por sessões de grupo'}</strong>
-        <span>{s.sessionMinutes} min · {s.ridersPerSession} {language==='en'?'people/session':'pessoas/sessão'} · {fd(calc.avgPeopleDay,1)} {language==='en'?'public participants/open day on average':'participantes públicos/dia aberto em média'}</span>
-        <span>{language==='en'?'Entered prices:':'Preços introduzidos:'} {s.pricesIncludeVat?(language==='en'?'final, VAT included':'finais, com IVA'):(language==='en'?'before VAT':'antes de IVA')}</span>
-      </div>
-      <BreakEvenCharts s={modelInputs.wave} barInputs={modelInputs.bar} sharedInputs={modelInputs.shared} project={project} component={component} language={language}/>
-      <ScenarioPresets activeId={scenarioId} onApply={applyScenario} language={language} vatInputs={vatInputs} wavePricesIncludeVat={s.pricesIncludeVat} barPricesIncludeVat={barInputs.pricesIncludeVat} barRentIncludesVat={barInputs.concessionRentIncludesVat}/>
-      {component === 'vat' && <VatPanel vat={vatInputs} onVat={updateVat} onPreset={applyVatProfile} s={s} b={barInputs} onWave={u} onBar={updateBar} result={vatResult} language={language}/>}
-      {(component === 'bar'||component === 'project') && <ProjectPanel mode={component} project={project} s={s} b={barInputs} shared={sharedInputs} updateWave={u} updateBar={updateBar} updateShared={updateShared} onWave={()=>setComponent('wave')} language={language} />}
-      {(component === 'bar'||component === 'project') && <Section title="Configurar sessões, energia e custos de venda" open={false}><SimulationControls s={s} b={barInputs} shared={sharedInputs} modelInputs={modelInputs} updateWave={u} project={project} /></Section>}
-      {component === 'wave' && <>
-      <p style={{fontSize:12,color:'#666'}}>Onda sem bar · Indicadores, graficos e separadores desta vista referem-se a piscina. Consulte Conjunto para o projeto completo.</p>
-      {/* ── DISCOVERY CALL BANNER ── */}
-      <div style={{ background:"#f5f5f3", border:"1px solid #e0e0e0", borderLeft:"3px solid #000", padding:"10px 14px", marginBottom:24, fontSize:11, lineHeight:1.5, color:"#444" }}>
-        <strong style={{color:"#000",letterSpacing:0.5,textTransform:"uppercase",fontSize:10}}>DADOS CITYWAVE CONFIRMADOS · 12 Mai 2026</strong> ·
-        Sistema 10m: €1,7-1,8M · Instalacao: €89k · Shipping Madeira: ~€15k · Sem royalties/licencas · Manutencao opcional ~1,5%/ano ·
-        Pagamento: 15/40/25/15/5 · Footprint ideal 34×28m · 400V 1200A · 1500m³ agua inicial ·
-        <strong style={{color:"#c00"}}> Pendente: preco saltwater, fundacao no relvado</strong>
-      </div>
-
-      {/* ── KPIs ── */}
-      <div className="kpi-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:1, background:"#000", marginBottom:24, borderRadius:2, overflow:"hidden" }}>
-        {[
-          {l:"EBITDA",v:`${fmtK(calc.ebitda)}€`,sub:pct(calc.margin),neg:calc.ebitda<0},
-          {l:"FCFE ANO 1",sub:"Apos imposto, divida e investimento",v:`${fmtK(calc.net)}€`,neg:calc.net<0},
-          {l:"PAYBACK FCFF",v:calc.payback<50?`${fd(calc.payback)} anos`:"N/A"},
-          {l:"ENERGIA/ANO",v:`${fmtK(calc.annEnergy)}€`,sub:`${fmt(Math.round(calc.dailyKwh))} kWh/dia`},
-          {l:"CAPEX",v:`${fmtK(calc.capex)}€`},
-          {l:"DIVIDENDOS",v:`${fmtK(calc.divs)}€`,sub:`Ate ${s.distPct}% do FCFE positivo`},
-        ].map((m,i) => (
-          <div key={i} style={{ background:"#fff", padding:"12px 14px", textAlign:"center" }}>
-            <div style={{ fontSize:9, letterSpacing:2, textTransform:"uppercase", color:"#999", fontWeight:600, marginBottom:4 }}>{m.l}</div>
-            <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800, color:m.neg?"#c00":"#000" }}>{m.v}</div>
-            {m.sub && <div style={{ fontSize:9, color:"#999", marginTop:2 }}>{m.sub}</div>}
-          </div>
-        ))}
-      </div>
-
-      {calc.warnings.length > 0 && <div role="status" style={{background:"#fff8e8",border:"1px solid #e4c477",padding:12,marginBottom:16,fontSize:12,lineHeight:1.6}}>
-        {calc.warnings.map((warning,i)=><div key={i}>{warning}</div>)}
-      </div>}
-      <p style={{fontSize:11,color:"#666"}}>Valores liquidos de IVA. Horizonte: {calc.N} anos. Precos e custos sao pressupostos editaveis.</p>
-      {/* ── TABS ── */}
-      <div className="tabs-bar" style={{ display:"flex", gap:0, borderBottom:"2px solid #000", marginBottom:20 }}>
-        {tabs.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            padding:"8px 18px", background:tab===t.id?"#000":"transparent",
-            color:tab===t.id?"#fff":"#666", border:"none", fontSize:11,
-            fontWeight:700, letterSpacing:0.5, textTransform:"uppercase", cursor:"pointer",
-            fontFamily:"'Instrument Sans',sans-serif", transition:"all 0.15s",
-            borderTopLeftRadius:2, borderTopRightRadius:2,
-          }}>{t.l}</button>
-        ))}
-      </div>
-
-      <div className="grid-main" style={{ display:"grid", gridTemplateColumns:"340px 1fr", gap:24, alignItems:"start" }}>
-
-        {/* ═══ LEFT ═══ */}
-        <aside style={{ borderRight:"1px solid #eee", paddingRight:20 }}>
-
-          {/* SITE & CONFIG */}
-          <Section title="Local e Configuracao" number="0">
-            <div style={{ fontSize:10, color:"#999", marginBottom:8 }}>Selecione o cenario do local (Jardins do Teleferico)</div>
-            <div style={{fontSize:10,color:'#7b5d21',background:'#fff8e8',border:'1px solid #e7d6ad',padding:'7px 9px',marginBottom:8,lineHeight:1.5}}>O preset de betao e apenas um cenario de dimensionamento. Nao confirma a parcela nem a concessao do local pretendido junto ao Teleferico.</div>
-            <div style={{ display:"grid", gap:6, marginBottom:10 }}>
-              {SITES.map(site=>(
-                <button key={site.id} onClick={()=>selectSite(site.id)} style={{
-                  padding:"10px 12px", borderRadius:4, border:s.siteId===site.id?"2px solid #000":"1px solid #ddd",
-                  background:s.siteId===site.id?"#000":"#fff", color:s.siteId===site.id?"#fff":"#333",
-                  cursor:"pointer", textAlign:"left", transition:"all 0.15s"
-                }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
-                    <strong style={{ fontSize:12 }}>{site.label}</strong>
-                    <span style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:11, opacity:0.7 }}>
-                      {site.length>0?`${site.length}m · max ${site.maxWave}m`:"manual"}
-                    </span>
-                  </div>
-                  <div style={{ fontSize:9.5, opacity:0.75, marginTop:3, lineHeight:1.4 }}>{site.note}</div>
-                </button>
-              ))}
-            </div>
-            {!calc.siteFitsWave && (
-              <div style={{ background:"#fee", border:"1px solid #fcc", borderRadius:3, padding:"6px 10px", fontSize:10, color:"#c00", marginBottom:8 }}>
-                ⚠ Onda {s.waveSize}m nao cabe neste local (max {calc.site.maxWave}m). Reduza tamanho ou mude de local.
-              </div>
+    <div className={`app ${theme}`}>
+      <header className="top">
+        <div>
+          <div className="eyebrow">Citywave · Funchal · Madeira</div>
+          <h1>
+            {t(
+              "Simulador financeiro do projeto",
+              "Project financial simulator",
             )}
-            <Row label="Anos de concessao" value={s.concessionYears} onChange={v=>u("concessionYears",v)} suffix=" anos" info="Determina o horizonte financeiro e a data de saida" min={3} max={25} />
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginTop:8, fontSize:10, lineHeight:1.6, color:"#555" }}>
-              <strong style={{color:"#000"}}>Fundacao:</strong> {calc.site.foundation}<br/>
-              <strong style={{color:"#000"}}>Carga ao solo:</strong> 2,5 ton/m² (Citywave confirmado)<br/>
-              <strong style={{color:"#000"}}>Ruido:</strong> 78-79 dB junto a piscina, desprezavel a 10-20m
+          </h1>
+          <p>
+            {t(
+              "Sessões de grupo + bar com espaço para trabalhar. Um único modelo, com resultados consolidados e componentes identificadas.",
+              "Group sessions + bar with space to work. One model, with consolidated results and visible component contributions.",
+            )}
+          </p>
+        </div>
+        <div className="top-actions">
+          <button
+            className="pill"
+            aria-pressed={lang === "pt"}
+            onClick={() => setLang("pt")}
+          >
+            PT
+          </button>
+          <button
+            className="pill"
+            aria-pressed={lang === "en"}
+            onClick={() => setLang("en")}
+          >
+            EN
+          </button>
+          <button
+            className="pill"
+            onClick={() => setTheme((x) => (x === "dark" ? "light" : "dark"))}
+          >
+            {theme === "dark"
+              ? "☀ " + t("Claro", "Light")
+              : "◐ " + t("Escuro", "Dark")}
+          </button>
+        </div>
+      </header>
+      <div className="scenario-strip">
+        <span className="eyebrow">{t("Cenários", "Scenarios")}</span>
+        {presetResults.map(({ def, result }) => (
+          <button
+            key={def.id}
+            className="scenario-button"
+            aria-pressed={scenario === def.id}
+            onClick={() => applyScenario(def.id)}
+            title={def.explanation[lang]}
+          >
+            {def.title[lang]} · {euro(result.npvProject, lang)}
+          </button>
+        ))}
+        <label className="check-row" style={{ marginLeft: "auto" }}>
+          <input
+            type="checkbox"
+            checked={wave.pricesIncludeVat}
+            onChange={(e) => setW("pricesIncludeVat", e.target.checked)}
+          />
+          {t("Preços das sessões incluem IVA", "Session prices include VAT")}
+        </label>
+      </div>
+      <p className="scenario-note">
+        {scenario
+          ? S.definitions.find((x) => x.id === scenario)?.explanation[lang]
+          : t(
+              "Simulação personalizada. Todos os resultados refletem as alterações abaixo.",
+              "Custom simulation. Every result reflects the inputs below.",
+            )}{" "}
+        {t(
+          "Cenários ilustrativos, não previsões de procura.",
+          "Illustrative scenarios, not demand forecasts.",
+        )}
+      </p>
+      <div className="metric-strip">
+        <Metric
+          label={t("Receita ano 1", "Year 1 revenue")}
+          value={euro(c.annRev, lang)}
+          note={t(
+            "Onda + renda/vendas do bar, sem IVA",
+            "Wave + bar rent/sales, net of VAT",
+          )}
+        />
+        <Metric
+          label={t("EBITDA ano 1", "Year 1 EBITDA")}
+          value={euro(c.ebitda, lang)}
+          note={percentage(c.margin)}
+          negative={c.ebitda < 0}
+        />
+        <Metric
+          label={t("VAL do projeto", "Project NPV")}
+          value={euro(c.npvProject, lang)}
+          note={t(
+            `Taxa de desconto ${percentage(c.wacc)}`,
+            `Discount rate ${percentage(c.wacc)}`,
+          )}
+          negative={c.npvProject < 0}
+        />
+        <Metric
+          label={t("TIR do projeto", "Project IRR")}
+          value={percentage(c.projectIRR)}
+          note={t(
+            `Prazo ${wave.concessionYears} anos`,
+            `Horizon ${wave.concessionYears} years`,
+          )}
+          negative={c.projectIRR < 0}
+        />
+        <Metric
+          label={t("Investimento inicial", "Initial investment")}
+          value={euro(c.investment, lang)}
+          note={t(
+            "Onda + CAPEX do proprietário no bar",
+            "Wave + owner-funded bar CAPEX",
+          )}
+        />
+        <Metric
+          label={t("Payback FCFF", "FCFF payback")}
+          value={
+            Number.isFinite(c.payback)
+              ? decimal(c.payback, 1, lang) + " " + t("anos", "years")
+              : "—"
+          }
+          note={t(
+            "Fluxos nominais acumulados",
+            "Cumulative nominal cash flows",
+          )}
+        />
+      </div>
+      <p className="context-line">
+        {t("Caso atual", "Current case")}:{" "}
+        <strong>
+          {decimal(w.avgPeopleDay, 1, lang)}{" "}
+          {t("participantes/dia aberto", "participants/open day")}
+        </strong>{" "}
+        · {wave.sessionMinutes} min · {wave.ridersPerSession}{" "}
+        {t("pessoas/sessão", "people/session")} · {wave.opDays}{" "}
+        {t("dias/ano", "days/year")} · {t("preços", "prices")}{" "}
+        <strong>
+          {wave.pricesIncludeVat
+            ? t("finais com IVA", "final, VAT included")
+            : t("antes de IVA", "before VAT")}
+        </strong>{" "}
+        · {t("bar", "bar")}:{" "}
+        {bar.operatingMode === "concession"
+          ? t("concessão", "concession")
+          : t("exploração própria", "company-operated")}
+      </p>
+      <nav
+        className="tabs"
+        aria-label={t("Secções do simulador", "Simulator sections")}
+      >
+        {tabs.map(([id, label]) => (
+          <button
+            className="tab-button"
+            role="tab"
+            aria-selected={tab === id}
+            onClick={() => setTab(id)}
+            key={id}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      <div className="workspace">
+        <aside className="sidebar">
+          <p className="sidebar-intro">
+            {t(
+              "Altere os pressupostos. O resumo, os gráficos, o IVA, a dívida e o VAL recalculam imediatamente.",
+              "Edit the assumptions. The overview, charts, VAT, debt and NPV recalculate immediately.",
+            )}
+          </p>
+          <Fold title={t("0 · Local e prazo", "0 · Site & term")} open>
+            <p className="fold-intro">
+              {t(
+                "O local de betão é apenas uma hipótese de dimensionamento; a concessão do terreno continua por confirmar.",
+                "The concrete site is a sizing assumption; the site concession remains unconfirmed.",
+              )}
+            </p>
+            {F.SITES.map((site) => (
+              <button
+                key={site.id}
+                className="site-button"
+                aria-pressed={wave.siteId === site.id}
+                onClick={() => setSite(site.id)}
+              >
+                {site.label}
+                <small>
+                  {site.length
+                    ? `${site.length}m · ${t("onda máx.", "max wave")} ${site.maxWave}m`
+                    : t("Configuração manual", "Manual configuration")}
+                </small>
+              </button>
+            ))}
+            {W(
+              "concessionYears",
+              t("Anos de concessão", "Concession years"),
+              "a",
+              1,
+              40,
+              1,
+            )}
+            {W(
+              "opDays",
+              t("Dias de operação/ano", "Operating days/year"),
+              "",
+              0,
+              365,
+              1,
+            )}
+          </Fold>
+          <Fold
+            title={t("1 · Sessões e capacidade", "1 · Sessions & capacity")}
+            open
+          >
+            <div className="select-line">
+              <label className="hint">
+                {t("Duração", "Duration")}
+                <select
+                  value={wave.sessionMinutes}
+                  onChange={(e) =>
+                    setW("sessionMinutes", Number(e.target.value))
+                  }
+                >
+                  <option value="45">45 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </label>
+              <label className="hint">
+                {t("Onda", "Wave")}
+                <select
+                  value={wave.waveSize}
+                  onChange={(e) => {
+                    const x = F.WAVES.find(
+                      (z) => z.size === Number(e.target.value),
+                    );
+                    if (x) {
+                      setScenario(null);
+                      setWave((v) => ({
+                        ...v,
+                        waveSize: x.size,
+                        citywaveCost: x.basePrice,
+                        kwhMax: x.kwh,
+                        pumpsCount: x.pumps,
+                      }));
+                    }
+                  }}
+                >
+                  {F.WAVES.map((x) => (
+                    <option key={x.size} value={x.size}>
+                      {x.size} m
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
-          </Section>
-
-          {/* WAVE SIZE */}
-          <Section title="Tamanho da Onda" number="1">
-            <div className="wave-grid" style={{ display:"grid", gridTemplateColumns:"repeat(6,1fr)", gap:3, marginBottom:12 }}>
-              {WAVES.map(w=>{
-                const disabled = calc.site.id !== "custom" && w.size > calc.site.maxWave;
-                return (
-                  <button key={w.size} disabled={disabled}
-                    onClick={()=>{u("waveSize",w.size); u("citywaveCost",w.basePrice); u("kwhMax",w.kwh); u("pumpsCount",w.pumps);}}
-                    style={{
-                      padding:"8px 2px", borderRadius:4,
-                      border:s.waveSize===w.size?"2px solid #000":"1px solid #ddd",
-                      background:s.waveSize===w.size?"#000":"#fff",
-                      color:s.waveSize===w.size?"#fff":(disabled?"#ccc":"#333"),
-                      cursor:disabled?"not-allowed":"pointer", textAlign:"center", transition:"all 0.15s",
-                      opacity: disabled?0.4:1
-                    }}
-                    title={disabled?`Nao cabe no local ${calc.site.label}`:""}>
-                    <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:13, fontWeight:800 }}>{w.label}</div>
-                    <div style={{ fontSize:7.5, opacity:0.7 }}>{fmtK(w.basePrice)}€</div>
-                  </button>
-                );
-              })}
-            </div>
-            <Row label="Potencia max" value={s.kwhMax} onChange={v=>u("kwhMax",v)} suffix=" kW" info="Citywave confirmou max 600 kW para 10m. Editavel quando especificacao final chegar." min={100} max={1500} step={10} />
-            <Row label="Numero de bombas" value={s.pumpsCount} onChange={v=>u("pumpsCount",v)} suffix="" info="Estimativa — Citywave nao confirmou. So afeta display, nao calculos." min={1} max={40} />
-            <Row label="Carga media bombas" value={s.avgPumpLoad} onChange={v=>u("avgPumpLoad",v)} suffix="%" info="100% = potencia maxima durante todo o horario; perfil real a validar com Citywave" min={30} max={100} step={5} />
-            <Row label="Preco eletricidade" value={s.electricityRate} onChange={v=>u("electricityRate",v)} suffix=" €/kWh" info="Hipotese nao validada pela EEM. Fatura depende de horarios, potencia e outros encargos." min={0.05} max={0.40} step={0.01} />
-            <Row label="Horas operacao/dia" value={s.operatingHoursDay} onChange={v=>u("operatingHoursDay",v)} suffix="h" min={4} max={16} />
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginTop:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:11, lineHeight:1.8 }}>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Consumo/dia</span><strong>{fmt(Math.round(calc.dailyKwh))} kWh</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/dia</span><strong>{fmt(Math.round(calc.dailyKwh*s.electricityRate))}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/sessão</span><strong>{fd(calc.costPerSess,2)}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Custo/ano</span><strong>{fmt(Math.round(calc.annEnergy))}€</strong></div>
-            </div>
-          </Section>
-
-          {/* REVENUE */}
-          <Section title="Receitas" number="2">
-            <label style={{display:'block',fontSize:11,fontWeight:700,marginBottom:8}}>Como interpretar os preços das sessões
-              <select value={s.pricesIncludeVat?'gross':'net'} onChange={e=>u('pricesIncludeVat',e.target.value==='gross')} style={{display:'block',padding:7,marginTop:5,width:'100%'}}>
-                <option value="net">Antes de IVA</option><option value="gross">Preço final pago pelo cliente, com IVA</option>
-              </select>
+            {W(
+              "sessionGapMinutes",
+              t("Intervalo entre sessões", "Gap between sessions"),
+              "m",
+              0,
+              60,
+              1,
+            )}
+            {W(
+              "ridersPerSession",
+              t("Pessoas por sessão", "People per session"),
+              "",
+              1,
+              14,
+              1,
+            )}
+            {W(
+              "sessionsDay",
+              t("Sessões de pico/dia", "Peak sessions/day"),
+              "",
+              0,
+              30,
+              0.1,
+              t(
+                `Capacidade ${w.maxSlotsDay}/dia; sazonalidade aplicada`,
+                `Capacity ${w.maxSlotsDay}/day; seasonality applied`,
+              ),
+            )}
+            {W(
+              "operatingHoursDay",
+              t("Horas de operação/dia", "Operating hours/day"),
+              "h",
+              1,
+              24,
+              0.5,
+            )}
+            <p className="hint">
+              {t("Participantes públicos anuais", "Annual public participants")}
+              : <strong>{decimal(annualParticipants, 0, lang)}</strong>.{" "}
+              {t(
+                "O limite de 14 pessoas requer validação operacional e de segurança.",
+                "The 14-person cap requires operational and safety validation.",
+              )}
+            </p>
+          </Fold>
+          <Fold
+            title={t("2 · Preços de sessão e IVA", "2 · Session prices & VAT")}
+            open
+          >
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={wave.pricesIncludeVat}
+                onChange={(e) => setW("pricesIncludeVat", e.target.checked)}
+              />
+              {t(
+                "Valores introduzidos são preços finais com IVA",
+                "Entered values are final prices including VAT",
+              )}
             </label>
-            <div style={{fontSize:11,lineHeight:1.5,background:'#f5f5f5',padding:'8px 10px',marginBottom:10}}>Exemplo principiante: {fd(s.beginnerPrice,2)} € introduzidos → {fd(vatResult.waveNetPrice,2)} € de receita antes de IVA → {fd(vatResult.waveGrossPrice,2)} € pagos pelo cliente. A base comercial ainda está por decidir.</div>
-              <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={45} max={60} step={15} />
-            <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
-            <Row label="Pessoas por sessão" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={14} info="Limite máximo por grupo: 14 pessoas" />
-            <Row label="Sessoes por hora" value={calc.slotsPerHour} suffix="" step={0.01} />
-            <Row label="Procura de sessoes/dia (pico)" value={s.sessionsDay} onChange={v=>u("sessionsDay",v)} suffix="" min={1} max={50} info={`Media anual: ${fd(calc.avgPeopleDay,1)} participantes publicos/dia · ${fd(calc.avgOccupancy,0)}% ocupacao`} />
-              <div style={{ background:"#f5f5f5", borderRadius:4, padding:6, margin:"4px 0 8px", fontSize:10, fontFamily:"'IBM Plex Mono',monospace" }}>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Max/dia</span><strong>{calc.maxRidersDay} pessoas</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:"#666"}}>Preco medio</span><strong>{fd(calc.effectiveAvgPrice,1)}€/pessoa</strong></div>
+            {priceNames.map(([name, priceKey, pctKey]) => (
+              <React.Fragment key={priceKey}>
+                {W(priceKey, name, "€", 0, 1000, 0.01)}
+                {W(pctKey, t("Mix de ", "Mix of ") + name, "%", 0, 100, 1)}
+              </React.Fragment>
+            ))}
+            {W(
+              "bonoPct",
+              t("Clientes com desconto", "Customers with discount"),
+              "%",
+              0,
+              100,
+              1,
+            )}
+            {W(
+              "bonoDiscount",
+              t("Desconto médio", "Average discount"),
+              "%",
+              0,
+              100,
+              1,
+            )}
+            <p className="hint">
+              {t("Exemplo principiante", "Beginner example")}:{" "}
+              {euro2(priceNet, lang)} {t("receita líquida", "net revenue")} →{" "}
+              {euro2(priceFinal, lang)}{" "}
+              {t("pago pelo cliente", "paid by customer")}.{" "}
+              {t(
+                "O IVA é retirado da receita quando o valor introduzido já o inclui.",
+                "VAT is removed from revenue when the entered price already includes it.",
+              )}
+            </p>
+          </Fold>
+          <Fold
+            title={t("3 · Bar e espaço de trabalho", "3 · Bar & work area")}
+          >
+            <div className="select-line">
+              <label className="hint">
+                {t("Exploração", "Operation")}
+                <select
+                  value={bar.operatingMode}
+                  onChange={(e) => setB("operatingMode", e.target.value)}
+                >
+                  <option value="concession">
+                    {t("Concessão", "Concession")}
+                  </option>
+                  <option value="own">
+                    {t("Própria", "Company-operated")}
+                  </option>
+                </select>
+              </label>
             </div>
-            <div style={{ fontSize:10, fontWeight:700, marginTop:4, marginBottom:4 }}>Precos por nivel:</div>
-            <Row label="Principiante" value={s.beginnerPrice} onChange={v=>u("beginnerPrice",v)} suffix="€" min={15} max={100} info={`${s.beginnerPct}% dos clientes`} />
-            <Row label="Intermedio" value={s.intermediatePrice} onChange={v=>u("intermediatePrice",v)} suffix="€" min={15} max={100} info={`${s.intermediatePct}% dos clientes`} />
-            <Row label="Avancado" value={s.advancedPrice} onChange={v=>u("advancedPrice",v)} suffix="€" min={15} max={100} info={`${s.advancedPct}%`} />
-            <Row label="Criancas" value={s.kidsPrice} onChange={v=>u("kidsPrice",v)} suffix="€" min={10} max={80} info={`${s.kidsPct}%`} />
-            <Row label="Eventos sem onda/mes" value={s.eventMonthly} onChange={v=>u("eventMonthly",v)} suffix="€" min={0} max={20000} step={500} />
-          </Section>
-
-          <Section title="Custos de venda e material" open={false}>
-            <Row label="Receita intermediada" value={s.distributionPct} onChange={v=>u('distributionPct',v)} suffix="%" max={100}/>
-            <Row label="Comissao do intermediario" value={s.commissionPct} onChange={v=>u('commissionPct',v)} suffix="%" max={100}/>
-            <Row label="Material por participacao" value={s.equipmentPerVisit} onChange={v=>u('equipmentPerVisit',v)} suffix="€" max={30} step={.1}/>
-            <Row label="Encargos eletricos adicionais" value={s.energyOtherMonth} onChange={v=>u('energyOtherMonth',v)} suffix="€/mes" max={50000} step={100}/>
-            <p style={{fontSize:10,color:'#777'}}>Valores zero nao sao orcamentos validados. Nao duplicar custos ja incluidos noutras rubricas.</p>
-          </Section>
-          {/* CAPEX */}
-          <Section title="Investimento (CAPEX)" number="3" open={true}>
-            <div style={{ fontSize:10, color:"#888", marginBottom:8, lineHeight:1.5 }}>
-              Pacote Citywave confirmado: equipamento + instalacao (€89k) + shipping. Sem royalties.
-            </div>
-            <Row label={`Citywave ${s.waveSize}m (base)`} value={s.citywaveCost} onChange={v=>u("citywaveCost",v)} suffix="€" info="10m: €1,7-1,8M · 7,5m: €1,2-1,3M" min={500000} max={4000000} step={50000} />
-            <Row label="Saltwater uplift" value={s.saltwaterUplift} onChange={v=>u("saltwaterUplift",v)} suffix="%" info="⚠ Preco exato pendente Citywave. Anti-corrosao + bombas SW. Necessidade tecnica e enquadramento local por confirmar." min={0} max={50} step={5} />
-            <Row label="Instalacao (Citywave)" value={s.installation} onChange={v=>u("installation",v)} suffix="€" info="Equipa Citywave confirmou €89k" min={50000} max={200000} step={5000} />
-            <Row label="Shipping (containers)" value={s.shipping} onChange={v=>u("shipping",v)} suffix="€" info="4-5 containers, €2-3k cada (Madeira)" min={5000} max={50000} step={1000} />
-            <Row label="Preparacao local" value={s.sitePrep} onChange={v=>u("sitePrep",v)} suffix="€" info={s.siteId==="lawn"?"Relvado precisa de slab/gravel — TBC":s.siteId==="concrete"?"Concreto existente":"Variavel"} min={20000} max={600000} step={10000} />
-            <Row label="Canalizacao" value={s.plumbing} onChange={v=>u("plumbing",v)} suffix="€" min={10000} max={300000} step={5000} />
-            <Row label="Eletrica (400V/1200A)" value={s.electrical} onChange={v=>u("electrical",v)} suffix="€" info="3-fase confirmado Citywave" min={10000} max={300000} step={5000} />
-            <Row label="Licencas e projeto" value={s.permits} onChange={v=>u("permits",v)} suffix="€" min={5000} max={150000} step={5000} />
-            <Row label="Contingencia" value={s.contingency} onChange={v=>u("contingency",v)} suffix="%" min={0} max={25} />
-            <Row label="CAPEX Total" value={calc.capex} suffix="€" total />
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:8, marginTop:8, fontSize:9.5, lineHeight:1.6, color:"#666" }}>
-              <strong style={{color:"#000"}}>Pagamento Citywave:</strong> 15% assinatura · 40% inicio producao · 25% shipping · 15% instalacao · 5% handover
-            </div>
-          </Section>
-
-          {/* OPERACAO */}
-          <Section title="Custos Operacao" number="4" open={false}>
-            <Row label="Funcionarios" value={s.staffCount} onChange={v=>u("staffCount",v)} suffix="" min={2} max={30} />
-            <Row label="Salario medio" value={s.avgSalary} onChange={v=>u("avgSalary",v)} suffix="€/mes" min={600} max={3000} step={50} />
-            <Row label="TSU patronal" value={s.ssRate} onChange={v=>u("ssRate",v)} suffix="%" min={18} max={30} step={0.25} />
-            <Row label="Dias operacao/ano" value={s.opDays} onChange={v=>u("opDays",v)} suffix="" min={200} max={365} step={5} />
-            <Row label="Agua/tratamento" value={s.waterMonth} onChange={v=>u("waterMonth",v)} suffix="€/mes" info="1500m³ inicial + ~17,5 m³/semana" min={200} max={10000} step={250} />
-            <Row label="Manutencao" value={s.maintMonth} onChange={v=>u("maintMonth",v)} suffix="€/mes" info="Contrato opcional Citywave: ~1,5%/ano do sistema" min={500} max={15000} step={250} />
-            <Row label="Seguro anual" value={s.insuranceYear} onChange={v=>u("insuranceYear",v)} suffix="€/ano" min={5000} max={100000} step={1000} />
-            <Row label="Marketing" value={s.marketingMonth} onChange={v=>u("marketingMonth",v)} suffix="€/mes" min={200} max={10000} step={250} />
-            <Row label="Contabilidade" value={s.accountingMonth} onChange={v=>u("accountingMonth",v)} suffix="€/mes" min={200} max={3000} step={50} />
-            <Row label="Diversos" value={s.miscMonth} onChange={v=>u("miscMonth",v)} suffix="€/mes" min={200} max={8000} step={250} />
-            <Row label="Concessao CMF" value={s.concessionRate} onChange={v=>u("concessionRate",v)} suffix="% receita" min={0} max={20} step={0.5} />
-          </Section>
-
-          {/* FINANCIAMENTO */}
-          <Section title="Financiamento" number="5" open={false}>
-            <div style={{ fontSize:10, color: fundAlert?"#c00":"#090", fontWeight:600, marginBottom:6 }}>
-              Total: {fd(calc.fundPct)}% {fundAlert?"⚠ Ajuste para 100%":"✓"}
-            </div>
-            <div style={{ fontSize:9.5, color:"#888", marginBottom:8, lineHeight:1.5 }}>
-              Citywave nao oferece financiamento direto.
-            </div>
-            <Row label="Joao Febrer" value={s.joaoPct} onChange={v=>u("joaoPct",v)} suffix="%" info={`= ${fmt(Math.round(calc.joaoAmt))}€`} min={0} max={50} />
-            <Row label="Rodrigo Farinha" value={s.rodrigoPct} onChange={v=>u("rodrigoPct",v)} suffix="%" info={`= ${fmt(Math.round(calc.rodrigoAmt))}€`} min={0} max={50} />
-            <Row label="Peso sweat equity fundadores" value={s.sweatPct} onChange={v=>u("sweatPct",v)} suffix=" unidades" info={`Peso normalizado com o capital proprio: ${fd(s.sweatPct/(calc.eqPct+s.sweatPct||1)*100)}% final, dividido 50/50.`} min={0} max={40} />
-            <div style={{ borderTop:"1px solid #eee", marginTop:8, paddingTop:8 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-                <span style={{ fontSize:12, fontWeight:700 }}>Investidores</span>
-                <button onClick={addInv} style={{ background:"#000", color:"#fff", border:"none", borderRadius:3, padding:"3px 10px", fontSize:10, cursor:"pointer", fontWeight:700 }}>+ Adicionar</button>
-              </div>
-              <p style={{fontSize:10,color:"#666",lineHeight:1.5}}>A duração é da sessão de grupo (45 ou 60 minutos), não o tempo individual de cada cliente na onda. Os níveis podem usar a onda de forma diferente. O grupo tem um máximo de 14 pessoas.</p>
-              {s.investors.map(inv=>(
-                <div key={inv.id} style={{ background:"#f8f8f8", borderRadius:4, padding:8, marginBottom:4 }}>
-                  <div style={{ display:"flex", gap:4, alignItems:"center", marginBottom:4 }}>
-                    <input value={inv.name} onChange={e=>uInv(inv.id,"name",e.target.value)} style={{
-                      flex:1, background:"#fff", border:"1px solid #ddd", borderRadius:3, padding:"4px 6px",
-                      fontSize:11, fontFamily:"'Instrument Sans',sans-serif"
-                    }} />
-                    <button onClick={()=>rmInv(inv.id)} style={{ background:"transparent", border:"none", color:"#c00", cursor:"pointer", fontSize:16, lineHeight:1 }}>×</button>
-                  </div>
-                  <Row label={`${inv.name}`} value={inv.pct} onChange={v=>uInv(inv.id,"pct",v)} suffix="%" info={`= ${fmt(Math.round(calc.capex*(inv.pct/100)))}€`} min={1} max={60} />
-                </div>
-              ))}
-            </div>
-            <Row label="Divida bancaria" value={s.bankPct} onChange={v=>u("bankPct",v)} suffix="%" min={0} max={80} />
-            {s.bankPct > 0 && <>
-              <Row label="Taxa juro" value={s.loanRate} onChange={v=>u("loanRate",v)} suffix="%" min={0} max={12} step={0.25} indent />
-              <Row label="Prazo" value={s.loanYears} onChange={v=>u("loanYears",v)} suffix=" anos" min={2} max={25} indent />
-              <div style={{ fontSize:11, color:"#666", fontFamily:"'IBM Plex Mono',monospace", paddingLeft:20, marginTop:2 }}>
-                Prestacao: <strong>{fmt(Math.round(calc.mp))}€/mes</strong> · Anual: {fmt(Math.round(calc.annDebt))}€
-              </div>
-            </>}
-            <div style={{ borderTop:"1px solid #eee", marginTop:8, paddingTop:8 }}>
-              <Row label="Dividendos" value={s.distPct} onChange={v=>u("distPct",v)} suffix="%" info="Percentagem do FCFE positivo, limitada a resultados acumulados" min={0} max={100} step={5} />
-              <Row label="Management fee" value={s.mgmtPct} onChange={v=>u("mgmtPct",v)} suffix="% receita" info="Custo operacional incluido no EBITDA; dividido pelos fundadores" min={0} max={20} step={0.5} />
-            </div>
-          </Section>
+            {bar.operatingMode === "concession" ? (
+              <>
+                {B(
+                  "concessionRentMonth",
+                  t("Renda recebida/mês", "Rent received/month"),
+                  "€",
+                  0,
+                  100000,
+                  0.01,
+                )}
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={bar.concessionRentIncludesVat}
+                    onChange={(e) =>
+                      setB("concessionRentIncludesVat", e.target.checked)
+                    }
+                  />
+                  {t(
+                    "Renda introduzida inclui IVA",
+                    "Entered rent includes VAT",
+                  )}
+                </label>
+                <p className="hint">
+                  {t("Renda líquida para a Lda.", "Net rent for the company")}:{" "}
+                  <strong>
+                    {euro2(rentNet, lang)}/{t("mês", "month")}
+                  </strong>
+                </p>
+                {B(
+                  "concessionOwnerCostsMonth",
+                  t("Custos retidos/mês", "Owner-retained costs/month"),
+                  "€",
+                  0,
+                  30000,
+                  0.01,
+                )}
+                {B(
+                  "concessionFitoutCapex",
+                  t("Obras pagas pela Lda.", "Company-funded fit-out"),
+                  "€",
+                  0,
+                  2000000,
+                  100,
+                )}
+                {B(
+                  "concessionExitValue",
+                  t("Valor residual no fim", "Residual exit value"),
+                  "€",
+                  0,
+                  2000000,
+                  100,
+                )}
+                {B(
+                  "contingency",
+                  t("Contingência obras", "Fit-out contingency"),
+                  "%",
+                  0,
+                  50,
+                  0.5,
+                )}
+                {B(
+                  "revenueGrowth",
+                  t("Crescimento da renda/ano", "Annual rent growth"),
+                  "%",
+                  -50,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "costGrowth",
+                  t(
+                    "Crescimento custos proprietário",
+                    "Annual owner-cost growth",
+                  ),
+                  "%",
+                  -50,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "maintCapexPct",
+                  t("CAPEX manutenção do bar", "Bar maintenance CAPEX"),
+                  "%",
+                  0,
+                  100,
+                  0.1,
+                )}
+              </>
+            ) : (
+              <>
+                <label className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={bar.pricesIncludeVat}
+                    onChange={(e) => setB("pricesIncludeVat", e.target.checked)}
+                  />
+                  {t(
+                    "Consumos do bar incluem IVA",
+                    "Bar spending includes VAT",
+                  )}
+                </label>
+                {B("seats", t("Lugares totais", "Total seats"), "", 1, 300, 1)}
+                {B(
+                  "hoursDay",
+                  t("Horas aberto/dia", "Opening hours/day"),
+                  "h",
+                  1,
+                  24,
+                  0.5,
+                )}
+                {B(
+                  "opDays",
+                  t("Dias aberto/ano", "Days open/year"),
+                  "",
+                  0,
+                  365,
+                  1,
+                )}
+                {B(
+                  "externalDaily",
+                  t("Visitantes externos/dia", "External visitors/day"),
+                  "",
+                  0,
+                  1000,
+                  1,
+                )}
+                {B(
+                  "externalTicket",
+                  t("Consumo externo/visita", "External spend/visit"),
+                  "€",
+                  0,
+                  200,
+                  0.01,
+                )}
+                {B(
+                  "surfConversion",
+                  t("Surfistas que consomem", "Surfers who buy"),
+                  "%",
+                  0,
+                  100,
+                  1,
+                )}
+                {B(
+                  "surfTicket",
+                  t("Consumo por surfista", "Spend per surfer"),
+                  "€",
+                  0,
+                  200,
+                  0.01,
+                )}
+                {B(
+                  "companionsPerSurfer",
+                  t("Acompanhantes/surfista", "Companions/surfer"),
+                  "",
+                  0,
+                  10,
+                  0.1,
+                )}
+                {B(
+                  "companionConversion",
+                  t("Acompanhantes que consomem", "Companions who buy"),
+                  "%",
+                  0,
+                  100,
+                  1,
+                )}
+                {B(
+                  "companionTicket",
+                  t("Consumo/acompanhante", "Spend/companion"),
+                  "€",
+                  0,
+                  200,
+                  0.01,
+                )}
+                {B(
+                  "workSeats",
+                  t("Lugares para trabalhar", "Work-friendly seats"),
+                  "",
+                  0,
+                  300,
+                  1,
+                )}
+                {B(
+                  "workDaily",
+                  t("Clientes a trabalhar/dia", "Working visitors/day"),
+                  "",
+                  0,
+                  300,
+                  1,
+                )}
+                {B(
+                  "workTicket",
+                  t("Consumo de quem trabalha", "Spend by working visitor"),
+                  "€",
+                  0,
+                  200,
+                  0.01,
+                )}
+                {B(
+                  "cogsPct",
+                  t("Custo de produtos", "Cost of goods"),
+                  "%",
+                  0,
+                  100,
+                  0.5,
+                )}
+                {B(
+                  "staffCount",
+                  t("Equipa exclusiva do bar", "Bar-only staff"),
+                  "",
+                  0,
+                  50,
+                  1,
+                )}
+                {B(
+                  "salary",
+                  t("Salário médio do bar", "Average bar wage"),
+                  "€",
+                  0,
+                  10000,
+                  1,
+                )}
+                {B(
+                  "works",
+                  t("Obras do bar", "Bar works"),
+                  "€",
+                  0,
+                  2000000,
+                  100,
+                )}
+                {B(
+                  "equipment",
+                  t("Equipamento do bar", "Bar equipment"),
+                  "€",
+                  0,
+                  2000000,
+                  100,
+                )}
+                {B(
+                  "furniture",
+                  t("Mobiliário", "Furniture"),
+                  "€",
+                  0,
+                  2000000,
+                  100,
+                )}
+                {B(
+                  "wifiSockets",
+                  t("Wi-Fi e tomadas", "Wi-Fi & sockets"),
+                  "€",
+                  0,
+                  100000,
+                  100,
+                )}
+                {B(
+                  "permits",
+                  t("Licenças do bar", "Bar permits"),
+                  "€",
+                  0,
+                  100000,
+                  100,
+                )}
+                {B(
+                  "initialStock",
+                  t("Stock inicial", "Initial stock"),
+                  "€",
+                  0,
+                  100000,
+                  100,
+                )}
+                {B(
+                  "externalStay",
+                  t("Permanência visita externa", "External visit length"),
+                  "h",
+                  0.1,
+                  24,
+                  0.1,
+                )}
+                {B(
+                  "surfStay",
+                  t("Permanência surfista", "Surfer visit length"),
+                  "h",
+                  0.1,
+                  24,
+                  0.1,
+                )}
+                {B(
+                  "companionStay",
+                  t("Permanência acompanhante", "Companion visit length"),
+                  "h",
+                  0.1,
+                  24,
+                  0.1,
+                )}
+                {B(
+                  "workHours",
+                  t("Janela de trabalho/dia", "Work hours/day"),
+                  "h",
+                  0,
+                  24,
+                  0.5,
+                )}
+                {B(
+                  "workStay",
+                  t("Permanência a trabalhar", "Working visit length"),
+                  "h",
+                  0.1,
+                  24,
+                  0.1,
+                )}
+                {B(
+                  "seasonalPct",
+                  t(
+                    "Sazonalidade público externo",
+                    "External visitor seasonality",
+                  ),
+                  "%",
+                  0,
+                  100,
+                  1,
+                )}
+                {B(
+                  "paymentPct",
+                  t("Comissões de pagamento", "Payment fees"),
+                  "%",
+                  0,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "concessionPct",
+                  t("Concessão sobre vendas do bar", "Concession on bar sales"),
+                  "%",
+                  0,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "mgmtPct",
+                  t("Gestão sobre vendas do bar", "Management on bar sales"),
+                  "%",
+                  0,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "utilitiesMonth",
+                  t("Utilidades do bar/mês", "Bar utilities/month"),
+                  "€",
+                  0,
+                  100000,
+                  10,
+                )}
+                {B(
+                  "rentMonth",
+                  t("Renda/custo fixo do bar", "Bar rent/fixed cost"),
+                  "€",
+                  0,
+                  100000,
+                  10,
+                )}
+                {B(
+                  "insuranceMonth",
+                  t("Seguro do bar/mês", "Bar insurance/month"),
+                  "€",
+                  0,
+                  100000,
+                  10,
+                )}
+                {B(
+                  "otherMonth",
+                  t("Outros custos do bar/mês", "Other bar costs/month"),
+                  "€",
+                  0,
+                  100000,
+                  10,
+                )}
+                {B(
+                  "contingency",
+                  t("Contingência do bar", "Bar contingency"),
+                  "%",
+                  0,
+                  100,
+                  0.5,
+                )}
+                {B(
+                  "depreciationYears",
+                  t("Vida útil do bar", "Bar asset life"),
+                  "a",
+                  1,
+                  100,
+                  1,
+                )}
+                {B(
+                  "maintCapexPct",
+                  t("CAPEX manutenção do bar", "Bar maintenance CAPEX"),
+                  "%",
+                  0,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "exitValue",
+                  t("Valor residual do bar", "Bar exit value"),
+                  "€",
+                  -10000000,
+                  10000000,
+                  100,
+                )}
+                {B(
+                  "revenueGrowth",
+                  t("Crescimento das vendas do bar", "Bar sales growth"),
+                  "%",
+                  -50,
+                  100,
+                  0.1,
+                )}
+                {B(
+                  "costGrowth",
+                  t("Crescimento de custos do bar", "Bar cost growth"),
+                  "%",
+                  -50,
+                  100,
+                  0.1,
+                )}
+              </>
+            )}
+            <p className="hint">
+              {bar.operatingMode === "concession"
+                ? t(
+                    "As vendas e os salários do concessionário não entram nas contas da Lda. O espaço para trabalhar integra o bar.",
+                    "Concessionaire sales and wages are outside the company accounts. The work area is part of the bar.",
+                  )
+                : t(
+                    "O trabalho no bar gera consumo por visita; não há passes nem aluguer de secretárias.",
+                    "Working in the bar generates visit spending; no desk passes or memberships are sold.",
+                  )}
+            </p>
+          </Fold>
+          <Fold title={t("4 · Energia e operação", "4 · Energy & operations")}>
+            {W(
+              "kwhMax",
+              t("Potência máxima", "Maximum power"),
+              "kW",
+              0,
+              5000,
+              1,
+            )}
+            {W(
+              "avgPumpLoad",
+              t("Carga média das bombas", "Average pump load"),
+              "%",
+              0,
+              100,
+              1,
+            )}
+            {W(
+              "electricityRate",
+              t("Custo de eletricidade", "Electricity cost"),
+              "€/kWh",
+              0,
+              5,
+              0.001,
+            )}
+            {W(
+              "energyOtherMonth",
+              t("Potência/consumos auxiliares", "Capacity & auxiliary energy"),
+              "€/m",
+              0,
+              50000,
+              10,
+            )}
+            {W("staffCount", t("Equipa da onda", "Wave team"), "", 0, 100, 1)}
+            {W(
+              "avgSalary",
+              t("Salário mensal médio", "Average monthly wage"),
+              "€",
+              0,
+              20000,
+              10,
+            )}
+            {W(
+              "ssRate",
+              t("Encargos patronais", "Employer charges"),
+              "%",
+              0,
+              100,
+              0.01,
+            )}
+            {W(
+              "waterMonth",
+              t("Água mensal", "Monthly water"),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+            {W(
+              "maintMonth",
+              t("Manutenção mensal", "Monthly maintenance"),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+            {W(
+              "insuranceYear",
+              t("Seguro anual", "Annual insurance"),
+              "€",
+              0,
+              1000000,
+              100,
+            )}
+            {W(
+              "marketingMonth",
+              t("Marketing mensal", "Monthly marketing"),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+            {W(
+              "accountingMonth",
+              t("Contabilidade mensal", "Monthly accounting"),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+            {W(
+              "miscMonth",
+              t("Outros custos mensais", "Other monthly costs"),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+            {W(
+              "concessionRate",
+              t("Concessão sobre receita da onda", "Wave revenue concession"),
+              "%",
+              0,
+              100,
+              0.1,
+            )}
+            {W(
+              "mgmtPct",
+              t("Gestão sobre receita da onda", "Wave revenue management"),
+              "%",
+              0,
+              100,
+              0.1,
+            )}
+            {W(
+              "distributionPct",
+              t("Vendas por intermediários", "Intermediated sales"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "commissionPct",
+              t("Comissão dos intermediários", "Intermediary commission"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "equipmentPerVisit",
+              t("Material por participante", "Equipment per participant"),
+              "€",
+              0,
+              1000,
+              0.01,
+            )}
+            <p className="hint">
+              {t("Custo anual da energia", "Annual energy cost")}:{" "}
+              <strong>{euro(w.annEnergy, lang)}</strong>.{" "}
+              {t(
+                "600 kW é potência de pico; 100% de carga média é uma hipótese editável.",
+                "600 kW is peak power; 100% average load is an editable assumption.",
+              )}
+            </p>
+          </Fold>
+          <Fold
+            title={t(
+              "5 · Investimento e receitas adicionais",
+              "5 · Investment & extra revenue",
+            )}
+          >
+            {W(
+              "citywaveCost",
+              t("Máquina Citywave", "Citywave machine"),
+              "€",
+              0,
+              10000000,
+              1000,
+            )}
+            {W(
+              "installation",
+              t("Instalação", "Installation"),
+              "€",
+              0,
+              2000000,
+              100,
+            )}
+            {W("shipping", t("Transporte", "Shipping"), "€", 0, 2000000, 100)}
+            {W(
+              "saltwaterUplift",
+              t("Acréscimo água salgada", "Saltwater uplift"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "sitePrep",
+              t("Preparação do local", "Site preparation"),
+              "€",
+              0,
+              2000000,
+              100,
+            )}
+            {W("plumbing", t("Canalização", "Plumbing"), "€", 0, 2000000, 100)}
+            {W(
+              "electrical",
+              t("Instalação elétrica", "Electrical works"),
+              "€",
+              0,
+              2000000,
+              100,
+            )}
+            {W(
+              "permits",
+              t("Licenças e projeto", "Permits & design"),
+              "€",
+              0,
+              2000000,
+              100,
+            )}
+            {W(
+              "contingency",
+              t("Contingência", "Contingency"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "privatePct",
+              t("Sessões privadas", "Private sessions"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "privatePrice",
+              t("Preço sessão privada", "Private session price"),
+              "€",
+              0,
+              10000,
+              0.01,
+            )}
+            {W(
+              "privateGroupSize",
+              t("Pessoas por privada", "People per private session"),
+              "",
+              1,
+              14,
+              1,
+            )}
+            {W(
+              "clinicPct",
+              t("Coaching extra", "Additional coaching"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "clinicPrice",
+              t("Preço coaching extra", "Additional coaching price"),
+              "€",
+              0,
+              1000,
+              0.01,
+            )}
+            {W(
+              "rentalAdvancedPct",
+              t("Avançados que alugam", "Advanced riders renting"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "rentalAdvancedPrice",
+              t("Preço aluguer", "Rental price"),
+              "€",
+              0,
+              1000,
+              0.01,
+            )}
+            {W(
+              "eventMonthly",
+              t("Eventos sem onda/mês", "Events without wave/month"),
+              "€",
+              0,
+              100000,
+              0.01,
+            )}
+            {W(
+              "communityCards",
+              t("Cartões sem sessões/ano", "Cards without sessions/year"),
+              "",
+              0,
+              100000,
+              1,
+            )}
+            {W(
+              "communityPrice",
+              t("Preço cartão", "Card price"),
+              "€",
+              0,
+              10000,
+              0.01,
+            )}
+            <p className="hint">
+              {t(
+                "Sessões privadas substituem sessões públicas. Outras receitas adicionais começam a zero no caso-base.",
+                "Private sessions replace public sessions. Other ancillary revenue starts at zero in the base case.",
+              )}
+            </p>
+          </Fold>
+          <Fold
+            title={t(
+              "6 · Financiamento e projeção",
+              "6 · Funding & projection",
+            )}
+          >
+            {W(
+              "bankPct",
+              t("Financiamento bancário", "Bank finance"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "loanRate",
+              t("Taxa do empréstimo", "Loan interest rate"),
+              "%",
+              0,
+              100,
+              0.1,
+            )}
+            {W("loanYears", t("Prazo empréstimo", "Loan years"), "a", 1, 40, 1)}
+            {W(
+              "joaoPct",
+              t("Capital João", "João cash contribution"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "rodrigoPct",
+              t("Capital Rodrigo", "Rodrigo cash contribution"),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "sweatPct",
+              t("Peso sweat equity", "Sweat equity weight"),
+              "",
+              0,
+              100,
+              0.5,
+            )}
+            {W(
+              "taxRate",
+              t("Imposto efetivo assumido", "Assumed effective income tax"),
+              "%",
+              0,
+              100,
+              0.1,
+            )}
+            {W(
+              "revenueGrowth",
+              t("Crescimento receita/ano", "Annual revenue growth"),
+              "%",
+              -50,
+              100,
+              0.1,
+            )}
+            {W(
+              "costGrowth",
+              t("Crescimento custos/ano", "Annual cost growth"),
+              "%",
+              -50,
+              100,
+              0.1,
+            )}
+            {W(
+              "depreciationYears",
+              t("Vida útil depreciação", "Depreciation years"),
+              "a",
+              1,
+              100,
+              1,
+            )}
+            {W(
+              "maintCapexPct",
+              t("CAPEX de manutenção/ano", "Annual maintenance CAPEX"),
+              "%",
+              0,
+              100,
+              0.1,
+            )}
+            {W(
+              "exitValue",
+              t("Valor residual da onda", "Wave residual value"),
+              "€",
+              -10000000,
+              10000000,
+              100,
+            )}
+            {W(
+              "distPct",
+              t("Distribuição do lucro", "Profit distribution"),
+              "%",
+              0,
+              100,
+              1,
+            )}
+            {W(
+              "rfRate",
+              t("Taxa sem risco", "Risk-free rate"),
+              "%",
+              -10,
+              50,
+              0.1,
+            )}
+            {W(
+              "marketPremium",
+              t("Prémio de risco", "Equity risk premium"),
+              "%",
+              0,
+              50,
+              0.1,
+            )}
+            {W(
+              "unleveredBeta",
+              t("Beta sem dívida", "Unlevered beta"),
+              "",
+              0,
+              10,
+              0.01,
+            )}
+            {Sh(
+              "barSharePct",
+              t(
+                "Custos comuns atribuídos ao bar",
+                "Shared costs allocated to bar",
+              ),
+              "%",
+              0,
+              100,
+              0.5,
+            )}
+            {Sh(
+              "extraMonth",
+              t(
+                "Custos comuns adicionais/mês",
+                "Additional shared costs/month",
+              ),
+              "€",
+              0,
+              100000,
+              10,
+            )}
+          </Fold>
+          <Fold title={t("7 · IVA e recuperação", "7 · VAT & recovery")}>
+            {Vat("waveSalesRate", t("IVA nas sessões", "Session output VAT"))}
+            {Vat("barSalesRate", t("IVA no bar/renda", "Bar/rent output VAT"))}
+            {Vat(
+              "waveTaxablePct",
+              t("Vendas da onda tributadas", "Taxable wave sales"),
+            )}
+            {Vat(
+              "waveRecoveryPct",
+              t("IVA dedutível na onda", "Recoverable wave VAT"),
+            )}
+            {Vat(
+              "barTaxablePct",
+              t("Bar/renda tributados", "Taxable bar/rent sales"),
+            )}
+            {Vat(
+              "barRecoveryPct",
+              t("IVA dedutível no bar", "Recoverable bar VAT"),
+            )}
+            {Vat(
+              "capexVatRate",
+              t("IVA de investimento", "Investment input VAT"),
+            )}
+            {Vat(
+              "opexVatRate",
+              t("IVA dos custos elegíveis", "Eligible operating input VAT"),
+            )}
+            {Vat(
+              "machineInvoicePct",
+              t("IVA máquina pago na fatura", "Machine VAT paid on invoice"),
+            )}
+            {Vat(
+              "otherInvoicePct",
+              t("IVA de outras faturas pago", "Other investment VAT paid"),
+            )}
+            {Vat(
+              "refundLagMonths",
+              t("Prazo de reembolso", "Refund delay"),
+              "m",
+              0,
+              24,
+              1,
+            )}
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={vat.requestRefund}
+                onChange={(e) => setV("requestRefund", e.target.checked)}
+              />
+              {t(
+                "Pedir reembolso do crédito de IVA",
+                "Request VAT credit refund",
+              )}
+            </label>
+          </Fold>
         </aside>
-
-        {/* ═══ RIGHT ═══ */}
-        <main style={{minWidth:0}}>
-
-          {/* OVERVIEW */}
-          {tab==="overview" && <>
-            <div style={{ marginBottom:24 }}>
-              <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Receita vs Custos — Mensal</h2>
-              <div style={{ display:"flex", gap:3, alignItems:"flex-end", height:120, paddingBottom:20, borderBottom:"1px solid #eee", position:"relative" }}>
-                {MONTHS.map((m,i)=>{
-                  const mx=Math.max(...calc.mRev,...calc.mCost)*1.1;
-                  return(
-                    <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
-                      <div style={{ display:"flex", gap:1, alignItems:"flex-end", width:"100%", justifyContent:"center" }}>
-                        <div style={{ width:"40%", height:mx>0?(calc.mRev[i]/mx)*100:0, background:"#000", borderRadius:"2px 2px 0 0", transition:"height 0.3s" }} />
-                        <div style={{ width:"40%", height:mx>0?(calc.mCost[i]/mx)*100:0, background:"#ccc", borderRadius:"2px 2px 0 0", transition:"height 0.3s" }} />
-                      </div>
-                      <div style={{ fontSize:9, color:"#999", marginTop:4, fontFamily:"'IBM Plex Mono',monospace" }}>{m}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ display:"flex", gap:16, marginTop:6, fontSize:10, color:"#666" }}>
-                <span><span style={{ display:"inline-block", width:10, height:3, background:"#000", marginRight:4, verticalAlign:"middle" }}/>Receita</span>
-                <span><span style={{ display:"inline-block", width:10, height:3, background:"#ccc", marginRight:4, verticalAlign:"middle" }}/>Custos</span>
-              </div>
-            </div>
-
-            {/* CAPEX breakdown — NEW */}
-            <div style={{ marginBottom:24 }}>
-              <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>CAPEX — Composicao Detalhada</h2>
-              {calc.capexBk.map((c,i)=><Bar key={i} label={c.l} value={c.v} maxVal={Math.max(...calc.capexBk.map(x=>x.v))*1.1} dark={i===0} />)}
-              <Row label="CAPEX Total" value={calc.capex} suffix="€" total />
-            </div>
-
-            <div className="twocol-charts" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, marginBottom:24 }}>
-              <div>
-                <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Custos Anuais</h2>
-                {calc.costBk.map((c,i)=><Bar key={i} label={c.l} value={c.v} maxVal={Math.max(...calc.costBk.map(x=>x.v))*1.1} dark={i===0} />)}
-                <Row label="Total OPEX" value={calc.opex} suffix="€" total />
-              </div>
-              <div>
-                <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Receitas Anuais</h2>
-                {calc.revBk.map((r,i)=><Bar key={i} label={r.l} value={r.v} maxVal={Math.max(...calc.revBk.map(x=>x.v))*1.1} dark={i===0} />)}
-                <Row label="Total Receita" value={calc.annRev} suffix="€" total />
-              </div>
-            </div>
-
-            <div>
-              <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>EBITDA Mensal</h2>
-              <div style={{ display:"flex", gap:3, alignItems:"flex-end", height:90 }}>
-                {calc.mProfit.map((v,i)=>{
-                  const mx=Math.max(...calc.mProfit.map(Math.abs))*1.2;
-                  const h=mx>0?Math.max((Math.abs(v)/mx)*75,2):2;
-                  return(
-                    <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
-                      <div style={{ fontSize:8, fontFamily:"'IBM Plex Mono',monospace", color:v>=0?"#000":"#c00", fontWeight:600, marginBottom:2 }}>{fmtK(v)}</div>
-                      <div style={{ width:"70%", height:h, borderRadius:"2px 2px 0 0", background:v>=0?"#000":"#c00", transition:"height 0.3s" }} />
-                      <div style={{ fontSize:8, color:"#999", marginTop:3 }}>{MONTHS[i]}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>}
-
-          {/* REVENUE */}
-          {tab==="revenue" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:12 }}>Modelo de receitas — capacidade e preços por sessão</h2>
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:14, marginBottom:16, fontSize:11, lineHeight:1.6, color:"#444" }}>
-              <p style={{margin:"0 0 6px"}}><strong style={{color:"#000"}}>Cada pessoa paga por sessao</strong>, com preco diferenciado por nivel. Principiantes incluem prancha, fato e instrutor.</p>
-              <p style={{margin:0}}>Preços {s.pricesIncludeVat?'finais com IVA':'antes de IVA'}. Privadas substituem sessões públicas. Material incluido exceto nos avancados; coaching extra desligado no cenario base. Eventos e cards nao incluem tempo de onda. A sessao total dura 45 ou 60 minutos e aceita ate 14 pessoas; o tempo individual na onda varia com o nivel e não é usado como duração individual.</p>
-            </div>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>1. Configuracao das Sessoes</h2>
-            <div className="twocol-charts" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:20 }}>
-              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <Row label="Duracao sessao" value={s.sessionMinutes} onChange={v=>u("sessionMinutes",v)} suffix=" min" min={45} max={60} step={15} />
-            <Row label="Intervalo entre sessoes" value={s.sessionGapMinutes} onChange={v=>u("sessionGapMinutes",v)} suffix=" min" min={0} max={60} step={5} />
-                <Row label="Pessoas por sessão" value={s.ridersPerSession} onChange={v=>u("ridersPerSession",v)} suffix="" min={1} max={14} info="Limite máximo por grupo: 14 pessoas" />
-                <Row label="Sessoes por hora" value={calc.slotsPerHour} suffix="" step={0.01} />
-                <Row label="Procura de sessoes/dia (pico)" value={s.sessionsDay} onChange={v=>u("sessionsDay",v)} suffix="" min={1} max={50} info={`Capacidade: ${calc.maxSlotsDay}/dia · Ocupacao anual: ${fd(calc.avgOccupancy,0)}%`} />
-              </div>
-            <div style={{ background:"#000", borderRadius:4, padding:14, color:"#fff" }}>
-                <div style={{ fontSize:9, letterSpacing:2, textTransform:"uppercase", color:"#888", marginBottom:10 }}>Capacidade</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                  <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.ridersPerHour,1)}</div><div style={{ fontSize:9, color:"#888" }}>pessoas / hora</div></div>
-                  <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{calc.maxRidersDay}</div><div style={{ fontSize:9, color:"#888" }}>max pessoas / dia</div></div>
-                  <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.avgPeopleDay,1)}</div><div style={{ fontSize:9, color:"#888" }}>participantes publicos / dia (media)</div></div>
-                  <div><div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:24, fontWeight:800 }}>{fd(calc.avgOccupancy,0)}%</div><div style={{ fontSize:9, color:"#888" }}>ocupacao</div></div>
-                </div>
-            </div>
-            </div>
-
-            <section aria-label="Comparacao de sessoes de 45 e 60 minutos" style={{border:"1px solid #ddd",padding:14,margin:"0 0 22px"}}>
-              <h2 style={{fontSize:13,fontWeight:800,textTransform:"uppercase",margin:"0 0 6px"}}>Comparação: 45 vs 60 minutos · grupo de {s.ridersPerSession}</h2>
-              <p style={{fontSize:11,color:"#666",lineHeight:1.55,marginTop:0}}>Todos os inputs atuais alimentam esta comparação, incluindo IVA, tarifa €/kWh, potência/carga, horário, procura, preços, custos do bar e financiamento. A energia anual é igual nos dois formatos se as horas de operação forem iguais. Se a procura couber tanto em 45 como em 60 minutos, os resultados financeiros também serão iguais; aumente a procura de pico para testar a capacidade adicional.</p>
-              <div style={{overflowX:"auto"}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:900}}>
-                <thead><tr style={{borderBottom:"2px solid #111",textAlign:"right"}}><th style={{textAlign:"left",padding:8}}>Duração</th><th style={{padding:8}}>Máx. sessões/dia</th><th style={{padding:8}}>Máx. pessoas/dia</th><th style={{padding:8}}>Participantes públicos/ano</th><th style={{padding:8}}>Tarifa energia</th><th style={{padding:8}}>Energia/ano</th><th style={{padding:8}}>Receita onda</th><th style={{padding:8}}>EBITDA conjunto</th><th style={{padding:8}}>VAL conjunto</th><th style={{padding:8}}>TIR projeto</th></tr></thead>
-                <tbody>{sessionComparison.map(({minutes,project:scenario})=><tr key={minutes} style={{borderBottom:"1px solid #eee",textAlign:"right"}}><td style={{textAlign:"left",padding:8,fontWeight:700}}>{minutes} min</td><td style={{padding:8}}>{scenario.wave.maxSlotsDay}</td><td style={{padding:8}}>{scenario.wave.maxRidersDay}</td><td style={{padding:8}}>{fmt(scenario.wave.monthly.reduce((total,m)=>total+m.people,0))}</td><td style={{padding:8}}>{fd(s.electricityRate,2)}€/kWh</td><td style={{padding:8}}>{fmt(scenario.wave.annEnergy)}€</td><td style={{padding:8}}>{fmt(scenario.wave.annRev)}€</td><td style={{padding:8}}>{fmt(scenario.combined.ebitda)}€</td><td style={{padding:8}}>{fmt(scenario.combined.npvProject)}€</td><td style={{padding:8}}>{pct(scenario.combined.projectIRR)}</td></tr>)}
-                  <tr style={{borderTop:"2px solid #111",background:"#f7f7f5",textAlign:"right",fontWeight:700}}><td style={{textAlign:"left",padding:8}}>Diferença 45 - 60 min</td><td style={{padding:8}}>{comparison45.wave.maxSlotsDay-comparison60.wave.maxSlotsDay}</td><td style={{padding:8}}>{comparison45.wave.maxRidersDay-comparison60.wave.maxRidersDay}</td><td style={{padding:8}}>{fmt(comparison45.wave.monthly.reduce((total,m)=>total+m.people,0)-comparison60.wave.monthly.reduce((total,m)=>total+m.people,0))}</td><td style={{padding:8}}>—</td><td style={{padding:8}}>{fmt(comparison45.wave.annEnergy-comparison60.wave.annEnergy)}€</td><td style={{padding:8}}>{fmt(comparison45.wave.annRev-comparison60.wave.annRev)}€</td><td style={{padding:8}}>{fmt(comparison45.combined.ebitda-comparison60.combined.ebitda)}€</td><td style={{padding:8}}>{fmt(comparison45.combined.npvProject-comparison60.combined.npvProject)}€</td><td style={{padding:8}}>{fd((comparison45.combined.projectIRR-comparison60.combined.projectIRR)*100,2)} p.p.</td></tr>
-                </tbody>
-              </table></div>
-            </section>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>2. Precos por Pessoa / Nivel</h2>
-            <div style={{ marginBottom:20 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11 }}>
-                <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                  {["Tipo Sessao","Preco/Pessoa","% do Total","Inclui"].map(h=><th key={h} style={{ padding:"8px 6px", textAlign:"left", fontWeight:700, fontSize:10, letterSpacing:0.5, textTransform:"uppercase" }}>{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  <tr style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"8px 6px", fontWeight:600 }}>Principiante</td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.beginnerPrice} onChange={v=>u("beginnerPrice",v)} suffix="€" min={15} max={100} /></td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.beginnerPct} onChange={v=>u("beginnerPct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Prancha + fato + instrutor</td>
-                  </tr>
-                  <tr style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"8px 6px", fontWeight:600 }}>Intermedio</td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.intermediatePrice} onChange={v=>u("intermediatePrice",v)} suffix="€" min={15} max={100} /></td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.intermediatePct} onChange={v=>u("intermediatePct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Prancha + fato + acompanhamento</td>
-                  </tr>
-                  <tr style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"8px 6px", fontWeight:600 }}>Avancado / Pro</td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.advancedPrice} onChange={v=>u("advancedPrice",v)} suffix="€" min={15} max={100} /></td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.advancedPct} onChange={v=>u("advancedPct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Material proprio + seguranca</td>
-                  </tr>
-                  <tr style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"8px 6px", fontWeight:600 }}>Criancas (8-16)</td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.kidsPrice} onChange={v=>u("kidsPrice",v)} suffix="€" min={10} max={80} /></td>
-                    <td style={{ padding:"8px 6px" }}><Editable value={s.kidsPct} onChange={v=>u("kidsPct",v)} suffix="%" min={0} max={100} /></td>
-                    <td style={{ padding:"8px 6px", fontSize:10, color:"#666" }}>Prancha + fato + instrutor</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:1, background:"#000", borderRadius:2, overflow:"hidden", marginTop:12 }}>
-                <div style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:8, letterSpacing:1, color:"#999" }}>PRECO MEDIO PONDERADO</div>
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:20, fontWeight:800 }}>{fd(calc.wtdPrice,1)}€</div>
-                </div>
-                <div style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:8, letterSpacing:1, color:"#999" }}>APOS DESC. BONOS ({s.bonoPct}%)</div>
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:20, fontWeight:800 }}>{fd(calc.effectiveAvgPrice,1)}€</div>
-                </div>
-                <div style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:8, letterSpacing:1, color:"#999" }}>ENERGIA / PARTICIPANTE PUBLICO</div>
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:20, fontWeight:800 }}>{fd(calc.energyCostPerPerson,2)}€</div>
-                </div>
-              </div>
-            </div>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>3. Receitas Extra</h2>
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:12, marginBottom:20 }}>
-              <Row label="Coaching extra opcional (% pessoas)" value={s.clinicPct} onChange={v=>u("clinicPct",v)} suffix="%" info="Desligado por defeito. Apenas servico distinto do acompanhamento incluido; validar custo e tempo." min={0} max={30} />
-              <Row label="Preco coaching extra opcional" value={s.clinicPrice} onChange={v=>u("clinicPrice",v)} suffix="€/pessoa" min={20} max={200} />
-              <Row label="Onda Privada (% sessoes)" value={s.privatePct} onChange={v=>u("privatePct",v)} suffix="%" info="Substitui sessoes publicas; nao acresce capacidade" min={0} max={30} />
-              <Row label="Participantes por privada" value={s.privateGroupSize} onChange={v=>u("privateGroupSize",v)} suffix="pessoas" min={1} max={20} info="Usado no consumo de material e nas visitas ao bar" />
-              <Row label="Preco Onda Privada" value={s.privatePrice} onChange={v=>u("privatePrice",v)} suffix="€/sessao" min={50} max={500} step={10} />
-              <Row label="Avancados que alugam material (%)" value={s.rentalAdvancedPct} onChange={v=>u("rentalAdvancedPct",v)} suffix="%" info="Apenas avancados; nos restantes niveis o material esta incluido" min={0} max={80} />
-              <Row label="Preco aluguer" value={s.rentalAdvancedPrice} onChange={v=>u("rentalAdvancedPrice",v)} suffix="€" min={5} max={30} />
-              <Row label="Bonos (% com desconto)" value={s.bonoPct} onChange={v=>u("bonoPct",v)} suffix="%" info="Clientes com pacotes 10/20 sessoes" min={0} max={50} />
-              <Row label="Desconto medio bonos" value={s.bonoDiscount} onChange={v=>u("bonoDiscount",v)} suffix="%" min={5} max={30} />
-              <Row label="Eventos sem onda/mes" value={s.eventMonthly} onChange={v=>u("eventMonthly",v)} suffix="€" min={0} max={20000} step={500} />
-              <Row label="Community Cards sem sessoes/ano" value={s.communityCards} onChange={v=>u("communityCards",v)} suffix="" min={0} max={500} />
-              <Row label="Preco Community Card" value={s.communityPrice} onChange={v=>u("communityPrice",v)} suffix="€/ano" min={50} max={300} step={10} />
-            </div>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Resumo Receitas Anuais</h2>
-            {calc.revBk.map((r,i)=><Bar key={i} label={r.l} value={r.v} maxVal={Math.max(...calc.revBk.map(x=>x.v))*1.1} dark={i===0} />)}
-            <Row label="Receita Anual Total" value={calc.annRev} suffix="€" total />
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", margin:"20px 0 10px" }}>Sazonalidade</h2>
-            <div style={{ display:"flex", gap:3, alignItems:"flex-end", height:90 }}>
-              {calc.mRev.map((v,i)=>{
-                const mx=Math.max(...calc.mRev)*1.15;
-                return(<div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
-                  <div style={{ fontSize:7, fontFamily:"'IBM Plex Mono',monospace", color:"#666", marginBottom:1 }}>{fmtK(v)}</div>
-                  <div style={{ width:"80%", height:mx>0?(v/mx)*70:0, borderRadius:"2px 2px 0 0", background:"#000", transition:"height 0.3s" }} />
-                  <div style={{ fontSize:8, color:"#999", marginTop:3 }}>{MONTHS[i]}</div>
-                </div>);
-              })}
-            </div>
-          </>}
-
-          {/* ENERGY */}
-          {tab==="energy" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Onda {s.waveSize}m — {s.pumpsCount} Bombas (estimado)</h2>
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:10, marginBottom:14, fontSize:11, color:"#444" }}>
-              Hipotese atual: {s.kwhMax} kW para a onda de {s.waveSize}m. Referencia da reuniao para 10m: maximo 600 kW. Perfil de consumo e numero de bombas a confirmar. Comparacoes de outros tamanhos sao estimativas; encargos adicionais ficam separados.
-            </div>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:1, background:"#000", borderRadius:2, overflow:"hidden", marginBottom:20 }}>
-              {[
-                {l:"BOMBAS",v:s.pumpsCount},{l:"KW MAX",v:s.kwhMax},
-                {l:"POTENCIA MEDIA (kW)",v:Math.round(calc.effKwh)},{l:"KWH/DIA",v:Math.round(calc.dailyKwh)},
-              ].map((m,i)=>(
-                <div key={i} style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:8, letterSpacing:1, color:"#999", fontWeight:600 }}>{m.l}</div>
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:20, fontWeight:800, marginTop:2 }}>{fmt(m.v)}</div>
-                </div>
+        <main className="main">
+          {warningList.length > 0 && (
+            <div className="warning" role="status">
+              {warningList.map((x, i) => (
+                <div key={i}>{warningLabel(x, lang)}</div>
               ))}
             </div>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Comparacao Tamanhos</h2>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11, marginBottom:20 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                {["Onda","Bombas","kW max","kWh/dia","Custo/dia","Custo/ano"].map(h=><th key={h} style={{ padding:"8px 6px", textAlign:"right", fontSize:10, fontWeight:700, letterSpacing:0.5, textTransform:"uppercase" }}>{h}</th>)}
-              </tr></thead>
-              <tbody>{calc.energyComp.map((w,i)=>{
-                const cur=w.size===s.waveSize;
-                return(<tr key={i} style={{ borderBottom:"1px solid #eee", background:cur?"#f5f5f5":"transparent" }}>
-                  <td style={{ padding:"6px", textAlign:"right", fontWeight:cur?800:400, fontFamily:"'IBM Plex Mono',monospace" }}>{w.size}m</td>
-                  <td style={{ padding:"6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{w.pumps}</td>
-                  <td style={{ padding:"6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{w.kwh}</td>
-                  <td style={{ padding:"6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(w.dKwh))}</td>
-                  <td style={{ padding:"6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(w.dKwh*s.electricityRate))}€</td>
-                  <td style={{ padding:"6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:cur?800:400 }}>{fmtK(w.aCost)}€</td>
-                </tr>);
-              })}</tbody>
-            </table>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Sensibilidade Preco Eletricidade</h2>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11, marginBottom:20 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                {["€/kWh","Energia/ano","EBITDA","Margem","vs Atual"].map(h=><th key={h} style={{ padding:"7px 5px", textAlign:"right", fontSize:10, fontWeight:700 }}>{h}</th>)}
-              </tr></thead>
-              <tbody>{[...new Set([0.08,0.10,0.13,s.electricityRate,0.18,0.20,0.25,0.30])].sort((a,b)=>a-b).map(r=>{
-                const ec=calc.dailyKwh*r*s.opDays;const eb=calc.annRev-(calc.opex-calc.annEnergy+ec);const d=eb-calc.ebitda;const cur=r===s.electricityRate;
-                return(<tr key={r} style={{ borderBottom:"1px solid #eee", background:cur?"#f5f5f5":"transparent" }}>
-                  <td style={{ padding:"6px 5px", textAlign:"right", fontWeight:cur?800:400, fontFamily:"'IBM Plex Mono',monospace" }}>{r.toFixed(3)}€</td>
-                  <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(ec)}€</td>
-                  <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:eb<0?"#c00":"#000", fontWeight:600 }}>{fmtK(eb)}€</td>
-                  <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{calc.annRev>0?pct(eb/calc.annRev):"—"}</td>
-                  <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:d>=0?"#000":"#c00" }}>{d>=0?"+":""}{fmtK(d)}€</td>
-                </tr>);
-              })}</tbody>
-            </table>
-          </>}
-
-          {/* INVESTORS */}
-          {tab==="investors" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Cap Table</h2>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:11, marginBottom:20 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                {["Stakeholder","Capital","Cash %","Ownership","Tipo"].map(h=><th key={h} style={{ padding:"8px 6px", textAlign:"right", fontSize:10, fontWeight:700 }}>{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {calc.capTableData.map((ct,i)=>(
-                  <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"7px 6px", textAlign:"right", fontWeight:700 }}>{ct.name}</td>
-                    <td style={{ padding:"7px 6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(ct.cash))}€</td>
-                    <td style={{ padding:"7px 6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fd(ct.cashPct)}%</td>
-                    <td style={{ padding:"7px 6px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{fd(ct.ownership)}%</td>
-                    <td style={{ padding:"7px 6px", textAlign:"right", fontSize:10, color:"#666" }}>{ct.type}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Distribuicao de Lucros</h2>
-            <div style={{ background:"#f8f8f8", borderRadius:4, padding:12, marginBottom:20, fontFamily:"'IBM Plex Mono',monospace", fontSize:11, lineHeight:2 }}>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>EBITDA</span><strong>{fmt(Math.round(calc.ebitda))}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>- Servico divida</span><span style={{color:"#c00"}}>-{fmt(Math.round(calc.annDebt))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>- Imposto sobre resultado apos juros</span><span>-{fmt(Math.round(calc.first.equityTax))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>- Investimento de manutencao</span><span>-{fmt(Math.round(calc.maintCapex))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",borderTop:"2px solid #000",paddingTop:4,fontWeight:800}}><span>= FCFE (antes de distribuicao)</span><span>{fmt(Math.round(calc.net))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>Reforco de capital necessario</span><span>{fmt(Math.round(calc.first.capitalCall))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>Resultado liquido (limite contabilistico)</span><span>{fmt(Math.round(calc.first.netIncome))}€</span></div>
-              <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}><span>→ Dividendos (ate {s.distPct}% da caixa positiva)</span><strong>{fmt(Math.round(calc.divs))}€</strong></div>
-              <div style={{display:"flex",justifyContent:"space-between"}}><span>→ Caixa retida no fim do ano</span><span>{fmt(Math.round(calc.reinv))}€</span></div>
-            </div>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Retorno por Stakeholder (Ano 1)</h2>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10, marginBottom:20 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                {["","Capital","Own%","Dividendo","Mgmt","Total/Ano","Yield dividendos","Payback capital"].map(h=><th key={h} style={{ padding:"7px 4px", textAlign:"right", fontWeight:700, fontSize:9 }}>{h}</th>)}
-              </tr></thead>
-              <tbody>
-                {[
-                  {n:"Joao",cash:calc.joaoAmt,own:calc.ownJ,div:calc.divs*calc.ownJ/100,mgmt:calc.annMgmt/2,tot:calc.jProfit},
-                  {n:"Rodrigo",cash:calc.rodrigoAmt,own:calc.ownR,div:calc.divs*calc.ownR/100,mgmt:calc.annMgmt/2,tot:calc.rProfit},
-                  ...calc.invRet.map(i=>({n:i.name,cash:i.amt,own:i.own,div:i.profit,mgmt:0,tot:i.profit})),
-                ].map((r,i)=>(
-                  <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontWeight:700 }}>{r.n}</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(r.cash)}€</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{fd(r.own)}%</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(r.div)}€</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:r.mgmt>0?"#000":"#ccc" }}>{r.mgmt>0?fmtK(r.mgmt)+"€":"—"}</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{fmtK(r.tot)}€</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{calc.valid && r.cash>0?fd(r.div/r.cash*100)+"%":"—"}</td>
-                    <td style={{ padding:"6px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{calc.valid && Number.isFinite(CitywaveFinance.paybackOf(r.cash,calc.proj.map(y=>(y.divs-y.capitalCall)*r.own/100)))?fd(CitywaveFinance.paybackOf(r.cash,calc.proj.map(y=>(y.divs-y.capitalCall)*r.own/100)))+"a":"—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>Retorno de Capital Acumulado — {calc.N} Anos</h2>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                <th style={{ padding:"6px 4px", textAlign:"right", fontSize:9, fontWeight:700 }}>Ano</th>
-                <th style={{ padding:"6px 4px", textAlign:"right", fontSize:9, fontWeight:700 }}>Joao</th>
-                <th style={{ padding:"6px 4px", textAlign:"right", fontSize:9, fontWeight:700 }}>Rodrigo</th>
-                {calc.invRet.map((inv,i)=><th key={i} style={{ padding:"6px 4px", textAlign:"right", fontSize:9, fontWeight:700 }}>{inv.name}</th>)}
-              </tr></thead>
-              <tbody>
-                {calc.cumRet.map((yr,i)=>(
-                  <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                    <td style={{ padding:"5px 4px", textAlign:"right", fontWeight:700 }}>A{yr.y}</td>
-                    <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:yr.j>=0?"#000":"#c00", fontWeight:600 }}>{fmtK(yr.j)}€</td>
-                    <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:yr.r>=0?"#000":"#c00", fontWeight:600 }}>{fmtK(yr.r)}€</td>
-                    {yr.inv.map((v,j)=><td key={j} style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:v.c>=0?"#000":"#c00", fontWeight:600 }}>{fmtK(v.c)}€</td>)}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div style={{ fontSize:9, color:"#999", marginTop:4 }}>Dividendos menos reforcos de capital e investimento inicial. Exclui remuneracao de gestao e valor de saida. Crescimento composto; volume de participantes constante.</div>
-          </>}
-
-          {/* PROJECTION */}
-          {tab==="analise" && <>
-            {/* ── INTRO ── */}
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>Analise Financeira Avancada</h2>
-            <div style={{ background:"#f8f8f8", borderLeft:"3px solid #000", borderRadius:4, padding:12, marginBottom:20, fontSize:11, lineHeight:1.6, color:"#444" }}>
-              Uma unica projecao ate ao fim da concessao. Receitas e custos liquidos de IVA. Fluxos do projeto separados dos dividendos, reforcos de capital e valor de saida dos acionistas.
-            </div>
-
-            {/* ── CAPM INPUTS ── */}
-            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:8 }}>1. CAPM · Custo do Capital</h3>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:16 }} className="analise-grid-2">
-              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <div style={{ fontSize:10, fontWeight:700, marginBottom:6, color:"#666" }}>INPUTS DE MERCADO</div>
-                <Row label="Taxa sem risco (rf)" value={s.rfRate} onChange={v=>u("rfRate",v)} suffix="%" info="Hipotese editavel, nao uma cotacao de mercado" min={0} max={10} step={0.1} />
-                <Row label="Premio de risco mercado" value={s.marketPremium} onChange={v=>u("marketPremium",v)} suffix="%" info="Premio de risco assumido" min={3} max={12} step={0.1} />
-                <Row label="Beta nao-alavancado" value={s.unleveredBeta} onChange={v=>u("unleveredBeta",v)} suffix="" info="Beta assumido, a fundamentar com comparaveis" min={0.3} max={2} step={0.05} />
-                <Row label="Taxa imposto" value={s.taxRate} onChange={v=>u("taxRate",v)} suffix="%" info="Taxa efetiva assumida; validar enquadramento fiscal" min={0} max={50} step={0.1} />
-              </div>
-              <div style={{ background:"#000", color:"#fff", borderRadius:4, padding:14 }}>
-                <div style={{ fontSize:10, fontWeight:700, marginBottom:8, color:"#999" }}>OUTPUTS CALCULADOS</div>
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, fontFamily:"'IBM Plex Mono',monospace", fontSize:11 }}>
-                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>D/V</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.dRatio)}</div></div>
-                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>E/V</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.eRatio)}</div></div>
-                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>β LEVERED</div><div style={{ fontSize:16, fontWeight:800 }}>{fd(calc.leveredBeta,2)}</div></div>
-                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>Ke</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.costOfEquity)}</div></div>
-                  <div><div style={{ fontSize:8, color:"#888", letterSpacing:1 }}>Kd (apos imp.)</div><div style={{ fontSize:16, fontWeight:800 }}>{pct(calc.costOfDebtAT)}</div></div>
-                  <div style={{ background:"#fff", color:"#000", padding:"4px 6px", borderRadius:3 }}>
-                    <div style={{ fontSize:8, color:"#666", letterSpacing:1 }}>WACC</div>
-                    <div style={{ fontSize:18, fontWeight:800 }}>{pct(calc.wacc)}</div>
+          )}
+          {tab === "overview" && (
+            <>
+              <MonthlyChart data={c.monthly} lang={lang} />
+              <div className="split">
+                <div>
+                  <h2 className="section-title">
+                    {t("Investimento inicial", "Initial investment")}
+                  </h2>
+                  {w.capexBk.map((x, i) => (
+                    <ValueBar
+                      key={i}
+                      label={x.l}
+                      value={x.v}
+                      max={Math.max(...w.capexBk.map((y) => y.v))}
+                      lang={lang}
+                    />
+                  ))}
+                  {b.capex > 0 && (
+                    <ValueBar
+                      label={t(
+                        "CAPEX do bar pago pela Lda.",
+                        "Company-funded bar CAPEX",
+                      )}
+                      value={b.capex}
+                      max={c.investment}
+                      lang={lang}
+                    />
+                  )}
+                  <div className="total-row">
+                    <span>
+                      CAPEX + {t("fundo de maneio", "working capital")}
+                    </span>
+                    <span className="mono">{euro(c.investment, lang)}</span>
                   </div>
                 </div>
-                <div style={{ fontSize:9, color:"#888", marginTop:10, lineHeight:1.5 }}>
-                  β<sub>L</sub> = β<sub>U</sub> × (1 + (1-t)·D/E) · Ke = rf + β<sub>L</sub>·MRP · WACC = E/V·Ke + D/V·Kd(1-t)
+                <div>
+                  <h2 className="section-title">
+                    {t("Receita anual", "Annual revenue")}
+                  </h2>
+                  {revenueRows.map((x, i) => (
+                    <ValueBar
+                      key={i}
+                      label={x.label}
+                      value={x.value}
+                      max={Math.max(...revenueRows.map((y) => y.value))}
+                      lang={lang}
+                    />
+                  ))}
+                  <div className="total-row">
+                    <span>{t("Total", "Total")}</span>
+                    <span className="mono">{euro(c.annRev, lang)}</span>
+                  </div>
+                  <h2 className="sub-title">
+                    {t("Custos anuais", "Annual costs")}
+                  </h2>
+                  {costRows.map((x, i) => (
+                    <ValueBar
+                      key={i}
+                      label={x.label}
+                      value={x.value}
+                      max={Math.max(...costRows.map((y) => y.value))}
+                      lang={lang}
+                    />
+                  ))}
+                  <div className="total-row">
+                    <span>OPEX</span>
+                    <span className="mono">{euro(c.opex, lang)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            {/* ── FREE CASH FLOW ── */}
-            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:8 }}>2. Free Cash Flow to Firm (FCFF)</h3>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:14, marginBottom:14 }} className="analise-grid-3">
-              <Row label="Anos de concessao" value={s.concessionYears} onChange={v=>u("concessionYears",v)} suffix="" info="Mesmo horizonte em todos os separadores" min={3} max={25} />
-              <Row label="Depreciacao" value={s.depreciationYears} onChange={v=>u("depreciationYears",v)} suffix=" anos" info="Vida util assumida; novos investimentos depreciam a partir do ano seguinte" min={5} max={25} />
-              <Row label="Maint. CapEx" value={s.maintCapexPct} onChange={v=>u("maintCapexPct",v)} suffix="% capex/ano" min={0} max={10} step={0.5} />
-            </div>
-            <Row label="Crescimento anual dos precos/receitas" value={s.revenueGrowth} onChange={v=>u("revenueGrowth",v)} suffix="%" min={-20} max={20} step={0.5} />
-            <Row label="Crescimento custos fixos e energia" value={s.costGrowth} onChange={v=>u("costGrowth",v)} suffix="%" min={-20} max={20} step={0.5} />
-            <Row label="Venda residual no fim da concessao" value={s.exitValue} onChange={v=>u("exitValue",v)} suffix="€" info="Liquido de impostos e custos de saida; pode ser negativo" min={-20000000} max={20000000} step={10000} />
-
-            <div style={{ overflowX:"auto", marginTop:12 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:680 }}>
-                <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                  {["Ano","Receita","OPEX","EBITDA","Depr.","EBIT","Imposto","NOPAT","Maint Capex","FCFF","PV @ WACC"].map(h=>
-                    <th key={h} style={{ padding:"6px 4px", textAlign:"right", fontSize:9.5, fontWeight:700 }}>{h}</th>
-                  )}
-                </tr></thead>
-                <tbody>
-                  {calc.fcfYears.map((y,i)=>{
-                    const pv = y.fcff / Math.pow(1+calc.wacc, i+1);
-                    return (
-                      <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontWeight:700 }}>A{y.y}</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(y.rev)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(y.opex)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:y.ebitda<0?"#c00":"#000" }}>{fmtK(y.ebitda)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(y.dep)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:y.ebit<0?"#c00":"#000" }}>{fmtK(y.ebit)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#c00" }}>-{fmtK(y.tax)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(y.nopat)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#c00" }}>-{fmtK(y.maintCapex)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800, color:y.fcff<0?"#c00":"#000" }}>{fmtK(y.fcff)}€</td>
-                        <td style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{fmtK(pv)}€</td>
+              <h2 className="sub-title">
+                {t("Contribuição das componentes", "Component contribution")}
+              </h2>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Indicador", "Measure")}</th>
+                      <th>{t("Onda", "Wave")}</th>
+                      <th>Bar</th>
+                      <th>{t("Conjunto", "Combined")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      [t("Receita ano 1", "Year 1 revenue"), "annRev"],
+                      [t("EBITDA ano 1", "Year 1 EBITDA"), "ebitda"],
+                      [
+                        t("Investimento inicial", "Initial investment"),
+                        "investment",
+                      ],
+                      [t("VAL", "NPV"), "npvProject"],
+                    ].map(([label, key]) => (
+                      <tr key={key}>
+                        <td>{label}</td>
+                        {[p.waveAllocated, b, c].map((z, i) => (
+                          <td key={i} className="numeric">
+                            {euro(z[key], lang)}
+                          </td>
+                        ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* ── DCF VALUATION SUMMARY ── */}
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:1, background:"#000", marginTop:14, marginBottom:20, borderRadius:2, overflow:"hidden" }}>
-              {[
-                {l:"PV FCFF DA CONCESSAO", v:`${fmtK(calc.pvFcff)}€`},
-                {l:"VENDA RESIDUAL", v:`${fmtK(calc.terminalValue)}€`, sub:`Saida no ano ${calc.N}`},
-                {l:"PV VENDA RESIDUAL", v:`${fmtK(calc.pvTerminal)}€`},
-                {l:"ENTERPRISE VALUE", v:`${fmtK(calc.enterpriseValue)}€`},
-                {l:"NPV PROJETO", v:`${fmtK(calc.npvProject)}€`, neg:calc.npvProject<0, sub:"EV - CAPEX inicial"},
-                {l:"IRR PROJETO", v:isFinite(calc.projectIRR)?pct(calc.projectIRR):"N/A", sub:`vs WACC ${pct(calc.wacc)}`},
-                {l:"IRR EQUITY", v:isFinite(calc.equityIRR)?pct(calc.equityIRR):"N/A", sub:"Dividendos, reforcos e saida"},
-              ].map((m,i)=>(
-                <div key={i} style={{ background:"#fff", padding:"10px 8px", textAlign:"center" }}>
-                  <div style={{ fontSize:8, letterSpacing:1.5, textTransform:"uppercase", color:"#999", fontWeight:600 }}>{m.l}</div>
-                  <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:14, fontWeight:800, color:m.neg?"#c00":"#000", marginTop:3 }}>{m.v}</div>
-                  {m.sub && <div style={{ fontSize:8, color:"#999", marginTop:2 }}>{m.sub}</div>}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint">
+                {t(
+                  "Custos comuns repartidos apenas para análise; o imposto e o VAL do conjunto são recalculados numa só Lda., por isso o VAL das colunas pode não somar exatamente.",
+                  "Shared costs are allocated only for analysis; combined tax and NPV are recalculated for one company, so component NPVs may not add exactly.",
+                )}
+              </p>
+              <div className="note">
+                <strong>{t("Como ler o VAL", "How to read NPV")}:</strong>{" "}
+                {euro(
+                  projectPV + c.terminalValue / (1 + c.wacc) ** c.years.length,
+                  lang,
+                )}{" "}
+                {t(
+                  "de fluxos e valor residual descontados",
+                  "of discounted cash flows and exit value",
+                )}{" "}
+                − {euro(c.investment, lang)}{" "}
+                {t("de investimento inicial", "of initial investment")} ={" "}
+                <strong className={signedClass(c.npvProject)}>
+                  {euro(c.npvProject, lang)}
+                </strong>
+                .{" "}
+                {t(
+                  "No caso-base, o projeto pode ter EBITDA positivo e VAL negativo porque os fluxos não recuperam o investimento no prazo da concessão.",
+                  "In the base case, EBITDA can be positive while NPV is negative because cash flows do not recover the investment during the concession.",
+                )}
+              </div>
+            </>
+          )}
+          {tab === "revenue" && (
+            <>
+              <h2 className="section-title">
+                {t(
+                  "Capacidade e preços por sessão",
+                  "Session capacity and prices",
+                )}
+              </h2>
+              <div className="inline-metrics">
+                <div>
+                  <small>
+                    {t(
+                      "Participantes públicos/ano",
+                      "Public participants/year",
+                    )}
+                  </small>
+                  <strong>{decimal(annualParticipants, 0, lang)}</strong>
                 </div>
+                <div>
+                  <small>{t("Média/dia aberto", "Average/open day")}</small>
+                  <strong>{decimal(w.avgPeopleDay, 1, lang)}</strong>
+                </div>
+                <div>
+                  <small>
+                    {t(
+                      "Receita líquida média/pessoa",
+                      "Average net revenue/person",
+                    )}
+                  </small>
+                  <strong>{euro2(w.effectiveAvgPrice, lang)}</strong>
+                </div>
+              </div>
+              <p className="lead">
+                {t(
+                  "O número de sessões introduzido é a procura de pico. O motor aplica a sazonalidade mensal e o limite de sessões possível nas horas de operação.",
+                  "Entered sessions are peak demand. The engine applies monthly seasonality and the session limit implied by opening hours.",
+                )}
+              </p>
+              <h3 className="sub-title">
+                {t("Preço por pessoa e nível", "Price per person and level")}
+              </h3>
+              <div className="table-wrap">
+                <table className="data-table price-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Nível", "Level")}</th>
+                      <th>{t("Preço introduzido", "Entered price")}</th>
+                      <th>{t("Mix", "Mix")}</th>
+                      <th>
+                        {t("Receita líquida/pessoa", "Net revenue/person")}
+                      </th>
+                      <th>{t("Preço final/pessoa", "Final price/person")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceNames.map(([name, priceKey, pctKey]) => {
+                      const val = wave[priceKey],
+                        net =
+                          val *
+                          taxableFactor(
+                            wave.pricesIncludeVat,
+                            vat.waveSalesRate,
+                            vat.waveTaxablePct,
+                          ),
+                        gross = wave.pricesIncludeVat
+                          ? val
+                          : val *
+                            (1 +
+                              ((vat.waveTaxablePct / 100) * vat.waveSalesRate) /
+                                100);
+                      return (
+                        <tr key={priceKey}>
+                          <td>{name}</td>
+                          <td>
+                            <Field
+                              label={name + " " + t("preço", "price")}
+                              value={val}
+                              onChange={(x) => setW(priceKey, x)}
+                              unit="€"
+                              max={1000}
+                              step={0.01}
+                            />
+                          </td>
+                          <td>
+                            <Field
+                              label={name + " mix"}
+                              value={wave[pctKey]}
+                              onChange={(x) => setW(pctKey, x)}
+                              unit="%"
+                              max={100}
+                            />
+                          </td>
+                          <td className="numeric">{euro2(net, lang)}</td>
+                          <td className="numeric">{euro2(gross, lang)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <label className="check-row">
+                <input
+                  type="checkbox"
+                  checked={wave.pricesIncludeVat}
+                  onChange={(e) => setW("pricesIncludeVat", e.target.checked)}
+                />
+                {t(
+                  "Os preços introduzidos já incluem IVA",
+                  "Entered prices already include VAT",
+                )}
+              </label>
+              <p className="hint">
+                {t(
+                  "Ao assinalar, os números introduzidos mantêm-se; a receita líquida passa a excluir o IVA. O mesmo critério aplica-se a sessões privadas, coaching, aluguer e outras vendas da onda.",
+                  "When checked, entered numbers stay the same; net revenue excludes VAT. The same basis applies to private sessions, coaching, rentals and other wave sales.",
+                )}
+              </p>
+              <h3 className="sub-title">
+                {t(
+                  "Comparação de duração, com os restantes pressupostos iguais",
+                  "Duration comparison with all other assumptions unchanged",
+                )}
+              </h3>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Duração", "Duration")}</th>
+                      <th>{t("Sessões máximas/dia", "Max sessions/day")}</th>
+                      <th>{t("Pessoas/dia médio", "Average people/day")}</th>
+                      <th>{t("Receita ano 1", "Year 1 revenue")}</th>
+                      <th>EBITDA</th>
+                      <th>VAL</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sessionResults.map(({ minutes, result }) => (
+                      <tr key={minutes}>
+                        <td>{minutes} min</td>
+                        <td className="numeric">{result.wave.maxSlotsDay}</td>
+                        <td className="numeric">
+                          {decimal(result.wave.avgPeopleDay, 1, lang)}
+                        </td>
+                        <td className="numeric">
+                          {euro(result.combined.annRev, lang)}
+                        </td>
+                        <td className="numeric">
+                          {euro(result.combined.ebitda, lang)}
+                        </td>
+                        <td className="numeric">
+                          {euro(result.combined.npvProject, lang)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <h3 className="sub-title">
+                {t("Origem da receita", "Revenue sources")}
+              </h3>
+              {revenueRows.map((x, i) => (
+                <ValueBar
+                  key={i}
+                  label={x.label}
+                  value={x.value}
+                  max={Math.max(...revenueRows.map((y) => y.value))}
+                  lang={lang}
+                />
               ))}
-            </div>
-
-            {/* ── REVENUE SENSITIVITY ── */}
-            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>3. Sensibilidade à Receita</h3>
-            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Sensibilidade a precos/receita por participante, com volume e horario constantes. Energia e marketing mantem-se; concessao, gestao e comissoes de venda acompanham a receita. FCFF do ano 1.</div>
-            <div style={{ overflowX:"auto", marginBottom:20 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:640 }}>
-                <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                  {["% Receita","Receita","OPEX","EBITDA","Margem","FCFE","FCFF","Payback"].map(h=>
-                    <th key={h} style={{ padding:"7px 5px", textAlign:"right", fontSize:9.5, fontWeight:700 }}>{h}</th>
+              <div className="total-row">
+                <span>
+                  {t(
+                    "Receita total líquida de IVA",
+                    "Total revenue net of VAT",
                   )}
-                </tr></thead>
-                <tbody>
-                  {calc.revScenarios.map((sc,i)=>{
-                    const base = Math.abs(sc.p - 1) < 0.01;
-                    return (
-                      <tr key={i} style={{ borderBottom:"1px solid #eee", background:base?"#f5f5f5":"transparent" }}>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontWeight:base?800:700, fontFamily:"'IBM Plex Mono',monospace" }}>{fd(sc.p*100,0)}%</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(sc.rev)}€</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(sc.opx)}€</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:sc.ebitda<0?"#c00":"#000" }}>{fmtK(sc.ebitda)}€</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{pct(sc.margin)}</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:sc.net<0?"#c00":"#000" }}>{fmtK(sc.net)}€</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:sc.fcf<0?"#c00":"#000" }}>{fmtK(sc.fcf)}€</td>
-                        <td style={{ padding:"6px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{sc.payback<50?fd(sc.payback)+"a":"—"}</td>
+                </span>
+                <span className="mono">{euro(c.annRev, lang)}</span>
+              </div>
+              <div className="note">
+                {bar.operatingMode === "concession"
+                  ? t(
+                      "O bar está concessionado: só a renda faturada pela Lda. entra na receita do projeto. Tráfego do teleférico, hotéis e cruzeiros não é automaticamente convertido em clientes.",
+                      "The bar is concessioned: only rent invoiced by the company enters project revenue. Cable car, hotel and cruise traffic is not automatically converted into customers.",
+                    )
+                  : t(
+                      "Na exploração direta, as vendas do bar são modeladas a partir dos clientes, do consumo e da capacidade de lugares; trabalhar no espaço não é cobrado separadamente.",
+                      "In company operation, bar sales follow visitors, spend and seat capacity; working in the space is not billed separately.",
+                    )}
+              </div>
+            </>
+          )}
+          {tab === "costs" && (
+            <>
+              <h2 className="section-title">
+                {t(
+                  "Custos anuais do projeto",
+                  "Project annual operating costs",
+                )}
+              </h2>
+              {costRows.map((x, i) => (
+                <ValueBar
+                  key={i}
+                  label={x.label}
+                  value={x.value}
+                  max={Math.max(...costRows.map((y) => y.value))}
+                  lang={lang}
+                />
+              ))}
+              <div className="total-row">
+                <span>OPEX</span>
+                <span className="mono">{euro(c.opex, lang)}</span>
+              </div>
+              <div className="inline-metrics">
+                <div>
+                  <small>{t("Energia/ano", "Energy/year")}</small>
+                  <strong>{euro(w.annEnergy, lang)}</strong>
+                </div>
+                <div>
+                  <small>{t("Consumo anual", "Annual energy")}</small>
+                  <strong>{decimal(w.annKwh, 0, lang)} kWh</strong>
+                </div>
+                <div>
+                  <small>
+                    {t("CAPEX manutenção/ano", "Maintenance CAPEX/year")}
+                  </small>
+                  <strong>{euro(c.first.maintCapex, lang)}</strong>
+                </div>
+              </div>
+              <p className="lead">
+                {t(
+                  "Energia = potência máxima × carga média × horas/dia × dias/ano × €/kWh. O CAPEX de manutenção é saída de caixa adicional ao OPEX de manutenção.",
+                  "Energy = peak power × average load × hours/day × days/year × €/kWh. Maintenance CAPEX is a cash outflow in addition to maintenance OPEX.",
+                )}
+              </p>
+              <h2 className="sub-title">
+                {t(
+                  "Investimento inicial detalhado",
+                  "Detailed initial investment",
+                )}
+              </h2>
+              {w.capexBk.map((x, i) => (
+                <ValueBar
+                  key={i}
+                  label={x.l}
+                  value={x.v}
+                  max={Math.max(...w.capexBk.map((y) => y.v))}
+                  lang={lang}
+                />
+              ))}
+              {b.capex > 0 && (
+                <ValueBar
+                  label={t(
+                    "CAPEX bar pago pela Lda.",
+                    "Company-funded bar CAPEX",
+                  )}
+                  value={b.capex}
+                  max={c.investment}
+                  lang={lang}
+                />
+              )}
+              <div className="total-row">
+                <span>{t("Investimento total", "Total investment")}</span>
+                <span className="mono">{euro(c.investment, lang)}</span>
+              </div>
+              <div className="note">
+                {t(
+                  "O IVA dedutível não é custo nem CAPEX económico. A saída temporária de caixa até ao reembolso aparece em “IVA e caixa”. IVA não dedutível entra no investimento/custos uma única vez.",
+                  "Recoverable VAT is neither cost nor economic CAPEX. Temporary cash tied up until refund appears in “VAT & cash”. Non-recoverable VAT enters investment/costs only once.",
+                )}
+              </div>
+            </>
+          )}
+          {tab === "vat" && (
+            <>
+              <h2 className="section-title">
+                {t("Preços, IVA e tesouraria", "Prices, VAT and cash")}
+              </h2>
+              <p className="lead">
+                {t(
+                  "O caso-base representa uma Lda. com vendas tributadas e dedução integral do IVA elegível. O enquadramento efetivo depende dos contratos e da faturação.",
+                  "The base case represents a trading company with taxable sales and full deduction of eligible input VAT. Actual treatment depends on contracts and invoices.",
+                )}
+              </p>
+              <div className="scenario-strip" style={{ marginTop: 0 }}>
+                <span className="eyebrow">
+                  {t("Hipótese fiscal", "Tax case")}
+                </span>
+                {[
+                  ["company", t("Lda. tributada", "Taxable company")],
+                  [
+                    "exempt",
+                    t("Sensibilidade: onda isenta", "Sensitivity: exempt wave"),
+                  ],
+                  [
+                    "mixed",
+                    t(
+                      "Sensibilidade: atividade mista",
+                      "Sensitivity: mixed activity",
+                    ),
+                  ],
+                ].map(([id, label]) => (
+                  <button
+                    key={id}
+                    className="scenario-button"
+                    aria-pressed={vat.profile === id}
+                    onClick={() => applyVatProfile(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="hint">
+                {t(
+                  "As sensibilidades são testes de risco, não regimes que a Lda. possa escolher livremente. Alterar uma taxa cria uma hipótese personalizada.",
+                  "The sensitivities test risk; they are not tax regimes the company can choose freely. Editing a rate creates a custom case.",
+                )}
+              </p>
+              <div className="split">
+                <div>
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={wave.pricesIncludeVat}
+                      onChange={(e) =>
+                        setW("pricesIncludeVat", e.target.checked)
+                      }
+                    />
+                    {t(
+                      "Preços das sessões introduzidos com IVA",
+                      "Entered session prices include VAT",
+                    )}
+                  </label>
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={
+                        bar.operatingMode === "concession"
+                          ? bar.concessionRentIncludesVat
+                          : bar.pricesIncludeVat
+                      }
+                      onChange={(e) =>
+                        setB(
+                          bar.operatingMode === "concession"
+                            ? "concessionRentIncludesVat"
+                            : "pricesIncludeVat",
+                          e.target.checked,
+                        )
+                      }
+                    />
+                    {bar.operatingMode === "concession"
+                      ? t(
+                          "Renda da concessão introduzida com IVA",
+                          "Entered concession rent includes VAT",
+                        )
+                      : t(
+                          "Consumo no bar introduzido com IVA",
+                          "Entered bar spend includes VAT",
+                        )}
+                  </label>
+                  <div className="note">
+                    {t("Exemplo principiante", "Beginner example")}:{" "}
+                    <strong>{euro2(priceNet, lang)}</strong>{" "}
+                    {t("líquidos →", "net →")}{" "}
+                    <strong>{euro2(priceFinal, lang)}</strong>{" "}
+                    {t("ao cliente", "customer price")}.{" "}
+                    {bar.operatingMode === "concession" && (
+                      <span>
+                        {t("Renda líquida mensal", "Net monthly rent")}:{" "}
+                        <strong>{euro2(rentNet, lang)}</strong>.
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    className="inline-metrics"
+                    style={{ gridTemplateColumns: "1fr 1fr" }}
+                  >
+                    <div>
+                      <small>
+                        {t(
+                          "IVA inicial pago em faturas",
+                          "Initial VAT paid on invoices",
+                        )}
+                      </small>
+                      <strong>{euro(vatResult.initialInvoiceVAT, lang)}</strong>
+                    </div>
+                    <div>
+                      <small>
+                        {t(
+                          "Pico de caixa empatada em IVA",
+                          "Peak cash tied up in VAT",
+                        )}
+                      </small>
+                      <strong>
+                        {euro(vatResult.peakVatCashDeficit, lang)}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h3 className="sub-title">
+                {t("Tratamento fiscal editável", "Editable tax treatment")}
+              </h3>
+              <div className="split">
+                <div>
+                  {Vat(
+                    "waveSalesRate",
+                    t("IVA nas sessões", "Session output VAT"),
+                  )}
+                  {Vat(
+                    "waveTaxablePct",
+                    t("Vendas da onda tributadas", "Taxable wave sales"),
+                  )}
+                  {Vat(
+                    "waveRecoveryPct",
+                    t("IVA dedutível na onda", "Recoverable wave VAT"),
+                  )}
+                  {Vat(
+                    "barSalesRate",
+                    t("IVA bar/renda", "Bar/rent output VAT"),
+                  )}
+                  {Vat(
+                    "barTaxablePct",
+                    t("Bar/renda tributados", "Taxable bar/rent sales"),
+                  )}
+                  {Vat(
+                    "barRecoveryPct",
+                    t("IVA dedutível no bar", "Recoverable bar VAT"),
+                  )}
+                </div>
+                <div>
+                  {Vat(
+                    "capexVatRate",
+                    t("IVA de investimento", "Investment input VAT"),
+                  )}
+                  {Vat(
+                    "opexVatRate",
+                    t(
+                      "IVA nos custos elegíveis",
+                      "Eligible operating input VAT",
+                    ),
+                  )}
+                  {Vat(
+                    "machineInvoicePct",
+                    t(
+                      "IVA Citywave pago na fatura",
+                      "Citywave VAT paid on invoice",
+                    ),
+                  )}
+                  {Vat(
+                    "otherInvoicePct",
+                    t("IVA outras faturas pago", "Other input VAT paid"),
+                  )}
+                  {Vat(
+                    "barInvoicePct",
+                    t("IVA faturas do bar pago", "Bar invoice VAT paid"),
+                  )}
+                  {Vat(
+                    "refundLagMonths",
+                    t("Prazo de reembolso", "Refund delay"),
+                    "m",
+                    0,
+                    24,
+                    1,
+                  )}
+                  <label className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={vat.requestRefund}
+                      onChange={(e) => setV("requestRefund", e.target.checked)}
+                    />
+                    {t(
+                      "Pedir reembolso quando elegível",
+                      "Request refund when eligible",
+                    )}
+                  </label>
+                </div>
+              </div>
+              <div className="inline-metrics">
+                <div>
+                  <small>
+                    {t(
+                      "IVA não dedutível no CAPEX",
+                      "Non-recoverable CAPEX VAT",
+                    )}
+                  </small>
+                  <strong>{euro(vatResult.nonDeductibleCapex, lang)}</strong>
+                </div>
+                <div>
+                  <small>{t("IVA autoliquidado", "Reverse-charged VAT")}</small>
+                  <strong>{euro(vatResult.reverseChargeVAT, lang)}</strong>
+                </div>
+                <div>
+                  <small>
+                    {t(
+                      "Crédito por recuperar no ano 1",
+                      "Year-end VAT credit pending",
+                    )}
+                  </small>
+                  <strong>
+                    {euro(
+                      vatResult.closingCredit + vatResult.pendingRefund,
+                      lang,
+                    )}
+                  </strong>
+                </div>
+              </div>
+              <h3 className="sub-title">
+                {t(
+                  "Caixa mensal de IVA — primeiro ano",
+                  "Monthly VAT cash — first year",
+                )}
+              </h3>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {[
+                        t("Mês", "Month"),
+                        t("IVA cobrado", "Output VAT"),
+                        t("IVA nos custos", "Input VAT"),
+                        t("IVA entregue", "VAT paid"),
+                        t("Reembolso", "Refund"),
+                        t("Caixa acumulada", "Cumulative cash"),
+                      ].map((x) => (
+                        <th key={x}>{x}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vatResult.months.map((m) => (
+                      <tr key={m.month}>
+                        <td>{monthLabel(m.month - 1, lang)}</td>
+                        {[
+                          m.output,
+                          m.input,
+                          m.paid,
+                          m.received,
+                          m.cumulativeCash,
+                        ].map((x, i) => (
+                          <td className="numeric" key={i}>
+                            {euro(x, lang)}
+                          </td>
+                        ))}
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* ── TWO-WAY SENSITIVITY ── */}
-            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>4. Sensibilidade Bidirecional · EBITDA</h3>
-            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Mesma regra da tabela anterior: preco/receita × tarifa de energia, com volume constante. Verde = EBITDA positivo; nao implica lucro liquido.</div>
-            <div style={{ overflowX:"auto", marginBottom:20 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10, minWidth:560 }}>
-                <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                  <th style={{ padding:"7px 4px", textAlign:"right", fontSize:9, fontWeight:700, background:"#000", color:"#fff" }}>€/kWh \ Rev%</th>
-                  {calc.sensRevPcts.map(r=><th key={r} style={{ padding:"7px 4px", textAlign:"right", fontSize:9, fontWeight:700, background:"#f5f5f5" }}>{fd(r*100,0)}%</th>)}
-                </tr></thead>
-                <tbody>
-                  {calc.sensElec.map((er,i)=>(
-                    <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                      <td style={{ padding:"5px 4px", textAlign:"right", fontWeight:700, background:"#f5f5f5", fontFamily:"'IBM Plex Mono',monospace" }}>{er.toFixed(3)}€</td>
-                      {calc.sensMatrix[i].map((v,j)=>{
-                        const intensity = Math.min(Math.abs(v)/Math.max(calc.ebitda,1), 1);
-                        const bg = v>=0 ? `rgba(40,160,80,${0.10+intensity*0.30})` : `rgba(220,40,40,${0.10+intensity*0.30})`;
-                        return (
-                          <td key={j} style={{ padding:"5px 4px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:v<0?"#900":"#040", background:bg }}>{fmtK(v)}€</td>
-                        );
-                      })}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint">
+                {t(
+                  "O prazo de reembolso altera a tesouraria do IVA, mas o custo de financiar essa espera ainda não entra no VAL. O investimento inicial não volta a somar IVA recuperável.",
+                  "Refund timing changes VAT cash, but financing this delay is not yet charged to NPV. Recoverable VAT is not added again to initial investment.",
+                )}
+              </p>
+            </>
+          )}
+          {tab === "investors" && (
+            <>
+              <h2 className="section-title">
+                {t(
+                  "Financiamento do projeto completo",
+                  "Funding for the full project",
+                )}
+              </h2>
+              <p className="lead">
+                {t(
+                  "O investimento e o serviço da dívida abaixo referem-se à Lda. que opera a onda e recebe a renda ou explora o bar.",
+                  "The investment and debt service below belong to the company that operates the wave and receives rent or operates the bar.",
+                )}
+              </p>
+              <div className="inline-metrics">
+                <div>
+                  <small>{t("Banco", "Bank")}</small>
+                  <strong>{euro(c.bankAmt, lang)}</strong>
+                </div>
+                <div>
+                  <small>{t("Capital próprio", "Equity")}</small>
+                  <strong>{euro(c.eqAmt, lang)}</strong>
+                </div>
+                <div>
+                  <small>
+                    {t("Serviço dívida ano 1", "Year 1 debt service")}
+                  </small>
+                  <strong>{euro(c.first.debt, lang)}</strong>
+                </div>
+              </div>
+              <h3 className="sub-title">
+                {t("Sócios e investimento", "Shareholders and contributions")}
+              </h3>
+              <div className="investor-list">
+                {wave.investors.map((inv) => (
+                  <div className="investor-row" key={inv.id}>
+                    <input
+                      aria-label={t("Nome do investidor", "Investor name")}
+                      value={inv.name}
+                      onChange={(e) =>
+                        changeInv(inv.id, "name", e.target.value)
+                      }
+                    />
+                    <input
+                      aria-label={inv.name + " %"}
+                      type="number"
+                      min="0"
+                      max="100"
+                      step=".5"
+                      value={inv.pct}
+                      onChange={(e) =>
+                        changeInv(inv.id, "pct", Number(e.target.value))
+                      }
+                    />
+                    <button
+                      className="small-button"
+                      title={t("Remover", "Remove")}
+                      onClick={() => {
+                        setScenario(null);
+                        setWave((x) => ({
+                          ...x,
+                          investors: x.investors.filter((z) => z.id !== inv.id),
+                        }));
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  className="small-button"
+                  onClick={() => {
+                    setScenario(null);
+                    setWave((x) => ({
+                      ...x,
+                      investors: [
+                        ...x.investors,
+                        {
+                          id: Date.now(),
+                          name: t("Novo investidor", "New investor"),
+                          pct: 0,
+                        },
+                      ],
+                    }));
+                  }}
+                >
+                  {t("+ Adicionar investidor", "+ Add investor")}
+                </button>
+              </div>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Parte", "Party")}</th>
+                      <th>{t("Capital investido", "Cash invested")}</th>
+                      <th>{t("Percentagem de capital", "Cash share")}</th>
+                      <th>
+                        {t("Participação económica", "Economic ownership")}
+                      </th>
+                      <th>{t("Dividendos ano 1", "Year 1 dividends")}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* ── BOND BENCHMARK ── */}
-            <h3 style={{ fontSize:12, fontWeight:800, letterSpacing:0.5, textTransform:"uppercase", marginBottom:6 }}>5. Comparacao vs Investimentos Passivos</h3>
-            <div style={{ fontSize:10, color:"#888", marginBottom:8 }}>Taxas ilustrativas, nao cotacoes nem retornos historicos. Capitalizacao a 10 anos apenas para as alternativas; a TIR do projeto nao e uma taxa garantida de reinvestimento.</div>
-            <div style={{ overflowX:"auto", marginBottom:14 }}>
-              <table style={{ width:"100%", borderCollapse:"collapse", fontSize:10.5, minWidth:640 }}>
-                <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                  {["Instrumento","Risco","Yield/Retorno","€10k @ 10a","Premio Projeto","Premio Equity"].map(h=>
-                    <th key={h} style={{ padding:"7px 5px", textAlign:"left", fontSize:9.5, fontWeight:700, letterSpacing:0.3, textTransform:"uppercase" }}>{h}</th>
+                  </thead>
+                  <tbody>
+                    {[
+                      [t("João", "João"), wave.joaoPct, w.ownJ],
+                      [t("Rodrigo", "Rodrigo"), wave.rodrigoPct, w.ownR],
+                      ...wave.investors.map((x, i) => [
+                        x.name,
+                        x.pct,
+                        w.ownInv[i]?.own || 0,
+                      ]),
+                    ].map(([name, cashPct, ownership], i) => (
+                      <tr key={i}>
+                        <td>{name}</td>
+                        <td className="numeric">
+                          {euro((c.investment * cashPct) / 100, lang)}
+                        </td>
+                        <td className="numeric">
+                          {decimal(cashPct, 1, lang)}%
+                        </td>
+                        <td className="numeric">
+                          {decimal(ownership, 1, lang)}%
+                        </td>
+                        <td className="numeric">
+                          {euro((c.first.divs * ownership) / 100, lang)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {Math.abs(w.fundPct - 100) > 1e-8 && (
+                <div className="warning">
+                  {t(
+                    "A soma de banco e capital próprio deve ser 100%; ajuste os investidores ou as percentagens de financiamento.",
+                    "Bank and equity shares must total 100%; adjust investor or funding percentages.",
                   )}
-                </tr></thead>
-                <tbody>
-                  {calc.benchmarkRows.map((b,i)=>(
-                    <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                      <td style={{ padding:"6px 5px", fontWeight:600 }}>{b.name}</td>
-                      <td style={{ padding:"6px 5px", fontSize:10, color:"#666" }}>{b.risk}</td>
-                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700 }}>{pct(b.yield)}</td>
-                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>{fmt(Math.round(b.val10k10y))}€</td>
-                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", color:b.excessProject>=0?"#040":"#c00", fontWeight:700 }}>{b.excessProject>=0?"+":""}{pct(b.excessProject)}</td>
-                      <td style={{ padding:"6px 5px", fontFamily:"'IBM Plex Mono',monospace", color:b.excessEquity>=0?"#040":"#c00", fontWeight:700 }}>{b.excessEquity>=0?"+":""}{pct(b.excessEquity)}</td>
+                </div>
+              )}
+              <h3 className="sub-title">
+                {t(
+                  "Ponte de caixa para os sócios — ano 1",
+                  "Cash bridge for shareholders — year 1",
+                )}
+              </h3>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <tbody>
+                    {[
+                      [t("EBITDA", "EBITDA"), c.first.ebitda],
+                      [
+                        t("− Imposto após juros", "− Tax after interest"),
+                        -c.first.equityTax,
+                      ],
+                      [
+                        t("− CAPEX de manutenção", "− Maintenance CAPEX"),
+                        -c.first.maintCapex,
+                      ],
+                      [
+                        t("− Serviço da dívida", "− Debt service"),
+                        -c.first.debt,
+                      ],
+                      [t("= FCFE", "= FCFE"), c.first.fcfe],
+                      [
+                        t(
+                          "Reforço de capital necessário",
+                          "Additional equity required",
+                        ),
+                        c.first.capitalCall,
+                      ],
+                      [
+                        t("Dividendos distribuídos", "Dividends paid"),
+                        c.first.divs,
+                      ],
+                    ].map(([label, val]) => (
+                      <tr key={label}>
+                        <td>{label}</td>
+                        <td className="numeric">{euro(val, lang)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="hint">
+                {t(
+                  "A TIR do projeto ignora fluxos de financiamento; a TIR do capital próprio inclui dívida, dividendos, reforços e saída.",
+                  "Project IRR excludes financing cash flows; equity IRR includes debt, dividends, capital calls and exit.",
+                )}
+              </p>
+            </>
+          )}
+          {tab === "projection" && (
+            <>
+              <h2 className="section-title">
+                {t(
+                  "Projeção consolidada da Lda.",
+                  "Consolidated company projection",
+                )}
+              </h2>
+              <p className="lead">
+                {t(
+                  "Receitas e custos crescem com as taxas introduzidas. O volume físico de sessões fica constante; o imposto é anual e simplificado.",
+                  "Revenue and costs grow by the entered rates. Physical session volume is held constant; income tax is simplified and annual.",
+                )}
+              </p>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      {[
+                        t("Ano", "Year"),
+                        t("Receita", "Revenue"),
+                        "OPEX",
+                        "EBITDA",
+                        t("Depreciação", "Depreciation"),
+                        t("Imposto operacional", "Operating tax"),
+                        "FCFF",
+                        "FCFE",
+                        t("Dividendos", "Dividends"),
+                        t("Caixa final", "Ending cash"),
+                      ].map((x) => (
+                        <th key={x}>{x}</th>
+                      ))}
                     </tr>
-                  ))}
-                  <tr style={{ borderTop:"2px solid #000", background:"#000", color:"#fff" }}>
-                    <td style={{ padding:"7px 5px", fontWeight:800 }}>CITYWAVE FUNCHAL · Projeto</td>
-                    <td style={{ padding:"7px 5px", fontSize:10 }}>Alto (iliquido)</td>
-                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{isFinite(calc.projectIRR)?pct(calc.projectIRR):"N/A"}</td>
-                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>—</td>
-                    <td style={{ padding:"7px 5px" }} colSpan={2}>—</td>
-                  </tr>
-                  <tr style={{ background:"#222", color:"#fff" }}>
-                    <td style={{ padding:"7px 5px", fontWeight:800 }}>CITYWAVE FUNCHAL · Equity (alavancado)</td>
-                    <td style={{ padding:"7px 5px", fontSize:10 }}>Muito alto</td>
-                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace", fontWeight:800 }}>{isFinite(calc.equityIRR)?pct(calc.equityIRR):"N/A"}</td>
-                    <td style={{ padding:"7px 5px", fontFamily:"'IBM Plex Mono',monospace" }}>—</td>
-                    <td style={{ padding:"7px 5px" }} colSpan={2}>—</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* ── RISK METRICS ── */}
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:10, marginBottom:20 }} className="analise-risk-grid">
-              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>NPV / CAPEX</div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800, color:calc.npvProject<0?"#c00":"#000" }}>{fd(calc.npvProject/calc.capex,2)}x</div>
-                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>VAL por euro investido · &gt;0 cria valor</div>
+                  </thead>
+                  <tbody>
+                    {c.years.map((y) => (
+                      <tr key={y.y}>
+                        <td>{y.y}</td>
+                        {[
+                          y.rev,
+                          y.opex,
+                          y.ebitda,
+                          y.dep,
+                          y.tax,
+                          y.fcff,
+                          y.fcfe,
+                          y.divs,
+                          y.cash,
+                        ].map((x, i) => (
+                          <td className="numeric" key={i}>
+                            {euro(x, lang)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>SPREAD vs WACC</div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800, color:(calc.projectIRR-calc.wacc)<0?"#c00":"#040" }}>{calc.projectIRR-calc.wacc>=0?"+":""}{pct(calc.projectIRR-calc.wacc)}</div>
-                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>IRR - WACC · &gt;0 cria valor</div>
+              <h3 className="sub-title">
+                {t("Fluxos descontados e VAL", "Discounted cash flows and NPV")}
+              </h3>
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>{t("Ano", "Year")}</th>
+                      <th>FCFF</th>
+                      <th>{t("Valor presente", "Present value")}</th>
+                      <th>
+                        {t(
+                          "Valor presente acumulado",
+                          "Cumulative present value",
+                        )}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {c.years.map((y, i) => (
+                      <tr key={y.y}>
+                        <td>{y.y}</td>
+                        <td className="numeric">{euro(y.fcff, lang)}</td>
+                        <td className="numeric">
+                          {euro(y.fcff / (1 + c.wacc) ** y.y, lang)}
+                        </td>
+                        <td className="numeric">
+                          {euro(
+                            sum(
+                              c.years
+                                .slice(0, i + 1)
+                                .map((z) => z.fcff / (1 + c.wacc) ** z.y),
+                            ),
+                            lang,
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    <tr className="total">
+                      <td>{t("Total/VAL", "Total/NPV")}</td>
+                      <td></td>
+                      <td className="numeric">{euro(projectPV, lang)}</td>
+                      <td className="numeric">{euro(c.npvProject, lang)}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div style={{ background:"#f8f8f8", borderRadius:4, padding:12 }}>
-                <div style={{ fontSize:9, letterSpacing:1.5, color:"#999", fontWeight:700, marginBottom:4 }}>EQUITY MULTIPLE</div>
-                <div style={{ fontFamily:"'IBM Plex Mono',monospace", fontSize:18, fontWeight:800 }}>{Number.isFinite(calc.equityMultiple)?fd(calc.equityMultiple,2)+"x":"N/A"}</div>
-                <div style={{ fontSize:9, color:"#888", marginTop:3 }}>Recebimentos / entradas de capital, incluindo reforcos</div>
+              <div className="note">
+                VAL = {euro(projectPV, lang)}{" "}
+                {t("de fluxos descontados", "of discounted cash flow")} +{" "}
+                {euro(c.terminalValue / (1 + c.wacc) ** c.years.length, lang)}{" "}
+                {t("de residual descontado", "of discounted residual")} −{" "}
+                {euro(c.investment, lang)}{" "}
+                {t("de investimento inicial", "initial investment")} ={" "}
+                <strong className={signedClass(c.npvProject)}>
+                  {euro(c.npvProject, lang)}
+                </strong>
+                .{" "}
+                {t(
+                  "O valor residual assumido é editável e começa em zero.",
+                  "The assumed exit value is editable and starts at zero.",
+                )}
               </div>
-            </div>
-
-            {/* ── NOTES ── */}
-            <div style={{ background:"#f8f8f8", border:"1px solid #eee", borderRadius:4, padding:12, fontSize:10, lineHeight:1.6, color:"#555" }}>
-              <strong style={{color:"#000"}}>Convencoes:</strong> Crescimento de receita via precos, com volume constante; custos fixos crescem separadamente. Energia funciona todas as horas e dias configurados. Investimento de manutencao desde o ano 1, constante em euros; depreciacao dos novos investimentos inicia no ano seguinte. WACC constante como taxa de desconto assumida, com pesos do financiamento inicial.
-              <br/><br/>
-              <strong style={{color:"#000"}}>Caixa e impostos:</strong> Imposto anual simplificado, sem reporte de prejuizos ou limites de deducao de juros. Dividendos limitados a caixa gerada e resultados acumulados positivos, antes de reservas legais ou contratuais. Defices anuais usam caixa retida e depois reforcos de capital proporcionais a participacao. Caixa retida nao rende juros e e distribuida na saida, deduzindo a divida residual.
-              <br/><br/>
-              <strong style={{color:"#000"}}>Limites:</strong> Valores liquidos de IVA; sem calendario de IVA, variacoes de fundo de maneio, pre-abertura ou impostos pessoais. A projecao anual nao mede necessidades de caixa dentro de cada ano. Sem perpetuidade: indique um valor residual liquido se aplicavel. TIR indisponivel para fluxos sem retorno positivo ou com multiplas mudancas de sinal. Payback usa fluxos acumulados e exclui a venda final.
-
-            </div>
-          </>}
-
-          {tab==="projection" && <>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>P&L — {calc.N} Anos</h2>
-            <div style={{overflowX:"auto"}}>
-            <table style={{ width:"100%", minWidth:1050, borderCollapse:"collapse", fontSize:10.5, marginBottom:24 }}>
-              <thead><tr style={{ borderBottom:"2px solid #000" }}>
-                {["Ano","Receita","OPEX","EBITDA","FCFE","Dividendos","Resultado liquido","Imposto","Juros","Capital pago","Divida final","Reforco","Caixa final"].map(h=><th key={h} style={{ padding:"8px 5px", textAlign:"right", fontWeight:700, fontSize:10 }}>{h}</th>)}
-              </tr></thead>
-              <tbody>{calc.proj.map((yr,i)=>(
-                <tr key={i} style={{ borderBottom:"1px solid #eee" }}>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontWeight:800 }}>Ano {yr.y}</td>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(yr.rev)}€</td>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", color:"#666" }}>{fmtK(yr.opex)}€</td>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:yr.ebitda<0?"#c00":"#000" }}>{fmtK(yr.ebitda)}€</td>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace", fontWeight:700, color:yr.net<0?"#c00":"#000" }}>{fmtK(yr.net)}€</td>
-                  <td style={{ padding:"7px 5px", textAlign:"right", fontFamily:"'IBM Plex Mono',monospace" }}>{fmtK(yr.divs)}€</td>
-                  {[yr.netIncome,yr.equityTax,yr.interest,yr.principal,yr.balance,yr.capitalCall,yr.cash].map((v,i)=><td key={i} style={{padding:"7px 5px",textAlign:"right",fontFamily:"'IBM Plex Mono',monospace"}}>{fmtK(v)}€</td>) }
-                </tr>
-              ))}</tbody>
-            </table>
-            </div>
-
-            <div style={{background:"#f8f8f8",padding:12,marginBottom:20,fontSize:12,lineHeight:1.6}}>
-              Saida no ano {calc.N}: venda liquida {fmt(calc.terminalValue)}€ + caixa retida {fmt(calc.last.cash)}€ − divida pendente {fmt(calc.last.balance)}€ = <strong>{fmt(calc.equityExit)}€ para os acionistas</strong>.
-              {calc.equityExit < 0 && <span> O saldo negativo representa capital adicional necessario para liquidar a divida.</span>}
-            </div>
-            <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:10 }}>EBITDA — {calc.N} Anos</h2>
-            <div className="scroll-x"><div style={{ display:"flex", gap:8, alignItems:"flex-end", height:130, marginBottom:24, minWidth:Math.max(450,calc.N*40) }}>
-              {calc.proj.map((yr,i)=>{
-                const mx=Math.max(...calc.proj.map(y=>Math.abs(y.ebitda)),1);
-                const h=Math.max((Math.abs(yr.ebitda)/(mx*1.2))*110,3);
-                return(<div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center" }}>
-                  <div title={`${fmt(yr.ebitda)}€`} style={{ fontSize:9, fontWeight:700, color:yr.ebitda<0?"#c00":"#000", marginBottom:3, fontFamily:"'IBM Plex Mono',monospace",whiteSpace:'nowrap' }}>{fmtK(yr.ebitda)}€</div>
-                  <div style={{ width:"60%", height:h, borderRadius:"2px 2px 0 0", background:yr.ebitda>=0?"#000":"#c00", transition:"height 0.3s" }} />
-                  <div style={{ fontSize:10, color:"#666", marginTop:4, fontWeight:700 }}>A{yr.y}</div>
-                </div>);
-              })}
-            </div></div>
-
-            <div style={{ background:"#f8f8f8", border:"1px solid #eee", borderRadius:4, padding:16 }}>
-              <h2 style={{ fontSize:13, fontWeight:800, letterSpacing:1, textTransform:"uppercase", marginBottom:8 }}>Proposta Investidores</h2>
-              <div style={{ fontSize:11, lineHeight:1.7 }}>
-                <p style={{ margin:"0 0 6px" }}><strong>Citywave Funchal</strong> — Onda {s.waveSize}m · {s.pumpsCount} bombas · {calc.site.label} · Concessao {s.concessionYears} anos</p>
-                <p style={{ margin:"0 0 4px" }}>Investimento total: <strong>{fmt(Math.round(calc.capex))}€</strong> {s.saltwaterUplift>0?`(inclui +${s.saltwaterUplift}% saltwater)`:"(freshwater)"}</p>
-                <p style={{ margin:"0 0 4px" }}>Fundadores SCM: {fmt(Math.round(calc.joaoAmt+calc.rodrigoAmt))}€ ({s.joaoPct+s.rodrigoPct}%) + {s.sweatPct} unidades de peso sweat equity</p>
-                <p style={{ margin:"0 0 4px" }}>Capital externo: <strong>{fmt(Math.round(calc.invAmts.reduce((a,i)=>a+i.amt,0)))}€</strong></p>
-                {s.bankPct>0&&<p style={{ margin:"0 0 4px" }}>Divida: {fmt(Math.round(calc.bankAmt))}€ ({s.bankPct}%)</p>}
-                <p style={{ margin:"0 0 4px" }}>Yield de dividendos investidor (ano 1): <strong>{calc.invRet.length>0?fd(calc.invRet[0].roi)+"%":"—"}</strong></p>
-                <p style={{ margin:0 }}>Payback estimado: <strong>{calc.invRet.length>0&&calc.invRet[0].pb<50?fd(calc.invRet[0].pb)+" anos":"N/A"}</strong></p>
+            </>
+          )}
+          {tab === "analysis" && (
+            <>
+              <h2 className="section-title">
+                {t(
+                  "Break-even do projeto completo",
+                  "Whole-project break-even",
+                )}
+              </h2>
+              <p className="lead">
+                {t(
+                  "Os gráficos variam apenas a procura de sessões de pico por dia; usam os preços, IVA, duração, capacidade, bar, energia e investimento atuais. O eixo horizontal é a média de participantes por dia aberto após sazonalidade.",
+                  "The charts vary only peak session demand per day; they use current prices, VAT, duration, capacity, bar, energy and investment. The horizontal axis is average participants per open day after seasonality.",
+                )}
+              </p>
+              <div className="chart-grid">
+                <BreakChart
+                  title={t("EBITDA anual", "Annual EBITDA")}
+                  points={breakPoints}
+                  keyName="ebitda"
+                  current={wave.sessionsDay}
+                  lang={lang}
+                />
+                <BreakChart
+                  title={t("FCFE ano 1", "Year 1 FCFE")}
+                  points={breakPoints}
+                  keyName="fcfe"
+                  current={wave.sessionsDay}
+                  lang={lang}
+                />
+                <BreakChart
+                  title={t("VAL do projeto", "Project NPV")}
+                  points={breakPoints}
+                  keyName="npv"
+                  current={wave.sessionsDay}
+                  lang={lang}
+                />
               </div>
-            </div>
-          </>}
+              <h3 className="sub-title">
+                {t("Rentabilidade e risco", "Returns and risk")}
+              </h3>
+              <div className="inline-metrics">
+                <div>
+                  <small>WACC</small>
+                  <strong>{percentage(c.wacc)}</strong>
+                </div>
+                <div>
+                  <small>{t("TIR do projeto", "Project IRR")}</small>
+                  <strong className={signedClass(c.projectIRR)}>
+                    {percentage(c.projectIRR)}
+                  </strong>
+                </div>
+                <div>
+                  <small>{t("TIR do capital próprio", "Equity IRR")}</small>
+                  <strong className={signedClass(c.equityIRR)}>
+                    {percentage(c.equityIRR)}
+                  </strong>
+                </div>
+              </div>
+              <div className="split">
+                <div>
+                  <h3 className="sub-title">
+                    {t("Alavancas atuais", "Current levers")}
+                  </h3>
+                  <div className="table-wrap">
+                    <table className="data-table">
+                      <tbody>
+                        {[
+                          [
+                            t("Sessões de pico/dia", "Peak sessions/day"),
+                            decimal(wave.sessionsDay, 1, lang),
+                          ],
+                          [
+                            t("Lotação por sessão", "People per session"),
+                            decimal(wave.ridersPerSession, 0, lang),
+                          ],
+                          [
+                            t(
+                              "Participantes médios/dia",
+                              "Average participants/day",
+                            ),
+                            decimal(w.avgPeopleDay, 1, lang),
+                          ],
+                          [
+                            t("Preço líquido médio", "Average net ticket"),
+                            euro2(w.effectiveAvgPrice, lang),
+                          ],
+                          [
+                            t("Custo de eletricidade", "Electricity price"),
+                            decimal(wave.electricityRate, 3, lang) + " €/kWh",
+                          ],
+                          [
+                            t("Carga média das bombas", "Average pump load"),
+                            decimal(wave.avgPumpLoad, 0, lang) + "%",
+                          ],
+                          [
+                            t("Renda do bar/mês", "Bar rent/month"),
+                            euro(b.annRev / 12, lang),
+                          ],
+                        ].map(([a, z]) => (
+                          <tr key={a}>
+                            <td>{a}</td>
+                            <td className="numeric">{z}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="sub-title">
+                    {t("Hipóteses por validar", "Assumptions to validate")}
+                  </h3>
+                  <div className="note">
+                    {t(
+                      "A localização pode facilitar vendas, mas visitantes do teleférico e dos cruzeiros não são clientes garantidos. Validar preço final ao cliente, taxa média real de ocupação, consumo médio da máquina, tarifa elétrica, equipa por turnos, renda do concessionário, direitos de uso do local e tratamento de IVA da compra/instalação.",
+                      "The location can support sales, but cable-car and cruise visitors are not guaranteed customers. Validate final customer prices, actual average occupancy, machine load, electricity tariff, shift staffing, concession rent, site rights and VAT treatment of purchase/installation.",
+                    )}
+                  </div>
+                  <div className="note">
+                    {t(
+                      "O custo financeiro da espera pelo reembolso de IVA, datas da obra, pré-abertura e fundo de maneio operacional além do stock não entram no VAL.",
+                      "Financing the VAT refund delay, construction timing, pre-opening and operating working capital beyond stock are outside NPV.",
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
-
-      </>}
-
-      {/* FOOTER */}
-      <footer style={{ borderTop:"3px solid #000", marginTop:32, paddingTop:12, display:"flex", justifyContent:"space-between", fontSize:9, color:"#999" }}>
-        <span>Surf Clube da Madeira · Citywave + Bar</span>
-        <span>Dados Citywave Munich, 12 Mai 2026 · Estimativas, nao constitui aconselhamento financeiro</span>
+      <footer className="footer">
+        <span>
+          {t(
+            "Citywave Funchal · simulação ilustrativa e editável",
+            "Citywave Funchal · editable illustrative model",
+          )}
+        </span>
+        <span>
+          <a href="./reports.html">{t("Relatórios fixos", "Fixed reports")}</a>{" "}
+          ·{" "}
+          <a href="./investor-guide.html">
+            {t("Guia do investidor", "Investor guide")}
+          </a>
+        </span>
       </footer>
     </div>
   );
 }
-
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);

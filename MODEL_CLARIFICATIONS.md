@@ -14,8 +14,8 @@ Referência de reunião registada no repositório: potência máxima de 600 kW p
 
 A referência não substitui uma ficha técnica final. A tarifa de 0,16 €/kWh não é orçamento da EEM. Há campo adicional para potência e consumos auxiliares; não duplicar esses encargos se já estiverem num preço integral por kWh. O bar tem uma rubrica própria de consumos. [ERSE: estrutura tarifária 2026](https://www.erse.pt/media/lipjxgih/estrutura-tarif%C3%A1ria-se-2026.pdf).
 
-## Coerência das vistas
+## Coerência do simulador único
 
-Conjunto agrega onda e bar como uma entidade. Onda sem bar, incluindo os seus separadores Investidores, P&L e Análise, refere-se apenas à piscina. Bar mostra a contribuição com custos comuns imputados. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.
+O resumo, receitas, custos, IVA, investidores, P&L e análise usam sempre o mesmo projeto conjunto. A tabela do resumo separa analiticamente onda e bar, com custos comuns imputados, enquanto imposto e VAL do conjunto são recalculados numa só entidade. Os relatórios são cenários fixos gerados do mesmo motor; não acompanham edições locais até serem regenerados.
 
 A tarifa EEM, o perfil real de consumo da máquina, os orçamentos e a procura não estão validados. Comissões, custo unitário de material e encargos elétricos adicionais iniciam a zero: isso não comprova ausência de custo. Sem rampa de abertura, reporte fiscal de prejuízos ou calendário completo de tesouraria; o painel IVA mostra uma ponte mensal simplificada apenas no primeiro ano. Prazo de dez anos nos cenários abaixo, sem valor residual dos ativos; na alternativa de operação própria recupera-se o stock inicial. A TIR é do projeto, não de um sócio após sweat equity.

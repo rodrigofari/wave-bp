@@ -6,7 +6,7 @@ Updated 30 Sep 2026. This guide explains how to read and test the simulator. The
 
 The proposal combines a Citywave pool in Funchal with a simple bar where surfers, companions, visitors and people working nearby can buy food and drinks. The work area does not sell memberships or desk time: visitors are customers of the bar operator. In the starting concession, the Lda. receives fixed rent and does not book their spending. The cable car and cruise traffic help describe tourist flows; their passengers are not guaranteed customers. Tourists, hotels, cruise ships, the cable car and online sales overlap. Do not add those audiences together.
 
-The simulator separates **Wave only**, **Bar / work** and **Combined**. The combined view is the most useful for assessing total funding needs. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 144 505 €, NPV of -1 371 916 € and project IRR of -6.96%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
+The simulator shows the combined project in one view; the overview table identifies the wave and bar contributions separately. All headline figures refer to the total investment. The wave requires substantial capital: the engine’s starting scenario shows combined investment of 2 292 400 €, annual revenue of 808 563 €, EBITDA of 144 505 €, NPV of -1 371 916 € and project IRR of -6.96%, against a discount rate of 8.14%. Positive EBITDA means the operation earns money before depreciation, interest and tax; **it does not mean the investment pays back**.
 
 | Starting scenario | Wave (allocated share) | Bar within combined | Combined |
 | --- | --- | --- | --- |
@@ -16,21 +16,21 @@ The simulator separates **Wave only**, **Bar / work** and **Combined**. The comb
 | NPV | -1 451 695 € | 73 816 € | -1 371 916 € |
 | Project IRR | -8.11% | Indisponível | -6.96% |
 
-In the wave column, common costs are already shared with the bar; the standalone wave view retains all of those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
+In the wave column, common costs are already shared with the bar; a wave-only calculation in the engine retains all those costs. Component NPVs/IRRs are analytical and should not be added as if they were the consolidated project returns.
 
 ## How to explore the model
 
-1. Choose **Combined** to see the pool and bar together. Then compare with **Wave only** and **Bar / work**.
+1. Open the single simulator: headline metrics and every tab show the whole project; the Overview table splits wave, bar and combined values.
 2. Start with the controls on the left: session length, group size, session demand, skill-level prices, opening hours, energy and investment. Underlined numbers are editable.
-3. Expand sections by clicking their title. Hover over the **i** icon for a plain-English explanation.
-4. Use **VAT & cash** to choose gross or net input prices, Citywave invoicing and refund timing. Edit bar inputs in **Bar / work**. The starting case is a concession with illustrative monthly rent and retained owner costs; switch to owner-operation to test direct bar trading.
+3. Expand each input group by clicking its title; hover over the **i** icon for an explanation.
+4. Use **VAT & cash** to choose gross or net input prices, Citywave invoicing and refund timing. Edit bar inputs in the left-hand **Bar & work area** group. The starting case is a concession with illustrative monthly rent and retained owner costs; switch to owner-operation to test direct bar trading.
 5. Compare EBITDA, cash flow, NPV and IRR. Test group-session demand; in owner-operated bar mode, edit external bar visits too. Tourist passenger totals are not automatic conversions.
 
 Edits remain only in the current browser session and are lost on refresh. Share the simulator link so each investor can test their own case; the link does not save or transmit edited values.
 
-## What the three views include
+## How to read the three Overview components
 
-| View | Includes | Use it to |
+| Component | Includes | Use it to |
 |---|---|---|
 | Wave only | Pool, group sessions, staff and wave costs | Assess the pool business by itself |
 | Bar / work | Owner rent and retained costs in concession mode; customer sales only in owner-operation | Test the rent or direct bar trading |
@@ -42,7 +42,7 @@ Shared costs can be allocated between wave and bar for analysis, but this does n
 
 The Lda. sells places in 45- or 60-minute group sessions. Each customer pays the price for their skill level; the duration belongs to the whole group, not to individual wave time. The starting case uses demand for nine peak sessions/day, eight people/session, 60 minutes, ten opening hours and 340 days/year: about 54.8 public participants per open day on average. Monthly seasonality reduces demand, while operating hours cap sales at the whole number of sessions that fit. At 60 minutes without an extra gap, the ceiling is ten groups/day. The editable group limit is 14 people, but Citywave and the operating team must confirm safe capacity and rotation.
 
-The starting prices are €49/€39/€39/€35 for beginner/intermediate/advanced/children, with editable discounts. The VAT panel chooses whether entered prices are before VAT or final customer prices; the commercial policy is still undecided. Equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it. Private sessions replace public groups; private bookings, rental, events, passes and extra coaching start at zero in the investor case. Intermediary sales incur a separate commission.
+The starting prices are €49/€39/€39/€35 for beginner/intermediate/advanced/children, with editable discounts. The VAT checkbox at the top, in Prices and in VAT & cash chooses whether entered prices are before VAT or final customer prices; the commercial policy is still undecided. Equipment is included for beginners, intermediate surfers and children; advanced surfers may rent it. Private sessions replace public groups; private bookings, rental, events, passes and extra coaching start at zero in the investor case. Intermediary sales incur a separate commission.
 
 ## Group sessions: comparing 45 and 60 minutes
 

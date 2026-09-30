@@ -6,7 +6,7 @@ Atualizado em 30/09/2026. Este guia explica como ler e testar o simulador. Os va
 
 A proposta combina uma piscina de ondas Citywave no Funchal com um bar simples onde surfistas, acompanhantes, visitantes e pessoas a trabalhar podem consumir. O espaço de trabalho não vende mensalidades nem lugares: essas pessoas são clientes do operador do bar. Na concessão inicial, a Lda. recebe renda fixa, não contabiliza esse consumo. O teleférico e os cruzeiros ajudam a caracterizar a circulação turística, mas os respetivos passageiros não são clientes garantidos. Há sobreposição entre turistas, hotéis, cruzeiros, teleférico e venda online; não some essas populações.
 
-O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista do conjunto é a mais útil para avaliar o investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 144 505 €, VAL de -1 371 916 € e TIR do projeto de -6.96%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
+O simulador apresenta o projeto conjunto numa única vista; a tabela do resumo identifica separadamente a contribuição da onda e do bar. Todos os indicadores principais referem-se ao investimento total. A onda exige muito capital: no cenário inicial do motor, o conjunto tem investimento de 2 292 400 €, receita anual de 808 563 €, EBITDA de 144 505 €, VAL de -1 371 916 € e TIR do projeto de -6.96%, a uma taxa de desconto de 8.14%. O EBITDA positivo significa que a operação gera resultado operacional antes de depreciação, juros e imposto; **não significa que o investimento recupera o capital**.
 
 | Indicador — cenário inicial | Onda (quota no conjunto) | Bar no conjunto | Conjunto |
 | --- | --- | --- | --- |
@@ -16,22 +16,22 @@ O simulador separa **Onda sem bar**, **Bar / trabalhar** e **Conjunto**. A vista
 | VAL | -1 451 695 € | 73 816 € | -1 371 916 € |
 | TIR do projeto | -8.11% | Indisponível | -6.96% |
 
-Na coluna da onda, os custos comuns já estão repartidos com o bar. A vista isolada da onda mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
+Na coluna da onda, os custos comuns já estão repartidos com o bar. A simulação sem bar, calculável pelo motor, mantém a totalidade desses custos. VAL/TIR das componentes são analíticos e não devem ser somados como se fossem os retornos consolidados.
 
 ## Como experimentar
 
-1. Escolha **Conjunto** para ver a piscina e o bar juntos. Compare depois com **Onda sem bar** e **Bar / trabalhar**.
+1. Abra o simulador único: o cabeçalho e todas as abas mostram o projeto completo; a tabela do Resumo discrimina onda, bar e conjunto.
 2. Comece pelos controlos à esquerda: duração da sessão, pessoas por grupo, procura de sessões, preços por nível, horário, energia e investimento. Os números sublinhados são editáveis.
-3. Abra cada secção pelo título. Passe o cursor pelo círculo **i** para ver uma explicação da secção.
-4. Edite os inputs do bar no painel **Bar / trabalhar**. O arranque simula concessão, com renda e custos retidos ilustrativos; mude para operação própria para testar vendas diretas.
+3. Abra cada grupo de pressupostos pelo título e passe o cursor pelo ícone **i** para ler a explicação.
+4. Edite os inputs do bar na coluna esquerda, em **Bar e espaço de trabalho**. O arranque simula concessão, com renda e custos retidos ilustrativos; mude para operação própria para testar vendas diretas.
 5. Compare EBITDA, caixa e VAL/TIR. Para testar a procura, altere sessões de grupo; na alternativa de operação própria do bar, altere também visitantes externos. Passageiros turísticos não são conversões automáticas.
-6. No painel **IVA e caixa**, escolha se os preços introduzidos são antes ou depois de IVA e teste faturação Citywave e prazo de reembolso. Leia os três gráficos de break-even no topo: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.
+6. Na aba **IVA e caixa**, escolha se os preços introduzidos são antes ou depois de IVA e teste faturação Citywave e prazo de reembolso. Leia os três gráficos de break-even em **Análise**: variam EBITDA, FCFE do ano 1 e VAL conforme a procura da onda. No modo de sessões, a procura indicada é de pico e a sazonalidade converte-a numa média anual esperada; não é uma agenda diária reservável.
 
 As alterações vivem apenas na sessão do navegador e desaparecem ao recarregar. Partilhe o link do simulador para cada investidor testar os seus próprios cenários; este link não grava nem transmite os valores alterados.
 
-## O que significam as três vistas
+## Como ler as três componentes no Resumo
 
-| Vista | O que inclui | Para que serve |
+| Componente | O que inclui | Para que serve |
 |---|---|---|
 | Onda sem bar | Piscina, sessões de grupo, pessoal e custos da onda | Medir o negócio da piscina isoladamente |
 | Bar / trabalhar | Renda e custos do proprietário na concessão; vendas e consumo por visita apenas na operação própria | Testar renda ou exploração direta do bar |
@@ -43,7 +43,7 @@ Os custos partilhados podem ser repartidos entre onda e bar para análise, mas e
 
 A Lda. vende lugares em sessões de grupo de 45 ou 60 minutos. Cada pessoa paga o preço do seu nível; a duração é do grupo inteiro, não o tempo individual na onda. O arranque usa 9 sessões de procura de pico por dia, 8 participantes por sessão, 60 minutos, dez horas abertas e 340 dias/ano: cerca de 54.8 participantes públicos por dia aberto em média. A sazonalidade reduz a procura em cada mês; a capacidade limita as vendas ao número inteiro de grupos que cabe no horário. Com 60 minutos e sem intervalo adicional, cabem no máximo dez grupos por dia. O limite editável é de 14 pessoas por grupo, mas a segurança e a rotação têm de ser confirmadas pela Citywave e pela equipa operacional.
 
-Os preços por nível são 49 €/39 €/39 €/35 € para principiantes/intermédios/avançados/crianças no caso-base, com descontos editáveis. O painel IVA escolhe se os números introduzidos são antes de IVA ou preços finais; a política comercial ainda está por decidir. Material está incluído para principiantes, intermédios e crianças; avançados podem alugá-lo. Sessões privadas substituem grupos públicos; privadas, aluguer, eventos, cartões e coaching adicional começam desligados no caso-base. Vendas intermediadas geram comissão separada.
+Os preços por nível são 49 €/39 €/39 €/35 € para principiantes/intermédios/avançados/crianças no caso-base, com descontos editáveis. O seletor de IVA no topo, em Preços e na aba IVA escolhe se os números introduzidos são antes de IVA ou preços finais; a política comercial ainda está por decidir. Material está incluído para principiantes, intermédios e crianças; avançados podem alugá-lo. Sessões privadas substituem grupos públicos; privadas, aluguer, eventos, cartões e coaching adicional começam desligados no caso-base. Vendas intermediadas geram comissão separada.
 
 ## Sessões de grupo: comparação de 45 e 60 minutos
 
