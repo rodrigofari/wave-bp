@@ -10,11 +10,11 @@ O modo inicial é **sessões de grupo de 60 minutos**, com 9 sessões de procura
 | --- | --- | --- | --- |
 | Investimento | 2 292 400 € | 0 € | 2 292 400 € |
 | Receita ano 1 | 778 563 € | 30 000 € | 808 563 € |
-| EBITDA ano 1 | 132 505 € | 12 000 € | 144 505 € |
-| VAL | -1 451 695 € | 73 816 € | -1 371 916 € |
-| TIR | -8.11% | Indisponível | -6.96% |
+| EBITDA ano 1 | 174 085 € | 12 000 € | 186 085 € |
+| VAL | -1 211 542 € | 73 816 € | -1 137 726 € |
+| TIR | -4.80% | Indisponível | -3.83% |
 
-Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 118 105 €. A melhoria real ao acrescentar o bar é 26 400 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
+Os custos comuns existentes somam 57 600 €, dos quais 14 400 € são imputados ao bar. A onda sem bar teria EBITDA de 159 685 €. A melhoria real ao acrescentar o bar é 26 400 €/ano de EBITDA; redistribuir custos não gera poupança. Impostos consolidados são recalculados, portanto VAL e TIR analíticos não devem ser somados.
 
 | Origem da receita do bar | Receita anual |
 | --- | --- |

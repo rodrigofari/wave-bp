@@ -19,7 +19,7 @@ test('investor scenarios are distinct, capacity-feasible and run through the com
     assert.ok(Math.abs(project.combined.ebitda-(project.wave.ebitda+project.bar.directEBITDA-project.extraSharedAnnual))<1e-6);
     assert.ok(Number.isFinite(project.combined.ebitda));
     assert.equal(bar.operatingMode,'concession');
-    assert.equal(wave.staffCount,[6,7,9][index]);
+    assert.equal(wave.staffCount,[5,5,6][index]);
     return project;
   });
   assert.ok(outputs[0].combined.annRev<outputs[1].combined.annRev);

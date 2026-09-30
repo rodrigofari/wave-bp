@@ -68,8 +68,9 @@ const INIT = {
   // Ops — updated per Citywave: maintenance optional ~1.5% of system price
   waterMonth:2500,        // 1500m³ initial + ~17.5 m³/week ongoing
   maintMonth:2250,        // ~1.5% of €1.75M / 12 = €2,187/mo
-  insuranceYear:35000, staffCount:7,
-  avgSalary:1200, ssRate:23.75, concessionRate:5, marketingMonth:2500,
+  insuranceYear:35000, staffCount:5,
+  avgSalary:1200, ssRate:23.75, concessionRate:5, // CMF site-use revenue share: editable placeholder, not agreed
+  marketingMonth:2500,
   accountingMonth:800, miscMonth:1500, opDays:340,
   // Funding
   joaoPct:15, rodrigoPct:15, sweatPct:20, bankPct:35,

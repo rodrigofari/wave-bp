@@ -863,8 +863,8 @@ function App() {
           <Fold title={t("0 · Local e prazo", "0 · Site & term")} open>
             <p className="fold-intro">
               {t(
-                "O local de betão é apenas uma hipótese de dimensionamento; a concessão do terreno continua por confirmar.",
-                "The concrete site is a sizing assumption; the site concession remains unconfirmed.",
+                "O local junto ao Teleférico é a proposta do promotor. O uso do jardim depende de título e condições a formalizar com a Câmara Municipal do Funchal; o prazo e os 5% sobre a receita da onda são hipóteses, não termos acordados.",
+                "The site near the cable car is the promoter's proposal. Use of the garden depends on rights and terms to be formalized with Funchal City Council; the term and 5% of wave revenue are assumptions, not agreed terms.",
               )}
             </p>
             {F.SITES.map((site) => (
@@ -1596,12 +1596,18 @@ function App() {
             )}
             {W(
               "concessionRate",
-              t("Concessão sobre receita da onda", "Wave revenue concession"),
+              t("CMF: percentagem da receita da onda (hipótese)", "Funchal Council: share of wave revenue (assumption)"),
               "%",
               0,
               100,
               0.1,
             )}
+            <p className="fold-intro">
+              {t(
+                "Este pagamento hipotético à Câmara é um custo da piscina. Para testar cedência sem percentagem, introduza 0%. O modelo ainda não tem renda municipal fixa. A renda do operador do bar é receita distinta da Lda.; confirme se o título municipal permite essa exploração por terceiro.",
+                "This assumed Council payment is a pool cost. Enter 0% to test a site without revenue sharing. A fixed municipal rent is not yet modelled. Bar operator rent is separate company income; confirm that the municipal title permits a third-party operator.",
+              )}
+            </p>
             {W(
               "mgmtPct",
               t("Gestão sobre receita da onda", "Wave revenue management"),

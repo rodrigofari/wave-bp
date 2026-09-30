@@ -9,9 +9,9 @@ A entidade que compra a máquina e fatura as sessões será uma **sociedade come
 | Sensibilidade sessões de grupo | 49 € antes de IVA | 49 € preço final |
 | --- | --- | --- |
 | Receita da onda no ano 1 | 778 563 € | 638 167 € |
-| EBITDA conjunto no ano 1 | 144 505 € | 11 128 € |
-| VAL conjunto | -1 371 916 € | -2 332 548 € |
-| TIR do projeto | -6.96% | -30.30% |
+| EBITDA conjunto no ano 1 | 186 085 € | 52 708 € |
+| VAL conjunto | -1 137 726 € | -2 032 798 € |
+| TIR do projeto | -3.83% | -19.18% |
 | Payback | Não recupera no prazo | Não recupera no prazo |
 
 Com nove sessões de pico por dia e oito participantes, a média após sazonalidade é 54.8 participantes públicos/dia aberto. Mesmo com preços antes de IVA, este caso-base não recupera o investimento no prazo de dez anos. A sensibilidade seguinte aumenta a procura para 12 sessões de pico, reduz cada sessão para 45 minutos e mantém oito participantes: é um teste de capacidade e vendas, não uma previsão validada.
@@ -19,10 +19,10 @@ Com nove sessões de pico por dia e oito participantes, a média após sazonalid
 | 12 sessões de pico/dia · 45 min | Preços antes de IVA | Preços finais |
 | --- | --- | --- |
 | Participantes públicos/dia aberto | 73.0 | 73.0 |
-| EBITDA conjunto no ano 1 | 391 050 € | 213 215 € |
-| VAL conjunto | 63 064 € | -970 645 € |
-| TIR do projeto | 8.70% | -1.75% |
-| Payback | 6.81 anos | Não recupera no prazo |
+| EBITDA conjunto no ano 1 | 432 630 € | 254 795 € |
+| VAL conjunto | 295 370 € | -738 339 € |
+| TIR do projeto | 10.73% | 0.87% |
+| Payback | 6.26 anos | 9.60 anos |
 
 ## Hipótese fiscal da Lda.
 
